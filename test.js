@@ -11,7 +11,9 @@ const testCases = [
   ["Absolute value", "abs(-10)", 10],
   ["Function used as expression", "1 + abs(-10)", 11],
   ["Min", "min(2, 10)", 2],
-  ["Min reversed", "min(10, 2)", 2]
+  ["Min reversed", "min(10, 2)", 2],
+  ["Max", "max(2, 10)", 10],
+  ["Max reversed", "max(10, 2)", 10]
 ];
 
 testCases.forEach(testCase => {
