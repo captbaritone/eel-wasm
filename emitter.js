@@ -1,20 +1,20 @@
+const BINARY_OPERATORS = {
+  "+": "f32.add",
+  "-": "f32.sub",
+  "*": "f32.mul",
+  "/": "f32.div",
+}
+
 function emit(ast) {
   switch (ast.type) {
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left);
       const right = emit(ast.right);
-      switch (ast.operator) {
-        case "+":
-          return `${left} ${right} f32.add`;
-        case "-":
-          return `${left} ${right} f32.sub`;
-        case "*":
-          return `${left} ${right} f32.mul`;
-        case "/":
-          return ` ${left} ${right} f32.div`;
-        default:
+      const instruction = BINARY_OPERATORS[ast.operator]
+      if(instruction == null) {
           throw new Error(`Unknown binary operator ${ast.operator}`);
       }
+      return `${left} ${right} ${instruction}`;
     }
     case "CALL_EXPRESSION": {
       switch (ast.callee.value) {
