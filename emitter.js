@@ -2,41 +2,39 @@ const BINARY_OPERATORS = {
   "+": "f32.add",
   "-": "f32.sub",
   "*": "f32.mul",
-  "/": "f32.div",
-}
+  "/": "f32.div"
+};
+
+const FUNCTIONS = {
+  abs: { arity: 1, instruction: "f32.abs" },
+  min: { arity: 2, instruction: "f32.min" },
+  max: { arity: 2, instruction: "f32.max" }
+};
 
 function emit(ast) {
   switch (ast.type) {
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left);
       const right = emit(ast.right);
-      const instruction = BINARY_OPERATORS[ast.operator]
-      if(instruction == null) {
-          throw new Error(`Unknown binary operator ${ast.operator}`);
+      const instruction = BINARY_OPERATORS[ast.operator];
+      if (instruction == null) {
+        throw new Error(`Unknown binary operator ${ast.operator}`);
       }
       return `${left} ${right} ${instruction}`;
     }
     case "CALL_EXPRESSION": {
-      switch (ast.callee.value) {
-        case "abs":
-          // TODO assert arity
-          const arg = emit(ast.arguments[0]);
-          return `${arg} f32.abs`;
-        case "min": {
-          // TODO assert arity
-          const first = emit(ast.arguments[0]);
-          const second = emit(ast.arguments[1]);
-          return `${first} ${second} f32.min`;
-        }
-        case "max": {
-          // TODO assert arity
-          const first = emit(ast.arguments[0]);
-          const second = emit(ast.arguments[1]);
-          return `${first} ${second} f32.max`;
-        }
-        default:
-          throw new Error(`Unknown call callee ${ast.callee}`);
+      const func = FUNCTIONS[ast.callee.value];
+      if (func == null) {
+        throw new Error(`Unknown call callee ${ast.callee}`);
       }
+      const { instruction, arity } = func;
+      if (ast.arguments.length !== arity) {
+        throw new Error(
+          `Incorrect number of arguments passed to ${ast.clllee.value}. Got ${ast.arguments.length}, expected ${arity}`
+        );
+      }
+      const args = ast.arguments.map(emit);
+      return `${args.join(" ")} ${instruction}`;
     }
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value);
