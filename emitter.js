@@ -7,8 +7,9 @@ const BINARY_OPERATORS = {
 
 const FUNCTIONS = {
   abs: { arity: 1, instruction: "f32.abs" },
+  sqrt: { arity: 1, instruction: "f32.sqrt" },
   min: { arity: 2, instruction: "f32.min" },
-  max: { arity: 2, instruction: "f32.max" }
+  max: { arity: 2, instruction: "f32.max" },
 };
 
 function emit(ast) {
