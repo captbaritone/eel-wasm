@@ -12,27 +12,27 @@ const grammar = {
     rules: [
       ["\\s+", "/* skip whitespace */"],
       ["[0-9]+(?:\\.[0-9]+)?\\b", "return 'NUMBER'"],
-      ["\\*", "return '*'"],
-      ["\\/", "return '/'"],
+      // ["\\*", "return '*'"],
+      // ["\\/", "return '/'"],
       ["-", "return '-'"],
       ["\\+", "return '+'"],
-      ["\\^", "return '^'"],
-      ["!", "return '!'"],
-      ["%", "return '%'"],
+      // ["\\^", "return '^'"],
+      // ["!", "return '!'"],
+      // ["%", "return '%'"],
       ["\\(", "return '('"],
       ["\\)", "return ')'"],
-      ["PI\\b", "return 'PI'"],
-      ["E\\b", "return 'E'"],
+      // ["PI\\b", "return 'PI'"],
+      // ["E\\b", "return 'E'"],
       ["$", "return 'EOF'"]
     ]
   },
 
   operators: [
     ["left", "+", "-"],
-    ["left", "*", "/"],
-    ["left", "^"],
-    ["right", "!"],
-    ["right", "%"],
+    // ["left", "*", "/"],
+    // ["left", "^"],
+    // ["right", "!"],
+    // ["right", "%"],
     ["left", "UMINUS"]
   ],
 
@@ -41,19 +41,16 @@ const grammar = {
     e: [
       ["e + e", binaryExpression],
       ["e - e", binaryExpression],
-      ["e * e", binaryExpression],
-      ["e / e", binaryExpression],
-      ["e ^ e", binaryExpression],
-      [
-        "e !",
-        "$$ = (function(n) {if(n==0) return 1; return arguments.callee(n-1) * n})($1)"
-      ],
-      ["e %", "$$ = $1/100"],
+      // ["e * e", binaryExpression],
+      // ["e / e", binaryExpression],
+      // ["e ^ e", binaryExpression],
+      // [ "e !", "$$ = (function(n) {if(n==0) return 1; return arguments.callee(n-1) * n})($1)" ],
+      // ["e %", "$$ = $1/100"],
       ["- e", unaryExpression, { prec: "UMINUS" }],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
-      ["E", "$$ = Math.E"],
-      ["PI", "$$ = Math.PI"]
+      // ["E", "$$ = Math.E"],
+      // ["PI", "$$ = Math.PI"]
     ]
   }
 };
