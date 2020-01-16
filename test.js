@@ -9,13 +9,13 @@ const testCases = [
   ["Order of operations (+ and *)", "1 + 1 * 10", 11],
   ["Parens", "(1 + 1) * 10", 20],
   ["Absolute value", "abs(-10)", 10],
-  ["Function used as expression", "1 + abs(-10)", 11],
+  ["Function used as expression", "1 + abs(-10)", 11]
 ];
 
 testCases.forEach(testCase => {
-  const [description, expression, expectedResult, debug] = testCase
+  const [description, expression, expectedResult, debug] = testCase;
   test(description, async () => {
-    const result = await evaluate(expression, {debug: debug === true});
+    const result = await evaluate(expression, { debug: debug === true });
     expect(result).toBe(expectedResult);
   });
-})
+});

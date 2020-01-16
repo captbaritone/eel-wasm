@@ -34,21 +34,21 @@ const grammar = {
     // ["left", "^"],
     // ["right", "!"],
     // ["right", "%"],
-    ["left", "UMINUS"]
-    ["left", "UPLUS"]
+    ["left", "UMINUS"][("left", "UPLUS")]
   ],
 
   bnf: {
     expressions: [["e EOF", "return $1"]],
-    identifier: [
-      ["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]
-    ],
+    identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
     arguments: [
       // TODO: Support multiple arguments
-      ["e", "$$ = [$1]"],
+      ["e", "$$ = [$1]"]
     ],
     functionCall: [
-      ['identifier ( arguments )', "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}"],
+      [
+        "identifier ( arguments )",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}"
+      ]
     ],
     e: [
       ["e + e", binaryExpression],
