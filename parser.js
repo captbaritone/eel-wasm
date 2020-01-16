@@ -16,6 +16,7 @@ const grammar = {
       ["\\/", "return '/'"],
       ["-", "return '-'"],
       ["\\+", "return '+'"],
+      [",", "return ','"],
       // ["\\^", "return '^'"],
       // ["!", "return '!'"],
       // ["%", "return '%'"],
@@ -41,8 +42,9 @@ const grammar = {
     expressions: [["e EOF", "return $1"]],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
     arguments: [
-      // TODO: Support multiple arguments
-      ["e", "$$ = [$1]"]
+      // TODO: Support arbitrary arguments
+      ["e", "$$ = [$1]"],
+      ["e , e", "$$ = [$1, $3]"]
     ],
     functionCall: [
       [

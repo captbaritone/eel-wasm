@@ -22,6 +22,11 @@ function emit(ast) {
           // TODO assert arity
           const arg = emit(ast.arguments[0]);
           return `(f32.abs ${arg})`;
+        case "min":
+          // TODO assert arity
+          const first = emit(ast.arguments[0]);
+          const second = emit(ast.arguments[1]);
+          return `(f32.min ${first} ${second})`;
         default:
           throw new Error(`Unknown call callee ${ast.callee}`);
       }

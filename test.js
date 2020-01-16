@@ -9,7 +9,9 @@ const testCases = [
   ["Order of operations (+ and *)", "1 + 1 * 10", 11],
   ["Parens", "(1 + 1) * 10", 20],
   ["Absolute value", "abs(-10)", 10],
-  ["Function used as expression", "1 + abs(-10)", 11]
+  ["Function used as expression", "1 + abs(-10)", 11],
+  ["Min", "min(2, 10)", 2],
+  ["Min reversed", "min(10, 2)", 2]
 ];
 
 testCases.forEach(testCase => {
