@@ -1,3 +1,4 @@
+// TODO: Should this be called the printer?
 function compile(ast) {
   switch (ast.type) {
     case "BINARY_EXPRESSION": {
