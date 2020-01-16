@@ -47,6 +47,9 @@ const grammar = {
       // TODO: Support multiple arguments
       ["e", "$$ = [$1]"],
     ],
+    functionCall: [
+      ['identifier ( arguments )', "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}"],
+    ],
     e: [
       ["e + e", binaryExpression],
       ["e - e", binaryExpression],
@@ -59,7 +62,7 @@ const grammar = {
       ["+ e", unaryExpression, { prec: "UPLUS" }],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
-      ['identifier ( arguments )', "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}"],
+      ["functionCall", "$$ = $1"]
       // ["E", "$$ = Math.E"],
       // ["PI", "$$ = Math.PI"]
     ]
