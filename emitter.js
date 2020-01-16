@@ -5,13 +5,13 @@ function emit(ast) {
       const right = emit(ast.right);
       switch (ast.operator) {
         case "+":
-          return `(f32.add ${left} ${right})`;
+          return `${left} ${right} f32.add`;
         case "-":
-          return `(f32.sub ${left} ${right})`;
+          return `${left} ${right} f32.sub`;
         case "*":
-          return `(f32.mul ${left} ${right})`;
+          return `${left} ${right} f32.mul`;
         case "/":
-          return `(f32.div ${left} ${right})`;
+          return ` ${left} ${right} f32.div`;
         default:
           throw new Error(`Unknown binary operator ${ast.operator}`);
       }
@@ -21,18 +21,18 @@ function emit(ast) {
         case "abs":
           // TODO assert arity
           const arg = emit(ast.arguments[0]);
-          return `(f32.abs ${arg})`;
+          return `${arg} f32.abs`;
         case "min": {
           // TODO assert arity
           const first = emit(ast.arguments[0]);
           const second = emit(ast.arguments[1]);
-          return `(f32.min ${first} ${second})`;
+          return `${first} ${second} f32.min`;
         }
         case "max": {
           // TODO assert arity
           const first = emit(ast.arguments[0]);
           const second = emit(ast.arguments[1]);
-          return `(f32.max ${first} ${second})`;
+          return `${first} ${second} f32.max`;
         }
         default:
           throw new Error(`Unknown call callee ${ast.callee}`);
@@ -42,7 +42,7 @@ function emit(ast) {
       const value = emit(ast.value);
       switch (ast.operator) {
         case "-":
-          return `(f32.neg ${value})`;
+          return `${value} f32.neg`;
         case "+":
           return value;
         default:
@@ -50,7 +50,7 @@ function emit(ast) {
       }
     }
     case "NUMBER_LITERAL":
-      return `(f32.const ${ast.value})`;
+      return `f32.const ${ast.value}`;
     default:
       console.error(ast);
       throw new Error(`Unknown AST node type ${ast.type}`);
