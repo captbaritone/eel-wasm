@@ -1,0 +1,18 @@
+{
+  "name": "eel-wasm",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "prettier": {},
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "jison": "^0.4.18",
+    "wabt": "^1.0.12"
+  },
+  "devDependencies": {
+    "prettier": "^1.19.1",
+    "jest": "^24.9.0"
+  }
+}
