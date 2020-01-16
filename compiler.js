@@ -5,9 +5,9 @@ function compile(ast) {
       const right = compile(ast.right);
       switch (ast.operator) {
         case "+":
-          return `(i32.add ${left} ${right})`;
+          return `(f32.add ${left} ${right})`;
         case "-":
-          return `(i32.sub ${left} ${right})`;
+          return `(f32.sub ${left} ${right})`;
         default:
             throw new Error(`Unknown binary operator ${ast.operator}`)
       }
@@ -16,13 +16,15 @@ function compile(ast) {
       const value = compile(ast.value);
       switch (ast.operator) {
         case "-":
-          return `(i32.sub (i32.const 0) ${value} )`;
+          return `(f32.sub (f32.const 0) ${value} )`;
+        case "+":
+          return value;
         default:
             throw new Error(`Unknown unary operator ${ast.operator}`)
       }
     }
     case "NUMBER_LITERAL":
-      return `(i32.const ${ast.value})`
+      return `(f32.const ${ast.value})`
     default:
       console.error(ast)
         throw new Error(`Unknown AST node type ${ast.type}`)

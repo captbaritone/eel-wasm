@@ -6,7 +6,7 @@ async function evaluate(expression, {debug = false} = {}) {
   const ast = parse(expression);
   const programWat = compile(ast);
   const wat = `(module
-      (func (result i32)
+      (func (result f32)
           ${programWat}
       )
       (export "run" (func 0))
