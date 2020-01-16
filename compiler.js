@@ -8,6 +8,10 @@ function compile(ast) {
           return `(f32.add ${left} ${right})`;
         case "-":
           return `(f32.sub ${left} ${right})`;
+        case "*":
+          return `(f32.mul ${left} ${right})`;
+        case "/":
+          return `(f32.div ${left} ${right})`;
         default:
             throw new Error(`Unknown binary operator ${ast.operator}`)
       }

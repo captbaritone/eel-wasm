@@ -12,8 +12,8 @@ const grammar = {
     rules: [
       ["\\s+", "/* skip whitespace */"],
       ["[0-9]+(?:\\.[0-9]+)?\\b", "return 'NUMBER'"],
-      // ["\\*", "return '*'"],
-      // ["\\/", "return '/'"],
+      ["\\*", "return '*'"],
+      ["\\/", "return '/'"],
       ["-", "return '-'"],
       ["\\+", "return '+'"],
       // ["\\^", "return '^'"],
@@ -29,11 +29,12 @@ const grammar = {
 
   operators: [
     ["left", "+", "-"],
-    // ["left", "*", "/"],
+    ["left", "*", "/"],
     // ["left", "^"],
     // ["right", "!"],
     // ["right", "%"],
     ["left", "UMINUS"]
+    ["left", "UPLUS"]
   ],
 
   bnf: {
@@ -41,12 +42,13 @@ const grammar = {
     e: [
       ["e + e", binaryExpression],
       ["e - e", binaryExpression],
-      // ["e * e", binaryExpression],
-      // ["e / e", binaryExpression],
+      ["e * e", binaryExpression],
+      ["e / e", binaryExpression],
       // ["e ^ e", binaryExpression],
       // [ "e !", "$$ = (function(n) {if(n==0) return 1; return arguments.callee(n-1) * n})($1)" ],
       // ["e %", "$$ = $1/100"],
       ["- e", unaryExpression, { prec: "UMINUS" }],
+      ["+ e", unaryExpression, { prec: "UPLUS" }],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
       // ["E", "$$ = Math.E"],
