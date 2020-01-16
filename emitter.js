@@ -30,7 +30,7 @@ function emit(ast) {
       const value = emit(ast.value);
       switch (ast.operator) {
         case "-":
-          return `(f32.sub (f32.const 0) ${value} )`;
+          return `(f32.neg ${value})`;
         case "+":
           return value;
         default:
