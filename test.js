@@ -6,7 +6,8 @@ const testCases = [
   ["Unary plus", "+10", 10],
   ["Multiply", "10 * 10", 100],
   ["Divide", "10 / 10", 1],
-  // ["Parens", "1 + 1 * 10", 10],
+  ["Order of operations (+ and *)", "1 + 1 * 10", 11],
+  ["Parens", "(1 + 1) * 10", 20],
 ];
 
 testCases.forEach(testCase => {
