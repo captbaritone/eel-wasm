@@ -23,6 +23,7 @@ const grammar = {
       ["\\)", "return ')'"],
       // ["PI\\b", "return 'PI'"],
       // ["E\\b", "return 'E'"],
+      ["[a-z]+", "return 'IDENTIFIER'"],
       ["$", "return 'EOF'"]
     ]
   },
@@ -39,6 +40,13 @@ const grammar = {
 
   bnf: {
     expressions: [["e EOF", "return $1"]],
+    identifier: [
+      ["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]
+    ],
+    arguments: [
+      // TODO: Support multiple arguments
+      ["e", "$$ = [$1]"],
+    ],
     e: [
       ["e + e", binaryExpression],
       ["e - e", binaryExpression],
@@ -51,6 +59,7 @@ const grammar = {
       ["+ e", unaryExpression, { prec: "UPLUS" }],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
+      ['identifier ( arguments )', "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}"],
       // ["E", "$$ = Math.E"],
       // ["PI", "$$ = Math.PI"]
     ]

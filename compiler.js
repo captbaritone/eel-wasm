@@ -17,6 +17,16 @@ function compile(ast) {
             throw new Error(`Unknown binary operator ${ast.operator}`)
       }
     }
+    case "CALL_EXPRESSION": {
+      switch(ast.callee.value) {
+        case "abs":
+          // TODO assert arity
+          const arg = compile(ast.arguments[0]);
+          return `(f32.abs ${arg})`
+        default:
+        throw new Error(`Unknown call callee ${ast.callee}`)
+      }
+    }
     case "UNARY_EXPRESSION": {
       const value = compile(ast.value);
       switch (ast.operator) {
