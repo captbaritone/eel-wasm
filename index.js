@@ -1,5 +1,5 @@
 const wabt = require("wabt")();
-const { compile } = require("./compiler");
+const { emit } = require("./emitter");
 const { parse } = require("./parser");
 
 async function main() {
@@ -7,7 +7,7 @@ async function main() {
 
   const ast = parse(expression);
 
-  const programWat = compile(ast);
+  const programWat = emit(ast);
 
   const wat = `(module
       (func (result i32)

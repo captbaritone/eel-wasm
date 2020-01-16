@@ -1,10 +1,10 @@
 const wabt = require("wabt")();
-const { compile } = require("./compiler");
+const { emit } = require("./emitter");
 const { parse } = require("./parser");
 
 async function evaluate(expression, {debug = false} = {}) {
   const ast = parse(expression);
-  const programWat = compile(ast);
+  const programWat = emit(ast);
   const wat = `(module
       (func (result f32)
           ${programWat}
