@@ -9,6 +9,11 @@ const FUNCTIONS = {
   abs: { arity: 1, instruction: "f64.abs" },
   sqrt: { arity: 1, instruction: "f64.sqrt" },
   sin: { arity: 1, instruction: "call $sin" },
+  cos: { arity: 1, instruction: "call $cos" },
+  tan: { arity: 1, instruction: "call $tan" },
+  asin: { arity: 1, instruction: "call $asin" },
+  acos: { arity: 1, instruction: "call $acos" },
+  atan: { arity: 1, instruction: "call $atan" },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },

@@ -18,6 +18,11 @@ const testCases = [
   ["Sqrt", "sqrt(4)", 2],
   ["Int", "int(4.5)", 4],
   ["Sin", "sin(10)", Math.sin(10)],
+  ["Cos", "cos(10)", Math.cos(10)],
+  ["Tan", "tan(10)", Math.tan(10)],
+  ["Asin", "asin(0.5)", Math.asin(0.5)],
+  ["Acos", "acos(0.5)", Math.acos(0.5)],
+  ["Atan", "atan(0.5)", Math.atan(0.5)]
 ];
 
 testCases.forEach(testCase => {

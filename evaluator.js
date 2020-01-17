@@ -7,6 +7,11 @@ async function evaluate(expression, {debug = false} = {}) {
   const programWat = emit(ast);
   const wat = `(module
     (func $sin (import "imports" "sin") (param f64) (result f64))
+    (func $cos (import "imports" "cos") (param f64) (result f64))
+    (func $tan (import "imports" "tan") (param f64) (result f64))
+    (func $asin (import "imports" "asin") (param f64) (result f64))
+    (func $acos (import "imports" "acos") (param f64) (result f64))
+    (func $atan (import "imports" "atan") (param f64) (result f64))
     (func $run (result f64) ${programWat})
     (export "run" (func $run))
   )`;
@@ -17,7 +22,12 @@ async function evaluate(expression, {debug = false} = {}) {
   var importObject = {
     imports: {
       // TODO: Reimplement these functions natively in Wasm
-      sin: Math.sin
+      sin: Math.sin,
+      cos: Math.cos,
+      tan: Math.tan,
+      asin: Math.asin,
+      acos: Math.acos,
+      atan: Math.atan,
     }
   };
 
