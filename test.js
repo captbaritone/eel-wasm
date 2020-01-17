@@ -17,6 +17,7 @@ const testCases = [
   ["Max reversed", "max(10, 2)", 10],
   ["Sqrt", "sqrt(4)", 2],
   ["Int", "int(4.5)", 4],
+  ["Sin", "sin(10)", Math.sin(10)],
 ];
 
 testCases.forEach(testCase => {

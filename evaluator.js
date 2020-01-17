@@ -5,16 +5,23 @@ const { parse } = require("./parser");
 async function evaluate(expression, {debug = false} = {}) {
   const ast = parse(expression);
   const programWat = emit(ast);
-  const wat = `(module
-      (func (result f64)
-          ${programWat}
-      )
-      (export "run" (func 0))
+  let wat = `(module
+    (func $sin (import "imports" "sin") (param f64) (result f64))
+    (func $run (result f64) ${programWat})
+    (export "run" (func 1))
   )`;
   const wasmModule = wabt.parseWat("somefile.wat", wat);
   const { buffer } = wasmModule.toBinary({});
   const mod = await WebAssembly.compile(buffer);
-  const instance = await WebAssembly.instantiate(mod);
+
+  var importObject = {
+    imports: {
+      // TODO: Reimplement these functions natively in Wasm
+      sin: Math.sin
+    }
+  };
+
+  const instance = await WebAssembly.instantiate(mod, importObject);
   const result = instance.exports.run();
   if(debug) {
     console.log("EXPRESSION: ", expression);

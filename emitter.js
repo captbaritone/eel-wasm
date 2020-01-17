@@ -8,6 +8,7 @@ const BINARY_OPERATORS = {
 const FUNCTIONS = {
   abs: { arity: 1, instruction: "f64.abs" },
   sqrt: { arity: 1, instruction: "f64.sqrt" },
+  sin: { arity: 1, instruction: "call $sin" },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },
@@ -34,7 +35,7 @@ function emit(ast) {
       const { instruction, arity } = func;
       if (ast.arguments.length !== arity) {
         throw new Error(
-          `Incorrect number of arguments passed to ${ast.clllee.value}. Got ${ast.arguments.length}, expected ${arity}`
+          `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
         );
       }
       const args = ast.arguments.map(emit);
