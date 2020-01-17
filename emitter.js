@@ -1,18 +1,18 @@
 const BINARY_OPERATORS = {
-  "+": "f32.add",
-  "-": "f32.sub",
-  "*": "f32.mul",
-  "/": "f32.div"
+  "+": "f64.add",
+  "-": "f64.sub",
+  "*": "f64.mul",
+  "/": "f64.div"
 };
 
 const FUNCTIONS = {
-  abs: { arity: 1, instruction: "f32.abs" },
-  sqrt: { arity: 1, instruction: "f32.sqrt" },
+  abs: { arity: 1, instruction: "f64.abs" },
+  sqrt: { arity: 1, instruction: "f64.sqrt" },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
-  int: { arity: 1, instruction: "f32.floor" },
-  min: { arity: 2, instruction: "f32.min" },
-  max: { arity: 2, instruction: "f32.max" },
+  int: { arity: 1, instruction: "f64.floor" },
+  min: { arity: 2, instruction: "f64.min" },
+  max: { arity: 2, instruction: "f64.max" },
 };
 
 function emit(ast) {
@@ -44,7 +44,7 @@ function emit(ast) {
       const value = emit(ast.value);
       switch (ast.operator) {
         case "-":
-          return `${value} f32.neg`;
+          return `${value} f64.neg`;
         case "+":
           return value;
         default:
@@ -52,7 +52,7 @@ function emit(ast) {
       }
     }
     case "NUMBER_LITERAL":
-      return `f32.const ${ast.value}`;
+      return `f64.const ${ast.value}`;
     default:
       console.error(ast);
       throw new Error(`Unknown AST node type ${ast.type}`);
