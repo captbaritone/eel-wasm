@@ -24,7 +24,7 @@ const grammar = {
       ["\\)", "return ')'"],
       // ["PI\\b", "return 'PI'"],
       // ["E\\b", "return 'E'"],
-      ["[a-z]+", "return 'IDENTIFIER'"],
+      ["[a-z]([a-z1-9]*)", "return 'IDENTIFIER'"],
       ["$", "return 'EOF'"]
     ]
   },
