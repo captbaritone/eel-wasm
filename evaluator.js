@@ -5,10 +5,10 @@ const { parse } = require("./parser");
 async function evaluate(expression, {debug = false} = {}) {
   const ast = parse(expression);
   const programWat = emit(ast);
-  let wat = `(module
+  const wat = `(module
     (func $sin (import "imports" "sin") (param f64) (result f64))
     (func $run (result f64) ${programWat})
-    (export "run" (func 1))
+    (export "run" (func $run))
   )`;
   const wasmModule = wabt.parseWat("somefile.wat", wat);
   const { buffer } = wasmModule.toBinary({});
