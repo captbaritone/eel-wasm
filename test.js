@@ -28,7 +28,7 @@ const testCases = [
 
 testCases.forEach(testCase => {
   const [description, expression, expectedResult, debug] = testCase;
-  test(description, async () => {
+  test(`${description}: "${expression}"`, async () => {
     const result = await evaluate(expression, { debug: debug === true });
     expect(result).toBe(expectedResult);
   });
