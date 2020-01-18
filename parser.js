@@ -42,7 +42,9 @@ const grammar = {
   ],
 
   bnf: {
-    expressions: [["e EOF", "return $1"]],
+    program: [["expressions EOF", "return {type: 'PROGRAM', body: $1}"]],
+    // TODO: Support multiple expressions
+    expressions: [["e", "$$ = $1"]],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
     arguments: [
       ["", "$$ = []"],

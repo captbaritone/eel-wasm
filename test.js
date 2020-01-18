@@ -31,7 +31,10 @@ const testCases = [
 testCases.forEach(testCase => {
   const [description, expression, expectedResult, debug] = testCase;
   test(`${description}: "${expression}"`, async () => {
-    const result = await evaluate(expression, { debug: debug === true });
+    const result = await evaluate(expression, {
+      globals: new Set(["g"]),
+      debug: debug === true
+    });
     expect(result).toBe(expectedResult);
   });
 });

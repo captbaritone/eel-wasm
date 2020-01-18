@@ -19,14 +19,30 @@ const FUNCTIONS = {
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },
   min: { arity: 2, instruction: "f64.min" },
-  max: { arity: 2, instruction: "f64.max" },
+  max: { arity: 2, instruction: "f64.max" }
 };
 
-function emit(ast) {
+function emit(ast, context) {
   switch (ast.type) {
+    case "PROGRAM": {
+      return `(module
+        ${Array.from(context.globals).map(name => 
+          `(global $${name} (import "js" "global") (mut f64))`
+        )}
+        (func $sin (import "imports" "sin") (param f64) (result f64))
+        (func $cos (import "imports" "cos") (param f64) (result f64))
+        (func $tan (import "imports" "tan") (param f64) (result f64))
+        (func $asin (import "imports" "asin") (param f64) (result f64))
+        (func $acos (import "imports" "acos") (param f64) (result f64))
+        (func $atan (import "imports" "atan") (param f64) (result f64))
+        (func $atan2 (import "imports" "atan2") (param f64) (param f64) (result f64))
+        (func $run (result f64) ${emit(ast.body, context)})
+        (export "run" (func $run))
+      )`;
+    }
     case "BINARY_EXPRESSION": {
-      const left = emit(ast.left);
-      const right = emit(ast.right);
+      const left = emit(ast.left, context);
+      const right = emit(ast.right, context);
       const instruction = BINARY_OPERATORS[ast.operator];
       if (instruction == null) {
         throw new Error(`Unknown binary operator ${ast.operator}`);
@@ -44,12 +60,19 @@ function emit(ast) {
           `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
         );
       }
-      const args = ast.arguments.map(emit);
+      const args = ast.arguments.map(node => emit(node, context));
       return `${args.join(" ")} ${instruction}`;
     }
     case "ASSIGNMENT_EXPRESSION": {
-      // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
-      return `${emit(ast.right)} global.set $${ast.left.value} global.get $${ast.left.value}`
+      const variableName = ast.left.value;
+      if (context.globals.has(variableName)) {
+        // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
+        return `${emit(ast.right, context)} global.set $${
+          ast.left.value
+        } global.get $${ast.left.value}`;
+      }
+
+      throw new Error(`Local variables are not yet implemented, and '${variableName}' is not a global.`)
     }
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value);
