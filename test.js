@@ -24,7 +24,8 @@ const testCases = [
   ["Acos", "acos(0.5)", Math.acos(0.5)],
   ["Atan", "atan(0.5)", Math.atan(0.5)],
   ["Atan2", "atan2(1, 1)", Math.atan2(1, 1)],
-  ["Assign to globals", "g = 10", 10]
+  ["Assign to globals", "g = 10", 10],
+  ["Read globals", "g", 0]
 ];
 
 testCases.forEach(testCase => {

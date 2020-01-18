@@ -68,7 +68,8 @@ const grammar = {
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
       ["functionCall", "$$ = $1"],
-      ["identifier = e", "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"]
+      ["identifier = e", "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"],
+      ["identifier", "$$ = $1"]
       // ["E", "$$ = Math.E"],
       // ["PI", "$$ = Math.PI"]
     ]

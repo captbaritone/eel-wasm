@@ -62,6 +62,11 @@ function emit(ast) {
           throw new Error(`Unknown unary operator ${ast.operator}`);
       }
     }
+    case "IDENTIFIER":
+      // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
+      // function calls and assignments we just peek at the name and never emit
+      // it.
+      return `global.get $${ast.value}`;
     case "NUMBER_LITERAL":
       return `f64.const ${ast.value}`;
     default:
