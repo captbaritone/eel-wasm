@@ -17,6 +17,7 @@ const grammar = {
       ["-", "return '-'"],
       ["\\+", "return '+'"],
       [",", "return ','"],
+      ["=", "return '='"],
       // ["\\^", "return '^'"],
       // ["!", "return '!'"],
       // ["%", "return '%'"],
@@ -24,12 +25,14 @@ const grammar = {
       ["\\)", "return ')'"],
       // ["PI\\b", "return 'PI'"],
       // ["E\\b", "return 'E'"],
-      ["[a-z]([a-z1-9]*)", "return 'IDENTIFIER'"],
+      // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
+      ["[a-zA-Z_][a-zA-Z0-9\._]*", "return 'IDENTIFIER'"],
       ["$", "return 'EOF'"]
     ]
   },
 
   operators: [
+    ["right", "="],
     ["left", "+", "-"],
     ["left", "*", "/"],
     // ["left", "^"],
@@ -64,7 +67,8 @@ const grammar = {
       ["+ e", unaryExpression, { prec: "UPLUS" }],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
-      ["functionCall", "$$ = $1"]
+      ["functionCall", "$$ = $1"],
+      ["identifier = e", "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"]
       // ["E", "$$ = Math.E"],
       // ["PI", "$$ = Math.PI"]
     ]

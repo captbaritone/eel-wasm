@@ -47,6 +47,10 @@ function emit(ast) {
       const args = ast.arguments.map(emit);
       return `${args.join(" ")} ${instruction}`;
     }
+    case "ASSIGNMENT_EXPRESSION": {
+      // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
+      return `${emit(ast.right)} global.set $${ast.left.value} global.get $${ast.left.value}`
+    }
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value);
       switch (ast.operator) {

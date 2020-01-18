@@ -6,6 +6,7 @@ async function evaluate(expression, {debug = false} = {}) {
   const ast = parse(expression);
   const programWat = emit(ast);
   const wat = `(module
+    (global $g (import "js" "global") (mut f64))
     (func $sin (import "imports" "sin") (param f64) (result f64))
     (func $cos (import "imports" "cos") (param f64) (result f64))
     (func $tan (import "imports" "tan") (param f64) (result f64))
@@ -20,7 +21,12 @@ async function evaluate(expression, {debug = false} = {}) {
   const { buffer } = wasmModule.toBinary({});
   const mod = await WebAssembly.compile(buffer);
 
+  const global = new WebAssembly.Global({value:'f64', mutable: true}, 0);
+
   var importObject = {
+    js: {
+      global
+    },
     imports: {
       // TODO: Reimplement these functions natively in Wasm
       sin: Math.sin,
@@ -45,6 +51,8 @@ async function evaluate(expression, {debug = false} = {}) {
     console.log("WASM BINARY", new Buffer(buffer).toString('base64'))
     console.log("--------");
     console.log("RESULT: ", result);
+    console.log("--------");
+    console.log("$g", global.value)
   }
   return result;
 }
