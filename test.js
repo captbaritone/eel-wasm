@@ -25,7 +25,10 @@ const testCases = [
   ["Atan", "atan(0.5)", Math.atan(0.5)],
   ["Atan2", "atan2(1, 1)", Math.atan2(1, 1)],
   ["Assign to globals", "g = 10", 10],
-  ["Read globals", "g", 0]
+  ["Read globals", "g", 0],
+  ["Ternary pass", "1 ? 10 : 5", 10],
+  ["Ternary fail", "0 ? 10 : 5", 5],
+  ["Ternary with complex expressions", "0 * 0 ? 10 - 5 : 1 + 0", 1]
 ];
 
 testCases.forEach(testCase => {

@@ -36,7 +36,9 @@ function emit(ast, context) {
         (func $acos (import "imports" "acos") (param f64) (result f64))
         (func $atan (import "imports" "atan") (param f64) (result f64))
         (func $atan2 (import "imports" "atan2") (param f64) (param f64) (result f64))
-        (func $run (result f64) ${emit(ast.body, context)})
+        (func $run (result f64) 
+          ${emit(ast.body, context)}
+        )
         (export "run" (func $run))
       )`;
     }
@@ -47,32 +49,44 @@ function emit(ast, context) {
       if (instruction == null) {
         throw new Error(`Unknown binary operator ${ast.operator}`);
       }
-      return `${left} ${right} ${instruction}`;
-    }
-    case "CALL_EXPRESSION": {
-      const func = FUNCTIONS[ast.callee.value];
-      if (func == null) {
-        throw new Error(`Unknown call callee ${ast.callee}`);
+        return `${left} ${right} ${instruction}`;
       }
-      const { instruction, arity } = func;
-      if (ast.arguments.length !== arity) {
-        throw new Error(
-          `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
-        );
+      case "CALL_EXPRESSION": {
+        const func = FUNCTIONS[ast.callee.value];
+        if (func == null) {
+          throw new Error(`Unknown call callee ${ast.callee}`);
+        }
+        const { instruction, arity } = func;
+        if (ast.arguments.length !== arity) {
+          throw new Error(
+            `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
+          );
+        }
+        const args = ast.arguments.map(node => emit(node, context));
+        return `${args.join(" ")} ${instruction}`;
       }
-      const args = ast.arguments.map(node => emit(node, context));
-      return `${args.join(" ")} ${instruction}`;
-    }
-    case "ASSIGNMENT_EXPRESSION": {
-      const variableName = ast.left.value;
-      if (context.globals.has(variableName)) {
-        // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
-        return `${emit(ast.right, context)} global.set $${
-          ast.left.value
-        } global.get $${ast.left.value}`;
-      }
+      case "ASSIGNMENT_EXPRESSION": {
+        const variableName = ast.left.value;
+        if (context.globals.has(variableName)) {
+          // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
+          return `
+            ${emit(ast.right, context)} global.set $${ast.left.value}
+            global.get $${ast.left.value}
+          `;
+        }
 
       throw new Error(`Local variables are not yet implemented, and '${variableName}' is not a global.`)
+    }
+    case "CONDITIONAL_EXPRESSION": {
+      // TODO: Support blocks and short circiting
+      return `
+        ${emit(ast.consiquent, context)}
+        ${emit(ast.alternate, context)}
+        ${emit(ast.test, context)}
+        ;; Convert the test to an i32, which select requires
+        f64.const 0 f64.ne
+        select
+      `;
     }
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value);

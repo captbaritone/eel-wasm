@@ -18,6 +18,8 @@ const grammar = {
       ["\\+", "return '+'"],
       [",", "return ','"],
       ["=", "return '='"],
+      ["\\?", "return '?'"],
+      ["\\:", "return ':'"],
       // ["\\^", "return '^'"],
       // ["!", "return '!'"],
       // ["%", "return '%'"],
@@ -32,13 +34,17 @@ const grammar = {
   },
 
   operators: [
+    // TODO: Fully undersand what these mean
     ["right", "="],
+    ["right", "?"],
     ["left", "+", "-"],
     ["left", "*", "/"],
     // ["left", "^"],
     // ["right", "!"],
     // ["right", "%"],
-    ["left", "UMINUS"][("left", "UPLUS")]
+    // TODO: Deleting these does nothing. Am I using them wrong?
+    ["left", "UMINUS"],
+    ["left", "UPLUS"]
   ],
 
   bnf: {
@@ -57,6 +63,9 @@ const grammar = {
         "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}"
       ]
     ],
+    conditionalExpression: [
+      ["e ? e : e", "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5}"],
+    ],
     e: [
       ["e + e", binaryExpression],
       ["e - e", binaryExpression],
@@ -71,7 +80,8 @@ const grammar = {
       ["NUMBER", numberLiteral],
       ["functionCall", "$$ = $1"],
       ["identifier = e", "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"],
-      ["identifier", "$$ = $1"]
+      ["identifier", "$$ = $1"],
+      ["conditionalExpression", "$$ = $1"]
       // ["E", "$$ = Math.E"],
       // ["PI", "$$ = Math.PI"]
     ]
