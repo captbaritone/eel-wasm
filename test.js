@@ -93,10 +93,24 @@ test.skip("A per-frame equasion", async () => {
     y3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
     dx: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
     dy: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    ib_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    ib_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    ib_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
   };
-  const eel = fs.readFileSync(
+  const perFrame = fs.readFileSync(
+    "./fixtures/youtube_broadcast_yourself_per_frame.eel",
+    { encoding: "utf8" }
+  );
+  await evaluate(perFrame, { globals, debug: false });
+
+  const perPixel = fs.readFileSync(
     "./fixtures/youtube_broadcast_yourself_per_pixel.eel",
     { encoding: "utf8" }
   );
-  await evaluate(eel, { globals, debug: false });
+  await evaluate(perPixel, { globals, debug: false });
 });
