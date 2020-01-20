@@ -26,8 +26,8 @@ function emit(ast, context) {
   switch (ast.type) {
     case "PROGRAM": {
       return `(module
-        ${Array.from(context.globals).map(name => 
-          `(global $${name} (import "js" "global") (mut f64))`
+        ${Array.from(context.globals).map(
+          name => `(global $${name} (import "js" "global") (mut f64))`
         )}
         (func $sin (import "imports" "sin") (param f64) (result f64))
         (func $cos (import "imports" "cos") (param f64) (result f64))
@@ -49,33 +49,35 @@ function emit(ast, context) {
       if (instruction == null) {
         throw new Error(`Unknown binary operator ${ast.operator}`);
       }
-        return `${left} ${right} ${instruction}`;
+      return `${left} ${right} ${instruction}`;
+    }
+    case "CALL_EXPRESSION": {
+      const func = FUNCTIONS[ast.callee.value];
+      if (func == null) {
+        throw new Error(`Unknown call callee ${ast.callee}`);
       }
-      case "CALL_EXPRESSION": {
-        const func = FUNCTIONS[ast.callee.value];
-        if (func == null) {
-          throw new Error(`Unknown call callee ${ast.callee}`);
-        }
-        const { instruction, arity } = func;
-        if (ast.arguments.length !== arity) {
-          throw new Error(
-            `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
-          );
-        }
-        const args = ast.arguments.map(node => emit(node, context));
-        return `${args.join(" ")} ${instruction}`;
+      const { instruction, arity } = func;
+      if (ast.arguments.length !== arity) {
+        throw new Error(
+          `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
+        );
       }
-      case "ASSIGNMENT_EXPRESSION": {
-        const variableName = ast.left.value;
-        if (context.globals.has(variableName)) {
-          // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
-          return `
+      const args = ast.arguments.map(node => emit(node, context));
+      return `${args.join(" ")} ${instruction}`;
+    }
+    case "ASSIGNMENT_EXPRESSION": {
+      const variableName = ast.left.value;
+      if (context.globals.has(variableName)) {
+        // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
+        return `
             ${emit(ast.right, context)} global.set $${ast.left.value}
             global.get $${ast.left.value}
           `;
-        }
+      }
 
-      throw new Error(`Local variables are not yet implemented, and '${variableName}' is not a global.`)
+      throw new Error(
+        `Local variables are not yet implemented, and '${variableName}' is not a global.`
+      );
     }
     case "CONDITIONAL_EXPRESSION": {
       // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
