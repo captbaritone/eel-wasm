@@ -120,7 +120,7 @@ function emit(ast, context) {
       `;
     }
     case "UNARY_EXPRESSION": {
-      const value = emit(ast.value);
+      const value = emit(ast.value, context);
       switch (ast.operator) {
         case "-":
           return `${value} f64.neg`;
@@ -131,6 +131,9 @@ function emit(ast, context) {
       }
     }
     case "IDENTIFIER":
+      if(!context.globals.has(ast.value)) {
+        throw new Error(`Unknown variable "${ast.value}"`)
+      }
       // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
       // function calls and assignments we just peek at the name and never emit
       // it.
@@ -138,7 +141,6 @@ function emit(ast, context) {
     case "NUMBER_LITERAL":
       return `f64.const ${ast.value}`;
     default:
-      console.error(ast);
       throw new Error(`Unknown AST node type ${ast.type}`);
   }
 }

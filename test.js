@@ -40,7 +40,7 @@ const testCases = [
   ["above (true)", "g = above(10, 4);", 0],
   ["above (false)", "g = above(4, 10);", 1],
   ["below (true)", "g = below(4, 10);", 0],
-  ["below (false)", "g = below(10, 4);", 1],
+  ["below (false)", "g = below(10, 4);", 1]
 ];
 
 testCases.forEach(testCase => {
@@ -76,41 +76,49 @@ test("Can execute Wasm", async () => {
   expect(result).toBe(10);
 });
 
-// TODO: Enable this and use errors to decide what to build next.
-test.skip("A per-frame equasion", async () => {
-  // TODO: Are all of these really global?
-  const globals = {
-    r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    cx1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    cy1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    d: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    dir: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    dx: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    dy: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    ib_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    ib_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    ib_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-  };
-  const perFrame = fs.readFileSync(
-    "./fixtures/youtube_broadcast_yourself_per_frame.eel",
-    { encoding: "utf8" }
-  );
-  await evaluate(perFrame, { globals, debug: false });
+describe("Some actual equations", () => {
+  let globals;
+  beforeEach(() => {
+    // TODO: Are all of these really global?
+    globals = {
+      r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      cx1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      cy1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      d: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      dir: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      x1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      y1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      x2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      y2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      x3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      y3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      dx: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      dy: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      ib_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      ib_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      ib_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      wave_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      wave_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      wave_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      wave_x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      wave_y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      time: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      bass: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      mid: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+      treb: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+    };
+  });
 
-  const perPixel = fs.readFileSync(
-    "./fixtures/youtube_broadcast_yourself_per_pixel.eel",
-    { encoding: "utf8" }
-  );
-  await evaluate(perPixel, { globals, debug: false });
+  const files = [
+    "./fixtures/youtube_broadcast_yourself_per_frame.eel",
+    "./fixtures/youtube_broadcast_yourself_per_pixel.eel"
+  ];
+  for (const file of files) {
+    test(`Evaluate: ${file}`, async () => {
+      const perFrame = fs.readFileSync(file, { encoding: "utf8" });
+      await evaluate(perFrame, { globals, debug: false });
+    });
+  }
 });
