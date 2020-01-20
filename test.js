@@ -37,6 +37,10 @@ const testCases = [
   ["if", "g = if(0, 20, 10);", 10],
   ["if does not short-circit (consiquent)", "if(0, (g = 10;), 10);", 10],
   ["if does not short-circit (alternate)", "if(1, (10), (g = 10;));", 10],
+  ["above (true)", "g = above(10, 4);", 0],
+  ["above (false)", "g = above(4, 10);", 1],
+  ["below (true)", "g = below(4, 10);", 0],
+  ["below (false)", "g = below(10, 4);", 1],
 ];
 
 testCases.forEach(testCase => {
@@ -81,7 +85,14 @@ test.skip("A per-frame equasion", async () => {
     cy1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
     d: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
     dir: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x1: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+    x1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    x2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    x3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    dx: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    dy: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
   };
   const eel = fs.readFileSync(
     "./fixtures/youtube_broadcast_yourself_per_pixel.eel",

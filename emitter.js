@@ -19,7 +19,11 @@ const FUNCTIONS = {
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },
   min: { arity: 2, instruction: "f64.min" },
-  max: { arity: 2, instruction: "f64.max" }
+  max: { arity: 2, instruction: "f64.max" },
+  // We use `lt` here rather than `gt` because the stack is backwards.
+  above: { arity: 2, instruction: "f64.lt f64.convert_i32_s" },
+  // We use `gt` here rather than `lt` because the stack is backwards.
+  below: { arity: 2, instruction: "f64.gt f64.convert_i32_s" }
 };
 
 function emit(ast, context) {
@@ -64,7 +68,9 @@ function emit(ast, context) {
     case "CALL_EXPRESSION": {
       const func = FUNCTIONS[ast.callee.value];
       if (func == null) {
-        throw new Error(`Unknown call callee \`${JSON.stringify(ast.callee)}\``);
+        throw new Error(
+          `Unknown call callee \`${JSON.stringify(ast.callee)}\``
+        );
       }
       const { instruction, arity } = func;
       if (ast.arguments.length !== arity) {
@@ -90,7 +96,7 @@ function emit(ast, context) {
       );
     }
     case "IF_STATEMENT": {
-      // TODO: It's unclear if `if()` actually shortcircuts. If not, we could use select.
+      // TODO: It's unclear if `if()` actually shortcircuts. If it does, we could 
       // TODO: Could this just be implemented as a function call?
       return `
         ${emit(ast.consiquent, context)}
