@@ -34,19 +34,18 @@ const grammar = {
   },
 
   operators: [
-    // TODO: Fully undersand what these mean
+    // List of operators ordered by precedence. First value is the operators
+    // associativity. Operators of the same precedence should be on the same
+    // line.
+    // https://www.gnu.org/software/bison/manual/bison.html#Precedence
     ["right", "="],
     ["right", "?"],
     ["left", "+", "-"],
     ["left", "*", "/"],
-    // ["left", "^"],
-    // ["right", "!"],
-    // ["right", "%"],
-    // TODO: Deleting these does nothing. Am I using them wrong?
-    ["left", "UMINUS"],
-    ["left", "UPLUS"]
+    // TODO: Theoretically it should be possible to make `--1` a parse error.
   ],
 
+  // TODO: These keys should be capitalized by convention.
   bnf: {
     program: [["expressions EOF", "return {type: 'PROGRAM', body: $1}"]],
     // TODO: Support multiple expressions
@@ -71,19 +70,14 @@ const grammar = {
       ["e - e", binaryExpression],
       ["e * e", binaryExpression],
       ["e / e", binaryExpression],
-      // ["e ^ e", binaryExpression],
-      // [ "e !", "$$ = (function(n) {if(n==0) return 1; return arguments.callee(n-1) * n})($1)" ],
-      // ["e %", "$$ = $1/100"],
-      ["- e", unaryExpression, { prec: "UMINUS" }],
-      ["+ e", unaryExpression, { prec: "UPLUS" }],
+      ["- e", unaryExpression],
+      ["+ e", unaryExpression],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
       ["functionCall", "$$ = $1"],
       ["identifier = e", "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"],
       ["identifier", "$$ = $1"],
       ["conditionalExpression", "$$ = $1"]
-      // ["E", "$$ = Math.E"],
-      // ["PI", "$$ = Math.PI"]
     ]
   }
 };
