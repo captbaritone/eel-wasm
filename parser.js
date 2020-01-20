@@ -49,12 +49,15 @@ const grammar = {
   // TODO: These keys should be capitalized by convention.
   bnf: {
     // TODO: Are empty programs valid?
-    program: [["statements EOF", "return {type: 'PROGRAM', body: $1}"]],
+    program: [["statementBlock EOF", "return {type: 'PROGRAM', body: $1}"]],
     // TODO: Are all expressions valid statements?
     statement: [["e ;", "$$ = {type: 'STATEMENT', expression: $1}"]],
     statements: [
       ["statement", "$$ = [$1]"],
       ["statements statement", "$$ = $1.concat([$2])"]
+    ],
+    statementBlock: [
+      ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1}"],
     ],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
     arguments: [
@@ -92,7 +95,8 @@ const grammar = {
       ["assignment", "$$ = $1"],
       ["functionCall", "$$ = $1"],
       ["identifier", "$$ = $1"],
-      ["conditionalExpression", "$$ = $1"]
+      ["conditionalExpression", "$$ = $1"],
+      ["( statementBlock )", "$$ = $2"]
     ]
   }
 };

@@ -28,9 +28,7 @@ function emit(ast, context) {
       const globals = Array.from(context.globals).map(name => {
         return `(global $${name} (import "js" "${name}") (mut f64))`;
       });
-      const body = ast.body.map(statement => {
-        return `${emit(statement, context)} drop`;
-      });
+      const body = `${emit(ast.body, context)} drop`;
       return `(module
         ${globals.join("\n")}
         (func $sin (import "imports" "sin") (param f64) (result f64))
@@ -40,12 +38,19 @@ function emit(ast, context) {
         (func $acos (import "imports" "acos") (param f64) (result f64))
         (func $atan (import "imports" "atan") (param f64) (result f64))
         (func $atan2 (import "imports" "atan2") (param f64) (param f64) (result f64))
-        (func $run ${body.join("\n")})
+        (func $run ${body})
         (export "run" (func $run))
       )`;
     }
     case "STATEMENT": {
       return `${emit(ast.expression, context)}`;
+    }
+    case "STATEMENT_BLOCK": {
+      const body = ast.body.map((statement, i) => {
+        const last = i === ast.body.length - 1;
+        return `${emit(statement, context)} ${last ? "" : "drop"}`;
+      });
+      return `${body.join("\n")}`;
     }
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);

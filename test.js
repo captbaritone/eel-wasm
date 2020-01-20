@@ -30,7 +30,9 @@ const testCases = [
   ["Ternary pass", "g = 1 ? 10 : 5;", 10],
   ["Ternary fail", "g = 0 ? 10 : 5;", 5],
   ["Ternary with complex expressions", "g = 0 * 0 ? 10 - 5 : 1 + 0;", 1],
-  ["Multiple statements", "g = 10; g = 20;", 20]
+  ["Multiple statements", "g = 10; g = 20;", 20],
+  ["Multiple statements expression", "(g = 10; g = 20;);", 20],
+  ["Multiple statements expression implcit return", "g = (0; 20 + 5;);", 25],
 ];
 
 testCases.forEach(testCase => {
@@ -67,7 +69,7 @@ test("Can execute Wasm", async () => {
 });
 
 // TODO: Enable this and use errors to decide what to build next.
-test("A per-frame equasion", async () => {
+test.skip("A per-frame equasion", async () => {
   // TODO: Are all of these really global?
   const globals = {
     r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
