@@ -78,14 +78,16 @@ function emit(ast, context) {
       throw new Error(`Local variables are not yet implemented, and '${variableName}' is not a global.`)
     }
     case "CONDITIONAL_EXPRESSION": {
-      // TODO: Support blocks and short circiting
+      // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
+      // Is that an optimization that we might want as well?
       return `
-        ${emit(ast.consiquent, context)}
-        ${emit(ast.alternate, context)}
         ${emit(ast.test, context)}
-        ;; Convert the test to an i32, which select requires
         f64.const 0 f64.ne
-        select
+        if (result f64)
+          ${emit(ast.consiquent, context)}
+        else
+          ${emit(ast.alternate, context)}
+        end
       `;
     }
     case "UNARY_EXPRESSION": {
