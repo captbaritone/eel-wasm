@@ -89,6 +89,17 @@ function emit(ast, context) {
         `Local variables are not yet implemented, and '${variableName}' is not a global.`
       );
     }
+    case "IF_STATEMENT": {
+      // TODO: It's unclear if `if()` actually shortcircuts. If not, we could use select.
+      // TODO: Could this just be implemented as a function call?
+      return `
+        ${emit(ast.consiquent, context)}
+        ${emit(ast.alternate, context)}
+        ${emit(ast.test, context)}
+        f64.const 0 f64.ne
+        select
+      `;
+    }
     case "CONDITIONAL_EXPRESSION": {
       // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
       // Is that an optimization that we might want as well?

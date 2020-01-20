@@ -26,6 +26,7 @@ const grammar = {
       // ["%", "return '%'"],
       ["\\(", "return '('"],
       ["\\)", "return ')'"],
+      ["if", "return 'IF_TOKEN'"],
       // ["PI\\b", "return 'PI'"],
       // ["E\\b", "return 'E'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
@@ -57,7 +58,7 @@ const grammar = {
       ["statements statement", "$$ = $1.concat([$2])"]
     ],
     statementBlock: [
-      ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1}"],
+      ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1}"]
     ],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
     arguments: [
@@ -75,6 +76,12 @@ const grammar = {
       [
         "e ? e : e",
         "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5}"
+      ]
+    ],
+    ifStatement: [
+      [
+        "IF_TOKEN ( e , e , e )",
+        "$$ = {type: 'IF_STATEMENT', test: $3, consiquent: $5, alternate: $7}"
       ]
     ],
     assignment: [
@@ -96,7 +103,8 @@ const grammar = {
       ["functionCall", "$$ = $1"],
       ["identifier", "$$ = $1"],
       ["conditionalExpression", "$$ = $1"],
-      ["( statementBlock )", "$$ = $2"]
+      ["( statementBlock )", "$$ = $2"],
+      ["ifStatement", "$$ = $1"]
     ]
   }
 };

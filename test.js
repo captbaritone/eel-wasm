@@ -33,6 +33,10 @@ const testCases = [
   ["Multiple statements", "g = 10; g = 20;", 20],
   ["Multiple statements expression", "(g = 10; g = 20;);", 20],
   ["Multiple statements expression implcit return", "g = (0; 20 + 5;);", 25],
+  ["if", "g = if(0, 20, 10);", 10],
+  ["if", "g = if(0, 20, 10);", 10],
+  ["if does not short-circit (consiquent)", "if(0, (g = 10;), 10);", 10],
+  ["if does not short-circit (alternate)", "if(1, (10), (g = 10;));", 10],
 ];
 
 testCases.forEach(testCase => {
