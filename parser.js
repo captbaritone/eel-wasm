@@ -20,6 +20,7 @@ const grammar = {
       ["=", "return '='"],
       ["\\?", "return '?'"],
       ["\\:", "return ':'"],
+      [";", "return ';'"],
       // ["\\^", "return '^'"],
       // ["!", "return '!'"],
       // ["%", "return '%'"],
@@ -28,7 +29,7 @@ const grammar = {
       // ["PI\\b", "return 'PI'"],
       // ["E\\b", "return 'E'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
-      ["[a-zA-Z_][a-zA-Z0-9\._]*", "return 'IDENTIFIER'"],
+      ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER'"],
       ["$", "return 'EOF'"]
     ]
   },
@@ -41,20 +42,25 @@ const grammar = {
     ["right", "="],
     ["right", "?"],
     ["left", "+", "-"],
-    ["left", "*", "/"],
+    ["left", "*", "/"]
     // TODO: Theoretically it should be possible to make `--1` a parse error.
   ],
 
   // TODO: These keys should be capitalized by convention.
   bnf: {
-    program: [["expressions EOF", "return {type: 'PROGRAM', body: [$1]}"]],
-    // TODO: Support multiple expressions
-    expressions: [["e", "$$ = $1"]],
+    // TODO: Are empty programs valid?
+    program: [["statements EOF", "return {type: 'PROGRAM', body: $1}"]],
+    // TODO: Are all expressions valid statements?
+    statement: [["e ;", "$$ = {type: 'STATEMENT', expression: $1}"]],
+    statements: [
+      ["statement", "$$ = [$1]"],
+      ["statements statement", "$$ = $1.concat([$2])"]
+    ],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
     arguments: [
       ["", "$$ = []"],
       ["e", "$$ = [$1]"],
-      ["arguments , e", "$$ = $1.concat($3)"]
+      ["arguments , e", "$$ = $1.concat([$3])"]
     ],
     functionCall: [
       [
@@ -63,7 +69,16 @@ const grammar = {
       ]
     ],
     conditionalExpression: [
-      ["e ? e : e", "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5}"],
+      [
+        "e ? e : e",
+        "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5}"
+      ]
+    ],
+    assignment: [
+      [
+        "identifier = e",
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"
+      ]
     ],
     e: [
       ["e + e", binaryExpression],
@@ -74,8 +89,8 @@ const grammar = {
       ["+ e", unaryExpression],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
+      ["assignment", "$$ = $1"],
       ["functionCall", "$$ = $1"],
-      ["identifier = e", "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"],
       ["identifier", "$$ = $1"],
       ["conditionalExpression", "$$ = $1"]
     ]

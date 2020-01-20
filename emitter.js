@@ -38,9 +38,12 @@ function emit(ast, context) {
         (func $acos (import "imports" "acos") (param f64) (result f64))
         (func $atan (import "imports" "atan") (param f64) (result f64))
         (func $atan2 (import "imports" "atan2") (param f64) (param f64) (result f64))
-        (func $run (result f64) ${body})
+        (func $run ${body.join("\n")})
         (export "run" (func $run))
       )`;
+    }
+    case "STATEMENT": {
+      return `${emit(ast.expression, context)} drop`;
     }
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
@@ -54,7 +57,7 @@ function emit(ast, context) {
     case "CALL_EXPRESSION": {
       const func = FUNCTIONS[ast.callee.value];
       if (func == null) {
-        throw new Error(`Unknown call callee ${ast.callee}`);
+        throw new Error(`Unknown call callee \`${JSON.stringify(ast.callee)}\``);
       }
       const { instruction, arity } = func;
       if (ast.arguments.length !== arity) {
