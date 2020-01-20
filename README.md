@@ -14,11 +14,16 @@ A **secondary goal** is to improve the performance of Butterchurn. Currently exe
 
 This project is currently just a sketch of a proof of concept.
 
+## TODO
+
+- [ ] Fails in Node 10 with "CompileError: AsyncCompile: Wasm decoding failed: mutable globals cannot be imported @+42"
+- [ ] Are expressions folled by a `;` valid statements, or is that just assignements?
+- [ ] Check if Milkdrop `if(test, consiquent, alternate)` is actually supposed to shortcircut.
+
 ## Challenges
 
 - [ ] Wasm exposes no trig functions. We'll have to write our own?
 - [ ] Wasm exposes no rand function. We'll have to write our own? Where do we get our seed?
-- [ ] Fails in Node 10 with "CompileError: AsyncCompile: Wasm decoding failed: mutable globals cannot be imported @+42"
 
 
 ## How to use this project
