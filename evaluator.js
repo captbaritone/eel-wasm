@@ -2,11 +2,27 @@ const wabt = require("wabt")();
 const { emit } = require("./emitter");
 const { parse } = require("./parser");
 
-async function evaluate(expression, { globals, debug = false }) {
-  const ast = parse(expression);
-  const wat = emit(ast, { globals: new Set(Object.keys(globals)) });
+function compileModule({ globals, functions }) {
+  const exportedFunctions = Object.entries(functions).map(
+    ([functionName, expression]) => {
+      return {
+        type: "FUNCTION_EXPORT",
+        name: functionName,
+        function: parse(expression)
+      };
+    }
+  );
 
-  const wasmModule = wabt.parseWat("somefile.wat", wat);
+  const ast = { type: "MODULE", exportedFunctions };
+  const wat = emit(ast, { globals });
+  return wabt.parseWat("somefile.wat", wat);
+}
+
+async function loadModule({ globals, functions }) {
+  const wasmModule = compileModule({
+    globals: new Set(Object.keys(globals)),
+    functions
+  });
   const { buffer } = wasmModule.toBinary({});
   const mod = await WebAssembly.compile(buffer);
 
@@ -24,22 +40,7 @@ async function evaluate(expression, { globals, debug = false }) {
     }
   };
 
-  const instance = await WebAssembly.instantiate(mod, importObject);
-  const result = instance.exports.run();
-  if (debug) {
-    console.log("EXPRESSION: ", expression);
-    console.log("--------");
-    console.log("AST: ", JSON.stringify(ast, null, 2));
-    console.log("--------");
-    console.log("WASM: ", wat);
-    console.log("--------");
-    console.log("WASM BINARY", new Buffer(buffer).toString("base64"));
-    console.log("--------");
-    console.log("RESULT: ", result);
-    console.log("--------");
-    console.log("$g", global.value);
-  }
-  return result;
+  return await WebAssembly.instantiate(mod, importObject);
 }
 
-module.exports = { evaluate };
+module.exports = { loadModule };

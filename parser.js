@@ -46,7 +46,7 @@ const grammar = {
   // TODO: These keys should be capitalized by convention.
   bnf: {
     // TODO: Are empty programs valid?
-    program: [["statementBlock EOF", "return {type: 'PROGRAM', body: $1}"]],
+    script: [["statementBlock EOF", "return {type: 'SCRIPT', body: $1}"]],
     // TODO: Are all expressions valid statements?
     statement: [["e ;", "$$ = {type: 'STATEMENT', expression: $1}"]],
     statements: [

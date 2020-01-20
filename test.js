@@ -1,5 +1,34 @@
-const { evaluate } = require("./evaluator");
+const { loadModule } = require("./evaluator");
 const fs = require("fs");
+
+test("Minimal example", async () => {
+  // Initialize global values avaliable to your EEL scripts (and JS).
+  const globals = {
+    x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+  };
+
+  // Define the EEL scripts that your module will include
+  const functions = {
+    ten: "x = 10;",
+    setXToY: "x = y;"
+  };
+
+  // Build (compile/initialize) the Wasm module
+  const mod = await loadModule({ globals, functions });
+
+  // Assert that x starts as zero
+  expect(globals.x.value).toBe(0);
+
+  // Run a compiled EEL script and assert that it ran
+  mod.exports.ten();
+  expect(globals.x.value).toBe(10);
+
+  // Change a global value from JS, and assert that EEL code uses the new value
+  globals.y.value = 5;
+  mod.exports.setXToY();
+  expect(globals.x.value).toBe(5);
+});
 
 const testCases = [
   ["Expressions", "g = ((6- -7)+ 3);", 16],
@@ -44,17 +73,22 @@ const testCases = [
   ["Line comments", "g = 10; // g = 20;", 10]
 ];
 
-testCases.forEach(testCase => {
-  const [description, expression, expectedResult, debug] = testCase;
-  test(`${description}: "${expression}"`, async () => {
-    const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
-    const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+describe("Small test cases", () => {
+  testCases.forEach(testCase => {
+    const [description, expression, expectedResult, debug] = testCase;
+    test(`${description}: "${expression}"`, async () => {
+      const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
+      const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 
-    await evaluate(expression, {
-      globals: { g, x },
-      debug: debug === true
+      const mod = await loadModule({
+        globals: { g, x },
+        functions: { run: expression },
+        debug: debug === true
+      });
+
+      mod.exports.run();
+      expect(g.value).toBe(expectedResult);
     });
-    expect(g.value).toBe(expectedResult);
   });
 });
 
@@ -77,49 +111,58 @@ test("Can execute Wasm", async () => {
   expect(result).toBe(10);
 });
 
-describe("Some actual equations", () => {
+test("Some actual equations", async () => {
   let globals;
-  beforeEach(() => {
-    // TODO: Are all of these really global?
-    globals = {
-      r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      cx1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      cy1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      d: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      dir: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      x1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      y1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      x2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      y2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      x3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      y3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      dx: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      dy: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      ib_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      ib_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      ib_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      wave_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      wave_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      wave_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      wave_x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      wave_y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      time: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      bass: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      mid: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-      treb: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
-    };
+  // TODO: Are all of these really global?
+  globals = {
+    r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    cx1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    cy1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    d: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    dir: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    x1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    x2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    x3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    dx: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    dy: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    ib_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    ib_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    ib_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    wave_y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    time: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    bass: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    mid: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    treb: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+  };
+
+  const perFrame = fs.readFileSync(
+    "./fixtures/youtube_broadcast_yourself_per_frame.eel",
+    { encoding: "utf8" }
+  );
+  const perPixel = fs.readFileSync(
+    "./fixtures/youtube_broadcast_yourself_per_pixel.eel",
+    { encoding: "utf8" }
+  );
+
+  const mod = await loadModule({
+    globals,
+    functions: {
+      perFrame,
+      perPixel
+    }
   });
 
-  const files = [
-    "./fixtures/youtube_broadcast_yourself_per_frame.eel",
-    "./fixtures/youtube_broadcast_yourself_per_pixel.eel"
-  ];
-  for (const file of files) {
-    test(`Evaluate: ${file}`, async () => {
-      const perFrame = fs.readFileSync(file, { encoding: "utf8" });
-      await evaluate(perFrame, { globals, debug: false });
-    });
-  }
+  expect(() => {
+    mod.exports.perFrame();
+    mod.exports.perPixel();
+  }).not.toThrow();
 });
