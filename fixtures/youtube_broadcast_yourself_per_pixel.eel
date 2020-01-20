@@ -1,0 +1,26 @@
+r = bass/4;
+cx1 = 0.5+sin(time*0.618)*0.2;
+cy1 = 0.5+cos(time*1.618)*0.2;
+d = sqrt((x-cx1)*(x-cx1)+(y-cy1)*(y-cy1));
+dir = (bass)*(r*r-d*d)*0.3;
+x1 = if( above(d,r),0,  sin(y-cy1)*dir);
+y1 = if( above(d,r),0, -sin(x-cx1)*dir);
+
+
+cx1 = 0.5+sin(time*2.618)*0.3;
+cy1 = 0.5+cos(time*3.14)*0.3;
+d = sqrt((x-cx1)*(x-cx1)+(y-cy1)*(y-cy1));
+dir = -(mid)*(r*r-d*d)*0.3;
+x2 = if( above(d,r),0,  sin(y-cy1)*dir);
+y2 = if( above(d,r),0, -sin(x-cx1)*dir);
+
+cx1 = 0.5+sin(-time*2.618)*0.4;
+cy1 = 0.5+cos(-time*1.14)*0.4;
+d = sqrt((x-cx1)*(x-cx1)+(y-cy1)*(y-cy1));
+dir = -(treb)*(r*r-d*d)*0.3;
+x3 = if( above(d,r),0,  sin(y-cy1)*dir);
+y3 = if( above(d,r),0, -sin(x-cx1)*dir);
+
+
+dx = x1+x2+x3;
+dy = y1+y2+y3;

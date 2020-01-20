@@ -47,7 +47,7 @@ const grammar = {
 
   // TODO: These keys should be capitalized by convention.
   bnf: {
-    program: [["expressions EOF", "return {type: 'PROGRAM', body: $1}"]],
+    program: [["expressions EOF", "return {type: 'PROGRAM', body: [$1]}"]],
     // TODO: Support multiple expressions
     expressions: [["e", "$$ = $1"]],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],

@@ -26,8 +26,9 @@ function emit(ast, context) {
   switch (ast.type) {
     case "PROGRAM": {
       const globals = Array.from(context.globals).map(name => {
-        return `(global $${name} (import "js" "global") (mut f64))`;
+        return `(global $${name} (import "js" "${name}") (mut f64))`;
       });
+      const body = ast.body.map(statement => emit(statement, context));
       return `(module
         ${globals.join("\n")}
         (func $sin (import "imports" "sin") (param f64) (result f64))
@@ -37,9 +38,7 @@ function emit(ast, context) {
         (func $acos (import "imports" "acos") (param f64) (result f64))
         (func $atan (import "imports" "atan") (param f64) (result f64))
         (func $atan2 (import "imports" "atan2") (param f64) (param f64) (result f64))
-        (func $run (result f64) 
-          ${emit(ast.body, context)}
-        )
+        (func $run (result f64) ${body})
         (export "run" (func $run))
       )`;
     }

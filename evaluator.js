@@ -2,23 +2,16 @@ const wabt = require("wabt")();
 const { emit } = require("./emitter");
 const { parse } = require("./parser");
 
-async function evaluate(
-  expression,
-  { globals = new Set(), debug = false }
-) {
+async function evaluate(expression, { globals, debug = false }) {
   const ast = parse(expression);
-  const wat = emit(ast, { globals });
+  const wat = emit(ast, { globals: new Set(Object.keys(globals)) });
 
   const wasmModule = wabt.parseWat("somefile.wat", wat);
   const { buffer } = wasmModule.toBinary({});
   const mod = await WebAssembly.compile(buffer);
 
-  const global = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
-
   var importObject = {
-    js: {
-      global
-    },
+    js: { ...globals },
     imports: {
       // TODO: Reimplement these functions natively in Wasm
       sin: Math.sin,
