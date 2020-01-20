@@ -28,7 +28,9 @@ function emit(ast, context) {
       const globals = Array.from(context.globals).map(name => {
         return `(global $${name} (import "js" "${name}") (mut f64))`;
       });
-      const body = ast.body.map(statement => emit(statement, context));
+      const body = ast.body.map(statement => {
+        return `${emit(statement, context)} drop`;
+      });
       return `(module
         ${globals.join("\n")}
         (func $sin (import "imports" "sin") (param f64) (result f64))
@@ -43,7 +45,7 @@ function emit(ast, context) {
       )`;
     }
     case "STATEMENT": {
-      return `${emit(ast.expression, context)} drop`;
+      return `${emit(ast.expression, context)}`;
     }
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
