@@ -11,6 +11,7 @@ const grammar = {
   lex: {
     rules: [
       ["\\s+", "/* skip whitespace */"],
+      ["\/\/[^\n]*", "/* skip inline comments */"],
       ["[0-9]+(?:\\.[0-9]+)?\\b", "return 'NUMBER'"],
       ["\\*", "return '*'"],
       ["\\/", "return '/'"],
@@ -21,14 +22,9 @@ const grammar = {
       ["\\?", "return '?'"],
       ["\\:", "return ':'"],
       [";", "return ';'"],
-      // ["\\^", "return '^'"],
-      // ["!", "return '!'"],
-      // ["%", "return '%'"],
       ["\\(", "return '('"],
       ["\\)", "return ')'"],
       ["if", "return 'IF_TOKEN'"],
-      // ["PI\\b", "return 'PI'"],
-      // ["E\\b", "return 'E'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
       ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER'"],
       ["$", "return 'EOF'"]

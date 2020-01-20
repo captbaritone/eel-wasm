@@ -40,7 +40,8 @@ const testCases = [
   ["above (true)", "g = above(10, 4);", 0],
   ["above (false)", "g = above(4, 10);", 1],
   ["below (true)", "g = below(4, 10);", 0],
-  ["below (false)", "g = below(10, 4);", 1]
+  ["below (false)", "g = below(10, 4);", 1],
+  ["Line comments", "g = 10; // g = 20;", 10]
 ];
 
 testCases.forEach(testCase => {
