@@ -14,5 +14,8 @@
   "devDependencies": {
     "prettier": "^1.19.1",
     "jest": "^24.9.0"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "eel"]
   }
 }
