@@ -36,7 +36,7 @@ async function evaluate(
   if (debug) {
     console.log("EXPRESSION: ", expression);
     console.log("--------");
-    console.log("AST: ", ast);
+    console.log("AST: ", JSON.stringify(ast, null, 2));
     console.log("--------");
     console.log("WASM: ", wat);
     console.log("--------");
