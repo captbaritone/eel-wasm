@@ -25,10 +25,11 @@ const FUNCTIONS = {
 function emit(ast, context) {
   switch (ast.type) {
     case "PROGRAM": {
+      const globals = Array.from(context.globals).map(name => {
+        return `(global $${name} (import "js" "global") (mut f64))`;
+      });
       return `(module
-        ${Array.from(context.globals).map(
-          name => `(global $${name} (import "js" "global") (mut f64))`
-        )}
+        ${globals.join("\n")}
         (func $sin (import "imports" "sin") (param f64) (result f64))
         (func $cos (import "imports" "cos") (param f64) (result f64))
         (func $tan (import "imports" "tan") (param f64) (result f64))
