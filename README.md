@@ -20,6 +20,39 @@ This project is currently just a sketch of a proof of concept.
 - [ ] Are expressions folled by a `;` valid statements, or is that just assignements?
 - [ ] Check if Milkdrop `if(test, consiquent, alternate)` is actually supposed to shortcircut.
 
+## Usage
+
+```JavaScript
+const {loadModule} = require("<SOMETHING>");
+
+// Initialize global values avaliable to your EEL scripts (and JS).
+const globals = {
+  x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+  y: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+};
+
+// Define the EEL scripts that your module will include
+const functions = {
+  ten: "x = 10;",
+  setXToY: "x = y;"
+};
+
+// Build (compile/initialize) the Wasm module
+const mod = await loadModule({ globals, functions });
+
+// Assert that x starts as zero
+expect(globals.x.value).toBe(0);
+
+// Run a compiled EEL script and assert that it ran
+mod.exports.ten();
+expect(globals.x.value).toBe(10);
+
+// Change a global value from JS, and assert that EEL code uses the new value
+globals.y.value = 5;
+mod.exports.setXToY();
+expect(globals.x.value).toBe(5);
+```
+
 ## Challenges
 
 - [ ] Wasm exposes no trig functions. We'll have to write our own?
