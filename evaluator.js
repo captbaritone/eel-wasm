@@ -1,7 +1,7 @@
 const wabt = require("wabt")();
 const { emit } = require("./emitter");
 const { parse } = require("./parser");
-const shims = require("./shims")
+const shims = require("./shims");
 
 function compileModule({ globals, functions }) {
   const exportedFunctions = Object.entries(functions).map(

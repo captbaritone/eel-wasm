@@ -49,7 +49,16 @@ function emit(ast, context) {
       )`;
     }
     case "FUNCTION_EXPORT": {
-      return `(func $${ast.name} ${emit(ast.function, context)} drop)
+      // Set the local scope.
+      context.locals = new Set();
+      const body = emit(ast.function, context);
+
+      const locals = Array.from(context.locals).map(name => {
+        return `(local $${name} f64)`;
+      });
+      // Reset the local scope. (Not strictly nessesary, but nice to clean up)
+      context.locals = new Set();
+      return `(func $${ast.name} ${locals.join(" ")} ${body} drop)
         (export "${ast.name}" (func $${ast.name}))`;
     }
     case "SCRIPT": {
@@ -95,19 +104,29 @@ function emit(ast, context) {
       if (context.globals.has(variableName)) {
         // TODO: Find a way to manage mapping global variables that need a $
         // prefix to EEL variables that cannot use $.
-        
+
         // TODO: In lots of cases we don't care about the return value. In those
         // cases we should try to find a way to omit the `get/drop` combo.
+        // Peephole optimization seems to be the conventional way to do this.
+        // https://en.wikipedia.org/wiki/Peephole_optimization
         return `
-            ${emit(ast.right, context)} global.set $${ast.left.value}
-            global.get $${ast.left.value}
-          `;
+            ${emit(ast.right, context)}
+            global.set $${variableName}
+            global.get $${variableName}
+        `;
       }
 
-      throw new Error(
-        `Local variables are not yet implemented, and '${variableName}' is not a global.`
-      );
+      // Ensure we have registed this as a local variable.
+      if (!context.locals.has(variableName)) {
+        context.locals.add(variableName);
+      }
+
+      return `
+          ${emit(ast.right, context)}
+          tee_local $${ast.left.value}
+      `;
     }
+    // TODO: This is less of an "if statement" and more of an "if call".
     case "IF_STATEMENT": {
       // TODO: It's unclear if `if()` actually shortcircuts. If it does, we could
       // TODO: Could this just be implemented as a function call?
@@ -144,13 +163,17 @@ function emit(ast, context) {
       }
     }
     case "IDENTIFIER":
-      if (!context.globals.has(ast.value)) {
-        throw new Error(`Unknown variable "${ast.value}"`);
+      const variableName = ast.value;
+      if (context.globals.has(variableName)) {
+        // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
+        // function calls and assignments we just peek at the name and never emit
+        // it.
+        return `global.get $${variableName}`;
       }
-      // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
-      // function calls and assignments we just peek at the name and never emit
-      // it.
-      return `global.get $${ast.value}`;
+      if (context.locals.has(variableName)) {
+        return `local.get $${variableName}`;
+      }
+      throw new Error(`Unknown variable "${variableName}"`);
     case "NUMBER_LITERAL":
       return `f64.const ${ast.value}`;
     default:

@@ -1,5 +1,6 @@
 const { loadModule } = require("./evaluator");
 const fs = require("fs");
+const MILKDROP_GLOBALS = require("./milkdropGlobals");
 
 test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).
@@ -79,7 +80,9 @@ const testCases = [
   ["Sign (10)", "g = sign(10);", 1],
   ["Sign (-10)", "g = sign(-10);", -1],
   ["Sign (0)", "g = sign(0);", 0],
-  ["Sign (-0)", "g = sign(-0);", -0]
+  ["Sign (-0)", "g = sign(-0);", -0],
+  ["Local variables", "a = 10; g = a * a;", 100],
+  ["Local variable assignment (implicit return)", "g = a = 10;", 10],
 ];
 
 describe("Small test cases", () => {
@@ -120,39 +123,7 @@ test("Can execute Wasm", async () => {
   expect(result).toBe(10);
 });
 
-const MILKDROP_GLOBALS = [
-  "r",
-  "r",
-  "cx1",
-  "cy1",
-  "d",
-  "dir",
-  "x1",
-  "y1",
-  "x2",
-  "y2",
-  "x3",
-  "y3",
-  "dx",
-  "dy",
-  "ib_r",
-  "ib_g",
-  "ib_b",
-  "wave_r",
-  "wave_g",
-  "wave_b",
-  "wave_x",
-  "wave_y",
-  "time",
-  "bass",
-  "x",
-  "y",
-  "mid",
-  "treb"
-];
-
 test("Some actual equations", async () => {
-  // TODO: Are all of these really global?
   const globals = {};
   MILKDROP_GLOBALS.forEach(name => {
     globals[name] = new WebAssembly.Global({ value: "f64", mutable: true }, 0);

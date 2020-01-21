@@ -19,6 +19,7 @@ This project is currently just a sketch of a proof of concept.
 - [ ] Fails in Node 10 with "CompileError: AsyncCompile: Wasm decoding failed: mutable globals cannot be imported @+42"
 - [ ] Are expressions folled by a `;` valid statements, or is that just assignements?
 - [ ] Check if Milkdrop `if(test, consiquent, alternate)` is actually supposed to shortcircut.
+- [ ] Don't use EEL variable names in output code. Use a map of incrementing numbers for each namespace instead.
 
 ## Usage
 
