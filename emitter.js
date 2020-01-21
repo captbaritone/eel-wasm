@@ -20,6 +20,8 @@ const FUNCTIONS = {
   // We use `gt` here rather than `lt` because the stack is backwards.
   below: { arity: 2, instruction: "f64.gt f64.convert_i32_s" },
   equal: { arity: 2, instruction: "f64.eq f64.convert_i32_s" },
+  bnot: { arity: 1, instruction: "call $bnot" },
+  bor: { arity: 2, instruction: "call $bor" },
   if: { arity: 3, instruction: "call $if" }
 };
 
@@ -53,6 +55,23 @@ function emit(ast, context) {
           get_local $test
           f64.const 0 f64.ne
           select 
+        )
+        ;; TODO: Simplify all this type coersion
+        (func $bor (param $a f64) (param $b f64) (result f64) 
+          get_local $a
+          i32.trunc_s/f64
+          get_local $b
+          i32.trunc_s/f64
+          i32.or
+          i32.const 0
+          i32.ne
+          f64.convert_s/i32
+        )
+        (func $bnot (param $x f64) (result f64) 
+          get_local $x
+          i32.trunc_s/f64
+          i32.eqz
+          f64.convert_s/i32
         )
         ${exportedFunctions.join("\n")}
       )`;

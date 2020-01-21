@@ -83,6 +83,12 @@ const testCases = [
   ["Sign (-0)", "g = sign(-0);", -0],
   ["Local variables", "a = 10; g = a * a;", 100],
   ["Local variable assignment (implicit return)", "g = a = 10;", 10],
+  ["Bor (true, false)", "g = bor(10, 0);", 1],
+  ["Bor (false, true)", "g = bor(0, 2);", 1],
+  ["Bor (true, true)", "g = bor(1, 7);", 1],
+  ["Bor (false, false)", "g = bor(0, 0);", 0],
+  ["Bnot (true)", "g = bnot(10);", 0],
+  ["Bnot (false)", "g = bnot(0);", 1],
 ];
 
 describe("Small test cases", () => {
