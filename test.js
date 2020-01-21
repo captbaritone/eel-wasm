@@ -79,7 +79,7 @@ const testCases = [
   ["Sign (10)", "g = sign(10);", 1],
   ["Sign (-10)", "g = sign(-10);", -1],
   ["Sign (0)", "g = sign(0);", 0],
-  ["Sign (-0)", "g = sign(-0);", -0],
+  ["Sign (-0)", "g = sign(-0);", -0]
 ];
 
 describe("Small test cases", () => {
@@ -120,38 +120,43 @@ test("Can execute Wasm", async () => {
   expect(result).toBe(10);
 });
 
+const MILKDROP_GLOBALS = [
+  "r",
+  "r",
+  "cx1",
+  "cy1",
+  "d",
+  "dir",
+  "x1",
+  "y1",
+  "x2",
+  "y2",
+  "x3",
+  "y3",
+  "dx",
+  "dy",
+  "ib_r",
+  "ib_g",
+  "ib_b",
+  "wave_r",
+  "wave_g",
+  "wave_b",
+  "wave_x",
+  "wave_y",
+  "time",
+  "bass",
+  "x",
+  "y",
+  "mid",
+  "treb"
+];
+
 test("Some actual equations", async () => {
-  let globals;
   // TODO: Are all of these really global?
-  globals = {
-    r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    cx1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    cy1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    d: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    dir: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y1: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y2: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y3: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    dx: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    dy: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    ib_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    ib_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    ib_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_r: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_g: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_b: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    wave_y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    time: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    bass: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    mid: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    treb: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
-  };
+  const globals = {};
+  MILKDROP_GLOBALS.forEach(name => {
+    globals[name] = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+  });
 
   const perFrame = fs.readFileSync(
     "./fixtures/youtube_broadcast_yourself_per_frame.eel",
