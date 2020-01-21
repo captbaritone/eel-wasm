@@ -36,7 +36,9 @@ async function loadModule({ globals, functions }) {
       asin: Math.asin,
       acos: Math.acos,
       atan: Math.atan,
-      atan2: Math.atan2
+      atan2: Math.atan2,
+      pow: Math.pow,
+      log: Math.log
     }
   };
 

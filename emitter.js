@@ -15,6 +15,8 @@ const FUNCTIONS = {
   acos: { arity: 1, instruction: "call $acos" },
   atan: { arity: 1, instruction: "call $atan" },
   atan2: { arity: 2, instruction: "call $atan2" },
+  pow: { arity: 2, instruction: "call $pow" },
+  log: { arity: 1, instruction: "call $log" },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },
@@ -23,7 +25,8 @@ const FUNCTIONS = {
   // We use `lt` here rather than `gt` because the stack is backwards.
   above: { arity: 2, instruction: "f64.lt f64.convert_i32_s" },
   // We use `gt` here rather than `lt` because the stack is backwards.
-  below: { arity: 2, instruction: "f64.gt f64.convert_i32_s" }
+  below: { arity: 2, instruction: "f64.gt f64.convert_i32_s" },
+  equal: { arity: 2, instruction: "f64.eq f64.convert_i32_s" }
 };
 
 function emit(ast, context) {
@@ -44,6 +47,8 @@ function emit(ast, context) {
         (func $acos (import "imports" "acos") (param f64) (result f64))
         (func $atan (import "imports" "atan") (param f64) (result f64))
         (func $atan2 (import "imports" "atan2") (param f64) (param f64) (result f64))
+        (func $pow (import "imports" "pow") (param f64) (param f64) (result f64))
+        (func $log (import "imports" "log") (param f64) (result f64))
         ${exportedFunctions.join("\n")}
       )`;
     }

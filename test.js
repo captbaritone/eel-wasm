@@ -70,7 +70,11 @@ const testCases = [
   ["above (false)", "g = above(4, 10);", 1],
   ["below (true)", "g = below(4, 10);", 0],
   ["below (false)", "g = below(10, 4);", 1],
-  ["Line comments", "g = 10; // g = 20;", 10]
+  ["Line comments", "g = 10; // g = 20;", 10],
+  ["Equal (false)", "g = equal(10, 5);", 0],
+  ["Equal (true)", "g = equal(10, 10);", 1],
+  ["Pow", "g = pow(2, 10);", 1024],
+  ["Log", "g = log(10);", Math.log(10)],
 ];
 
 describe("Small test cases", () => {
