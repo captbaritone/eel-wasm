@@ -19,7 +19,8 @@ const FUNCTIONS = {
   above: { arity: 2, instruction: "f64.lt f64.convert_i32_s" },
   // We use `gt` here rather than `lt` because the stack is backwards.
   below: { arity: 2, instruction: "f64.gt f64.convert_i32_s" },
-  equal: { arity: 2, instruction: "f64.eq f64.convert_i32_s" }
+  equal: { arity: 2, instruction: "f64.eq f64.convert_i32_s" },
+  if: { arity: 3, instruction: "call $if" }
 };
 
 Object.entries(shims).forEach(([key, value]) => {
@@ -45,6 +46,14 @@ function emit(ast, context) {
       return `(module
         ${globals.join("\n")}
         ${imports.join("\n")}
+        ;; TODO: We should double check that this does not short circut
+        (func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
+          get_local $consiquent
+          get_local $alternate
+          get_local $test
+          f64.const 0 f64.ne
+          select 
+        )
         ${exportedFunctions.join("\n")}
       )`;
     }
@@ -124,18 +133,6 @@ function emit(ast, context) {
       return `
           ${emit(ast.right, context)}
           tee_local $${ast.left.value}
-      `;
-    }
-    // TODO: This is less of an "if statement" and more of an "if call".
-    case "IF_STATEMENT": {
-      // TODO: It's unclear if `if()` actually shortcircuts. If it does, we could
-      // TODO: Could this just be implemented as a function call?
-      return `
-        ${emit(ast.consiquent, context)}
-        ${emit(ast.alternate, context)}
-        ${emit(ast.test, context)}
-        f64.const 0 f64.ne
-        select
       `;
     }
     case "CONDITIONAL_EXPRESSION": {

@@ -24,7 +24,6 @@ const grammar = {
       [";", "return ';'"],
       ["\\(", "return '('"],
       ["\\)", "return ')'"],
-      ["if", "return 'IF_TOKEN'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
       ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER'"],
       ["$", "return 'EOF'"]
@@ -74,12 +73,6 @@ const grammar = {
         "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5}"
       ]
     ],
-    ifStatement: [
-      [
-        "IF_TOKEN ( e , e , e )",
-        "$$ = {type: 'IF_STATEMENT', test: $3, consiquent: $5, alternate: $7}"
-      ]
-    ],
     assignment: [
       [
         "identifier = e",
@@ -100,7 +93,6 @@ const grammar = {
       ["identifier", "$$ = $1"],
       ["conditionalExpression", "$$ = $1"],
       ["( statementBlock )", "$$ = $2"],
-      ["ifStatement", "$$ = $1"]
     ]
   }
 };
