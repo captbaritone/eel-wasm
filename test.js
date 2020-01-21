@@ -75,6 +75,11 @@ const testCases = [
   ["Equal (true)", "g = equal(10, 10);", 1],
   ["Pow", "g = pow(2, 10);", 1024],
   ["Log", "g = log(10);", Math.log(10)],
+  ["Log10", "g = log10(10);", Math.log10(10)],
+  ["Sign (10)", "g = sign(10);", 1],
+  ["Sign (-10)", "g = sign(-10);", -1],
+  ["Sign (0)", "g = sign(0);", 0],
+  ["Sign (-0)", "g = sign(-0);", -0],
 ];
 
 describe("Small test cases", () => {

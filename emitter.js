@@ -1,3 +1,5 @@
+const shims = require("./shims");
+
 const BINARY_OPERATORS = {
   "+": "f64.add",
   "-": "f64.sub",
@@ -8,15 +10,6 @@ const BINARY_OPERATORS = {
 const FUNCTIONS = {
   abs: { arity: 1, instruction: "f64.abs" },
   sqrt: { arity: 1, instruction: "f64.sqrt" },
-  sin: { arity: 1, instruction: "call $sin" },
-  cos: { arity: 1, instruction: "call $cos" },
-  tan: { arity: 1, instruction: "call $tan" },
-  asin: { arity: 1, instruction: "call $asin" },
-  acos: { arity: 1, instruction: "call $acos" },
-  atan: { arity: 1, instruction: "call $atan" },
-  atan2: { arity: 2, instruction: "call $atan2" },
-  pow: { arity: 2, instruction: "call $pow" },
-  log: { arity: 1, instruction: "call $log" },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },
@@ -29,6 +22,10 @@ const FUNCTIONS = {
   equal: { arity: 2, instruction: "f64.eq f64.convert_i32_s" }
 };
 
+Object.entries(shims).forEach(([key, value]) => {
+  FUNCTIONS[key] = { arity: value.length, instruction: `call $${key}` };
+});
+
 function emit(ast, context) {
   switch (ast.type) {
     case "MODULE": {
@@ -37,18 +34,17 @@ function emit(ast, context) {
       });
       const exportedFunctions = ast.exportedFunctions.map(func => {
         return `${emit(func, context)}`;
-      })
+      });
+
+      const imports = Object.entries(shims).map(([key, value]) => {
+        const arity = value.length;
+        const params = new Array(arity).fill("(param f64)").join(" ");
+        return `(func $${key} (import "imports" "${key}") ${params} (result f64))`;
+      });
+
       return `(module
         ${globals.join("\n")}
-        (func $sin (import "imports" "sin") (param f64) (result f64))
-        (func $cos (import "imports" "cos") (param f64) (result f64))
-        (func $tan (import "imports" "tan") (param f64) (result f64))
-        (func $asin (import "imports" "asin") (param f64) (result f64))
-        (func $acos (import "imports" "acos") (param f64) (result f64))
-        (func $atan (import "imports" "atan") (param f64) (result f64))
-        (func $atan2 (import "imports" "atan2") (param f64) (param f64) (result f64))
-        (func $pow (import "imports" "pow") (param f64) (param f64) (result f64))
-        (func $log (import "imports" "log") (param f64) (result f64))
+        ${imports.join("\n")}
         ${exportedFunctions.join("\n")}
       )`;
     }
@@ -57,7 +53,7 @@ function emit(ast, context) {
         (export "${ast.name}" (func $${ast.name}))`;
     }
     case "SCRIPT": {
-      return emit(ast.body, context)
+      return emit(ast.body, context);
     }
     case "STATEMENT": {
       return `${emit(ast.expression, context)}`;
@@ -97,7 +93,11 @@ function emit(ast, context) {
     case "ASSIGNMENT_EXPRESSION": {
       const variableName = ast.left.value;
       if (context.globals.has(variableName)) {
-        // TODO: Find a way to manage mapping global variables that need a $ prefix to EEL variables that cannot use $.
+        // TODO: Find a way to manage mapping global variables that need a $
+        // prefix to EEL variables that cannot use $.
+        
+        // TODO: In lots of cases we don't care about the return value. In those
+        // cases we should try to find a way to omit the `get/drop` combo.
         return `
             ${emit(ast.right, context)} global.set $${ast.left.value}
             global.get $${ast.left.value}
@@ -109,7 +109,7 @@ function emit(ast, context) {
       );
     }
     case "IF_STATEMENT": {
-      // TODO: It's unclear if `if()` actually shortcircuts. If it does, we could 
+      // TODO: It's unclear if `if()` actually shortcircuts. If it does, we could
       // TODO: Could this just be implemented as a function call?
       return `
         ${emit(ast.consiquent, context)}
@@ -144,8 +144,8 @@ function emit(ast, context) {
       }
     }
     case "IDENTIFIER":
-      if(!context.globals.has(ast.value)) {
-        throw new Error(`Unknown variable "${ast.value}"`)
+      if (!context.globals.has(ast.value)) {
+        throw new Error(`Unknown variable "${ast.value}"`);
       }
       // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
       // function calls and assignments we just peek at the name and never emit

@@ -1,6 +1,7 @@
 const wabt = require("wabt")();
 const { emit } = require("./emitter");
 const { parse } = require("./parser");
+const shims = require("./shims")
 
 function compileModule({ globals, functions }) {
   const exportedFunctions = Object.entries(functions).map(
@@ -28,18 +29,7 @@ async function loadModule({ globals, functions }) {
 
   var importObject = {
     js: { ...globals },
-    imports: {
-      // TODO: Reimplement these functions natively in Wasm
-      sin: Math.sin,
-      cos: Math.cos,
-      tan: Math.tan,
-      asin: Math.asin,
-      acos: Math.acos,
-      atan: Math.atan,
-      atan2: Math.atan2,
-      pow: Math.pow,
-      log: Math.log
-    }
+    imports: shims
   };
 
   return await WebAssembly.instantiate(mod, importObject);
