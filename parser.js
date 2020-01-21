@@ -11,8 +11,8 @@ const grammar = {
   lex: {
     rules: [
       ["\\s+", "/* skip whitespace */"],
-      ["\/\/[^\n]*", "/* skip inline comments */"],
-      ["[0-9]+(?:\\.[0-9]+)?\\b", "return 'NUMBER'"],
+       ["\/\/[^\n]*", "/* skip inline comments */"],
+      ["[0-9]+(\\.[0-9]+)?\\b", "return 'NUMBER'"],
       ["\\*", "return '*'"],
       ["\\/", "return '/'"],
       ["-", "return '-'"],
