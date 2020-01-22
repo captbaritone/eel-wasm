@@ -31,7 +31,6 @@ const EDITOR_OPTIONS = {
 
 function App() {
   const { globals, addGlobal, removeGlobal } = useGlobals();
-  // const [globals, setGlobals] = useState({});
   const [eel, setEel] = useUrlState("eel", "foo = 1;");
   const [astString, setAstString] = useState(null);
   const [ast, astError] = useAst(eel);
