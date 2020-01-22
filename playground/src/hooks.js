@@ -117,7 +117,8 @@ export function useMod(wasm, globals) {
     // should generate a new `wasm` string, and we want to ensure we wait for the
     // new `wasm` rather than trying to build the mod with the old `wasm` and the
     // new `globals`.
-  }, [globals, wasm]);
+    // eslint-disable-next-line
+  }, [ wasm]);
 
   return mod;
 }
