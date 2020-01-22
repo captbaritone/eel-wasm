@@ -13,6 +13,6 @@ export function useUrlState(key, initial) {
     const newRelativePathQuery =
       window.location.pathname + "?" + params.toString();
     window.history.pushState(null, "", newRelativePathQuery);
-  }, [eel]);
+  }, [eel, key]);
   return [eel, setEel];
 }
