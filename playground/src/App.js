@@ -24,6 +24,11 @@ function ErrorBlock({ children }) {
   return <div style={{ backgroundColor: "lightPink" }}>{children}</div>;
 }
 
+const EDITOR_OPTIONS = {
+  minimap: { enabled: false },
+  lineNumbers: "off"
+};
+
 function App() {
   const [eel, setEel] = useUrlState("eel", "foo = 1;");
   const [ast, setAst] = useState(null);
@@ -72,17 +77,30 @@ function App() {
           width="100%"
           value={eel}
           onChange={(ev, value) => setEel(value)}
+          options={EDITOR_OPTIONS}
         />
       </Column>
       <Column>
         <h2>AST</h2>
         {astError != null && <ErrorBlock>{astError}</ErrorBlock>}
-        <Editor height="90vh" width="100%" language="json" value={astString} />
+        <Editor
+          height="90vh"
+          width="100%"
+          language="json"
+          value={astString}
+          options={{ ...EDITOR_OPTIONS, readOnly: true }}
+        />
       </Column>
       <Column>
         <h2>Wasm</h2>
         {wasmError != null && <ErrorBlock>{wasmError}</ErrorBlock>}
-        <Editor height="90vh" width="100%" language="wasm" value={wasm} />
+        <Editor
+          height="90vh"
+          width="100%"
+          language="wasm"
+          value={wasm}
+          options={{ ...EDITOR_OPTIONS, readOnly: true }}
+        />
       </Column>
     </div>
   );
