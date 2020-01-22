@@ -62,7 +62,7 @@ function App() {
           width="100%"
           value={eel}
           onChange={(ev, value) => setEel(value)}
-          options={EDITOR_OPTIONS}
+          options={{...EDITOR_OPTIONS, lineNumbers: "on"}}
         />
         <button onClick={run} disabled={run == null}>
           Run
