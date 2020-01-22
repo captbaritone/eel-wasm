@@ -1,11 +1,9 @@
-import React, { useEffect } from "react";
-import logo from "./logo.svg";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import { parse } from "parser";
 import { emit } from "emitter";
 import Editor, { ControlledEditor } from "@monaco-editor/react";
-
-const { useState, useRef } = React;
+import { useUrlState } from "./hooks";
 
 function Column({ children }) {
   return (
@@ -20,23 +18,6 @@ function Column({ children }) {
       {children}
     </div>
   );
-}
-
-function useUrlState(key, initial) {
-  const [eel, setEel] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlEel = params.get(key);
-    return urlEel ? atob(urlEel) : initial;
-  });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    params.set(key, btoa(eel));
-    const newRelativePathQuery =
-      window.location.pathname + "?" + params.toString();
-    window.history.pushState(null, "", newRelativePathQuery);
-  }, [eel]);
-  return [eel, setEel];
 }
 
 function ErrorBlock({ children }) {
