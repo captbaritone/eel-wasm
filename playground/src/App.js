@@ -112,7 +112,11 @@ function useMod(wasm, globals) {
     return () => {
       unmounted = true;
     };
-  }, [wasm, globals]);
+    // We intentionally omit `globals` from this array. When globals updates it
+    // should generate a new `wasm` string, and we want to ensure we wait for the
+    // new `wasm` rather than trying to build the mod with the old `wasm` and the
+    // new `globals`.
+  }, [wasm]);
 
   return mod;
 }
@@ -147,9 +151,7 @@ function deserializeGlobals(str) {
 function App() {
   const [globals, setGlobals] = useUrlState(
     "globals",
-    {
-      g: new WebAssembly.Global({ value: "f64", mutable: true }, 10)
-    },
+    {},
     { serialize: serializeGlobals, deserialize: deserializeGlobals }
   );
   // const [globals, setGlobals] = useState({});
@@ -179,7 +181,7 @@ function App() {
     setGlobals(globals => {
       return {
         ...globals,
-        [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 10)
+        [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
       };
     });
   }, []);
@@ -219,7 +221,7 @@ function App() {
                   forceUpdate();
                 }}
               />
-              {/* <button onClick={() => removeGlobal(name)}>-</button> */}
+              <button onClick={() => removeGlobal(name)}>-</button>
             </label>
           );
         })}
