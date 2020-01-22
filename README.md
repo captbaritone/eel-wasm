@@ -62,11 +62,22 @@ expect(globals.x.value).toBe(5);
 
 ## How to use this project
 
-Currently all you can do is run some tests:
+First install dependencies:
 
 ```
 yarn
+```
+
+Currently all you can do is run some tests:
+
+```
 yarn test
+```
+
+And run a prototype of a performance benchmark:
+
+```
+yarn perf
 ```
 
 ## Prior Art
