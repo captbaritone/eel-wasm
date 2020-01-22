@@ -3,8 +3,9 @@ import logo from "./logo.svg";
 import "./App.css";
 import { parse } from "parser";
 import { emit } from "emitter";
+import Editor, { ControlledEditor } from "@monaco-editor/react";
 
-const { useState, useMemo } = React;
+const { useState, useRef } = React;
 
 function Column({ children }) {
   return (
@@ -21,20 +22,48 @@ function Column({ children }) {
   );
 }
 
+function useUrlState(key, initial) {
+  const [eel, setEel] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlEel = params.get(key);
+    return urlEel ? atob(urlEel) : initial;
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set(key, btoa(eel));
+    const newRelativePathQuery =
+      window.location.pathname + "?" + params.toString();
+    window.history.pushState(null, "", newRelativePathQuery);
+  }, [eel]);
+  return [eel, setEel];
+}
+
+function ErrorBlock({ children }) {
+  return <div style={{ backgroundColor: "lightPink" }}>{children}</div>;
+}
+
 function App() {
-  const [eel, setEel] = useState("foo = 1;");
+  const [eel, setEel] = useUrlState("eel", "foo = 1;");
   const [ast, setAst] = useState(null);
+  const [astString, setAstString] = useState(null);
+  const [astError, setAstError] = useState(null);
   const [wasm, setWasm] = useState(null);
+  const [wasmError, setWasmError] = useState(null);
+
   useEffect(() => {
     try {
       setAst(parse(eel));
+      setAstError(null);
     } catch (e) {
-      // setAst(null);
+      setAstError(e.message);
     }
   }, [eel]);
   useEffect(() => {
+    setAstString(JSON.stringify(ast, null, 2));
+  }, [ast]);
+  useEffect(() => {
     if (ast == null) {
-      // setWasm("Empty");
       return;
     }
     try {
@@ -48,24 +77,31 @@ function App() {
 
       const moduleAst = { type: "MODULE", exportedFunctions };
       setWasm(emit(moduleAst, { globals: new Set() }));
+      setWasmError(null);
     } catch (e) {
-      console.error(e);
-      // setWasm(e.toString());
+      setWasmError(e.message);
     }
   }, [ast]);
   return (
     <div style={{ display: "flex", width: "100vw", alignContent: "stretch" }}>
       <Column>
         <h2>Code</h2>
-        <textarea value={eel} onChange={e => setEel(e.target.value)} />
+        <ControlledEditor
+          height="90vh"
+          width="100%"
+          value={eel}
+          onChange={(ev, value) => setEel(value)}
+        />
       </Column>
       <Column>
         <h2>AST</h2>
-        <pre>{JSON.stringify(ast, null, 2)}</pre>
+        {astError != null && <ErrorBlock>{astError}</ErrorBlock>}
+        <Editor height="90vh" width="100%" language="json" value={astString} />
       </Column>
       <Column>
         <h2>Wasm</h2>
-        <pre>{wasm}</pre>
+        {wasmError != null && <ErrorBlock>{wasmError}</ErrorBlock>}
+        <Editor height="90vh" width="100%" language="wasm" value={wasm} />
       </Column>
     </div>
   );
