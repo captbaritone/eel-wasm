@@ -10250,6 +10250,11 @@ w3c-xmlserializer@^1.1.2:
     webidl-conversions "^4.0.2"
     xml-name-validator "^3.0.0"
 
+wabt@^1.0.12:
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/wabt/-/wabt-1.0.12.tgz#c3ef04e464a47ddffe9c37af480b0de159bf48b7"
+  integrity sha512-Pq6UNbElHXo/Gxr+amBsmY3CgsO3VxS540YsH5cN/WaGl87yrWGC61TSxz2n5L+V2qC0jb7QoVIBvz4WbVQUlA==
+
 wait-for-expect@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/wait-for-expect/-/wait-for-expect-3.0.1.tgz#ec204a76b0038f17711e575720aaf28505ac7185"
