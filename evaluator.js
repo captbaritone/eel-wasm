@@ -15,15 +15,15 @@ function compileModule({ globals, functions }) {
   );
 
   const ast = { type: "MODULE", exportedFunctions };
-  const wat = emit(ast, { globals });
-  return wabt.parseWat("somefile.wat", wat);
+  return emit(ast, { globals });
 }
 
 async function loadModule({ globals, functions }) {
-  const wasmModule = compileModule({
+  const wat = compileModule({
     globals: new Set(Object.keys(globals)),
     functions
   });
+  const wasmModule  = wabt.parseWat("somefile.wat", wat);
   const { buffer } = wasmModule.toBinary({});
   const mod = await WebAssembly.compile(buffer);
 
