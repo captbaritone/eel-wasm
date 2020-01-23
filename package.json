@@ -17,6 +17,7 @@
     "jest": "^24.9.0"
   },
   "jest": {
-    "moduleFileExtensions": ["js", "eel"]
+    "moduleFileExtensions": ["js", "eel"],
+    "testPathIgnorePatterns": ["/node_modules/", "playground"]
   }
 }
