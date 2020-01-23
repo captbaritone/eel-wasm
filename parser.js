@@ -1,10 +1,10 @@
 const { Parser } = require("jison");
 
 const binaryExpression =
-  "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2}";
+  "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2, column: @1.first_column, line: @1.first_line}";
 const unaryExpression =
-  "$$ = {type: 'UNARY_EXPRESSION', value: $2, operator: $1}";
-const numberLiteral = "$$ = {type: 'NUMBER_LITERAL', value: yytext}";
+  "$$ = {type: 'UNARY_EXPRESSION', value: $2, operator: $1, column: @1.first_column, line: @1.first_line}";
+const numberLiteral = "$$ = {type: 'NUMBER_LITERAL', value: yytext, column: @1.first_column, line: @1.first_line}";
 
 const grammar = {
   comment: "EEL Parser",
@@ -45,17 +45,19 @@ const grammar = {
   // TODO: These keys should be capitalized by convention.
   bnf: {
     // TODO: Are empty programs valid?
-    script: [["statementBlock EOF", "return {type: 'SCRIPT', body: $1}"]],
+    script: [["statementBlock EOF", "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}"]],
     // TODO: Are all expressions valid statements?
-    statement: [["e ;", "$$ = {type: 'STATEMENT', expression: $1}"]],
+    statement: [
+      ["e ;", "$$ = {type: 'STATEMENT', expression: $1, column: @1.first_column, line: @1.first_line}"]
+    ],
     statements: [
       ["statement", "$$ = [$1]"],
       ["statements statement", "$$ = $1.concat([$2])"]
     ],
     statementBlock: [
-      ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1}"]
+      ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}"]
     ],
-    identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
+    identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1, column: @1.first_column, line: @1.first_line};"]],
     argument: ["e", "statementBlock"],
     arguments: [
       ["", "$$ = []"],
@@ -65,19 +67,19 @@ const grammar = {
     functionCall: [
       [
         "identifier ( arguments )",
-        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}"
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     conditionalExpression: [
       [
         "e ? e : e",
-        "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5}"
+        "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     assignment: [
       [
         "identifier ASSIGNMENT_OPERATOR e",
-        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3}"
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     e: [
