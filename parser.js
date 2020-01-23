@@ -56,10 +56,14 @@ const grammar = {
       ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1}"]
     ],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
+    argument: [
+      ["e", "$$ = $1"],
+      ["statementBlock", "$$ = $1"],
+    ],
     arguments: [
       ["", "$$ = []"],
-      ["e", "$$ = [$1]"],
-      ["arguments , e", "$$ = $1.concat([$3])"]
+      ["argument", "$$ = [$1]"],
+      ["arguments , argument", "$$ = $1.concat([$3])"]
     ],
     functionCall: [
       [

@@ -86,6 +86,7 @@ function emit(ast, context) {
       });
       // Reset the local scope. (Not strictly nessesary, but nice to clean up)
       context.locals = new Set();
+      // TODO: Should functions have implicit return?
       return `(func $${ast.name} ${locals.join(" ")} ${body} drop)
         (export "${ast.name}" (func $${ast.name}))`;
     }
