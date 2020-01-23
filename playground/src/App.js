@@ -1,7 +1,14 @@
 import React, { useEffect, useState, useMemo } from "react";
 import "./App.css";
 import Editor, { ControlledEditor } from "@monaco-editor/react";
-import { useUrlState, useForceUpdate, useGlobals, useAst, useWasm, useMod } from "./hooks";
+import {
+  useUrlState,
+  useForceUpdate,
+  useGlobals,
+  useAst,
+  useWasm,
+  useMod
+} from "./hooks";
 
 function Column({ children }) {
   return (
@@ -26,8 +33,6 @@ const EDITOR_OPTIONS = {
   minimap: { enabled: false },
   lineNumbers: "off"
 };
-
-
 
 function App() {
   const { globals, addGlobal, removeGlobal } = useGlobals();
@@ -55,6 +60,17 @@ function App() {
 
   return (
     <div style={{ display: "flex", width: "100vw", alignContent: "stretch" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "0",
+          right: "0",
+          marginTop: "10px",
+          marginRight: "10px"
+        }}
+      >
+        <a href="https://github.com/captbaritone/eel-wasm">GitHub</a>
+      </div>
       <Column>
         <h2>Code</h2>
         <ControlledEditor
@@ -62,7 +78,7 @@ function App() {
           width="100%"
           value={eel}
           onChange={(ev, value) => setEel(value)}
-          options={{...EDITOR_OPTIONS, lineNumbers: "on"}}
+          options={{ ...EDITOR_OPTIONS, lineNumbers: "on" }}
         />
         <button onClick={run} disabled={run == null}>
           Run
