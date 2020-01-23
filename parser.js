@@ -11,7 +11,7 @@ const grammar = {
   lex: {
     rules: [
       ["\\s+", "/* skip whitespace */"],
-       ["\/\/[^\n]*", "/* skip inline comments */"],
+      ["//[^\n]*", "/* skip inline comments */"],
       ["[0-9]+(\\.[0-9]+)?\\b", "return 'NUMBER'"],
       ["=|\\+=|-=|\\*=|\\/=", "return 'ASSIGNMENT_OPERATOR'"],
       ["\\*", "return '*'"],
@@ -56,10 +56,7 @@ const grammar = {
       ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1}"]
     ],
     identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1}"]],
-    argument: [
-      ["e", "$$ = $1"],
-      ["statementBlock", "$$ = $1"],
-    ],
+    argument: ["e", "statementBlock"],
     arguments: [
       ["", "$$ = []"],
       ["argument", "$$ = [$1]"],
@@ -92,11 +89,11 @@ const grammar = {
       ["+ e", unaryExpression],
       ["( e )", "$$ = $2"],
       ["NUMBER", numberLiteral],
-      ["assignment", "$$ = $1"],
-      ["functionCall", "$$ = $1"],
-      ["identifier", "$$ = $1"],
-      ["conditionalExpression", "$$ = $1"],
-      ["( statementBlock )", "$$ = $2"],
+      "assignment",
+      "functionCall",
+      "identifier",
+      "conditionalExpression",
+      ["( statementBlock )", "$$ = $2"]
     ]
   }
 };
