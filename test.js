@@ -89,6 +89,16 @@ const testCases = [
   ["Bor (false, false)", "g = bor(0, 0);", 0],
   ["Bnot (true)", "g = bnot(10);", 0],
   ["Bnot (false)", "g = bnot(0);", 1],
+  ["Plus equals", "g = 5; g += 5;", 10],
+  ["Plus equals (local var)", "a = 5; a += 5; g = a;", 10],
+  ["Minus equals", "g = 5; g -= 4;", 1],
+  ["Minus equals (local var)", "a = 5; a -= 4; g = a;", 1],
+  ["Times equals", "g = 5; g *= 4;", 20],
+  ["Times equals (local var)", "a = 5; a *= 4; g = a;", 20],
+  ["Divide equals", "g = 5; g /= 2;", 2.5],
+  ["Divide equals (local var)", "a = 5; a /= 2; g = a;", 2.5],
+  // ["Mod equals", "g = 5; g %= 2;", 1],
+  // ["Mod equals (local var)", "a = 5; a %= 2; g = a;", 1],
 ];
 
 describe("Small test cases", () => {

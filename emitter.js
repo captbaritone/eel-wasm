@@ -128,31 +128,46 @@ function emit(ast, context) {
       return `${args.join(" ")} ${instruction}`;
     }
     case "ASSIGNMENT_EXPRESSION": {
+      const right = emit(ast.right, context);
       const variableName = ast.left.value;
-      if (context.globals.has(variableName)) {
-        // TODO: Find a way to manage mapping global variables that need a $
-        // prefix to EEL variables that cannot use $.
-
-        // TODO: In lots of cases we don't care about the return value. In those
-        // cases we should try to find a way to omit the `get/drop` combo.
-        // Peephole optimization seems to be the conventional way to do this.
-        // https://en.wikipedia.org/wiki/Peephole_optimization
-        return `
-            ${emit(ast.right, context)}
-            global.set $${variableName}
-            global.get $${variableName}
-        `;
-      }
+      const global = context.globals.has(variableName);
 
       // Ensure we have registed this as a local variable.
-      if (!context.locals.has(variableName)) {
+      if (!global && !context.locals.has(variableName)) {
         context.locals.add(variableName);
       }
+      // TODO: Find a way to manage mapping global variables that need a $
+      // prefix to EEL variables that cannot use $.
 
-      return `
-          ${emit(ast.right, context)}
-          tee_local $${ast.left.value}
-      `;
+      // TODO: In lots of cases we don't care about the return value. In those
+      // cases we should try to find a way to omit the `get/drop` combo.
+      // Peephole optimization seems to be the conventional way to do this.
+      // https://en.wikipedia.org/wiki/Peephole_optimization
+
+      // TODO: In the cases where we set and then get a local an _don't_ want to
+      // drop it, we could use `tee_local`. This might also be a good peephole
+      // optimizaiton.
+      const get = global
+        ? `global.get $${variableName}`
+        : `get_local $${variableName}`;
+      const set = global
+        ? `global.set $${variableName}`
+        : `set_local $${variableName}`;
+
+      switch (ast.operator) {
+        case "=":
+          return `${right} ${set} ${get}`;
+        case "+=":
+          return `${get} ${right} f64.add ${set} ${get}`;
+        case "-=":
+          return `${get} ${right} f64.sub ${set} ${get}`;
+        case "*=":
+          return `${get} ${right} f64.mul ${set} ${get}`;
+        case "/=":
+          return `${get} ${right} f64.div ${set} ${get}`;
+        default:
+          throw new Error(`Unknown assignment operator "${ast.operator}"`);
+      }
     }
     case "CONDITIONAL_EXPRESSION": {
       // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.

@@ -13,12 +13,12 @@ const grammar = {
       ["\\s+", "/* skip whitespace */"],
        ["\/\/[^\n]*", "/* skip inline comments */"],
       ["[0-9]+(\\.[0-9]+)?\\b", "return 'NUMBER'"],
+      ["=|\\+=|-=|\\*=|\\/=", "return 'ASSIGNMENT_OPERATOR'"],
       ["\\*", "return '*'"],
       ["\\/", "return '/'"],
       ["-", "return '-'"],
       ["\\+", "return '+'"],
       [",", "return ','"],
-      ["=", "return '='"],
       ["\\?", "return '?'"],
       ["\\:", "return ':'"],
       [";", "return ';'"],
@@ -35,7 +35,7 @@ const grammar = {
     // associativity. Operators of the same precedence should be on the same
     // line.
     // https://www.gnu.org/software/bison/manual/bison.html#Precedence
-    ["right", "="],
+    ["right", "ASSIGNMENT_OPERATOR"],
     ["right", "?"],
     ["left", "+", "-"],
     ["left", "*", "/"]
@@ -75,8 +75,8 @@ const grammar = {
     ],
     assignment: [
       [
-        "identifier = e",
-        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, right: $3}"
+        "identifier ASSIGNMENT_OPERATOR e",
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3}"
       ]
     ],
     e: [
