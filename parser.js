@@ -13,9 +13,10 @@ const grammar = {
       ["//[^\n]*", "/* skip inline comments */"],
       ["[0-9]+", "return 'DIGIT'"],
       ["\\.", "return '.'"],
-      ["[+\\-*/]?=", "return 'ASSIGNMENT_OPERATOR'"],
+      ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR'"],
       ["\\*", "return '*'"],
       ["\\/", "return '/'"],
+      ["\\%", "return '%'"],
       ["-", "return '-'"],
       ["\\+", "return '+'"],
       [",", "return ','"],
@@ -38,7 +39,7 @@ const grammar = {
     ["right", "ASSIGNMENT_OPERATOR"],
     ["right", "?"],
     ["left", "+", "-"],
-    ["left", "*", "/"]
+    ["left", "*", "/", "%"]
     // TODO: Theoretically it should be possible to make `--1` a parse error.
   ],
 
@@ -114,6 +115,7 @@ const grammar = {
       ["e - e", binaryExpression],
       ["e * e", binaryExpression],
       ["e / e", binaryExpression],
+      ["e % e", binaryExpression],
       ["- e", unaryExpression],
       ["+ e", unaryExpression],
       ["( e )", "$$ = $2"],

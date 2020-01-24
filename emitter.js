@@ -4,7 +4,8 @@ const BINARY_OPERATORS = {
   "+": "f64.add",
   "-": "f64.sub",
   "*": "f64.mul",
-  "/": "f64.div"
+  "/": "f64.div",
+  "%": "f64.div",
 };
 
 const FUNCTIONS = {
@@ -165,6 +166,7 @@ function emit(ast, context) {
         case "*=":
           return `${get} ${right} f64.mul ${set} ${get}`;
         case "/=":
+        case "%=":
           return `${get} ${right} f64.div ${set} ${get}`;
         default:
           throw new Error(`Unknown assignment operator "${ast.operator}"`);
