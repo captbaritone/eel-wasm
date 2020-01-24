@@ -4,7 +4,6 @@ const binaryExpression =
   "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2, column: @1.first_column, line: @1.first_line}";
 const unaryExpression =
   "$$ = {type: 'UNARY_EXPRESSION', value: $2, operator: $1, column: @1.first_column, line: @1.first_line}";
-const numberLiteral = "$$ = {type: 'NUMBER_LITERAL', value: yytext, column: @1.first_column, line: @1.first_line}";
 
 const grammar = {
   comment: "EEL Parser",
@@ -12,7 +11,8 @@ const grammar = {
     rules: [
       ["\\s+", "/* skip whitespace */"],
       ["//[^\n]*", "/* skip inline comments */"],
-      ["[0-9]+(\\.[0-9]+)?\\b", "return 'NUMBER'"],
+      ["[0-9]+", "return 'DIGIT'"],
+      ["\\.", "return '.'"],
       ["=|\\+=|-=|\\*=|\\/=", "return 'ASSIGNMENT_OPERATOR'"],
       ["\\*", "return '*'"],
       ["\\/", "return '/'"],
@@ -45,19 +45,35 @@ const grammar = {
   // TODO: These keys should be capitalized by convention.
   bnf: {
     // TODO: Are empty programs valid?
-    script: [["statementBlock EOF", "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}"]],
+    script: [
+      [
+        "statementBlock EOF",
+        "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}"
+      ]
+    ],
     // TODO: Are all expressions valid statements?
     statement: [
-      ["e ;", "$$ = {type: 'STATEMENT', expression: $1, column: @1.first_column, line: @1.first_line}"]
+      [
+        "e ;",
+        "$$ = {type: 'STATEMENT', expression: $1, column: @1.first_column, line: @1.first_line}"
+      ]
     ],
     statements: [
       ["statement", "$$ = [$1]"],
       ["statements statement", "$$ = $1.concat([$2])"]
     ],
     statementBlock: [
-      ["statements", "$$ = {type: 'STATEMENT_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}"]
+      [
+        "statements",
+        "$$ = {type: 'STATEMENT_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}"
+      ]
     ],
-    identifier: [["IDENTIFIER", "$$ = {type: 'IDENTIFIER', value: $1, column: @1.first_column, line: @1.first_line};"]],
+    identifier: [
+      [
+        "IDENTIFIER",
+        "$$ = {type: 'IDENTIFIER', value: $1, column: @1.first_column, line: @1.first_line};"
+      ]
+    ],
     argument: ["e", "statementBlock"],
     arguments: [
       ["", "$$ = []"],
@@ -82,6 +98,20 @@ const grammar = {
         "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, column: @1.first_column, line: @1.first_line}"
       ]
     ],
+    number: [
+      [
+        "DIGIT",
+        "$$ = {type: 'NUMBER_LITERAL', value: yytext, column: @1.first_column, line: @1.first_line}"
+      ],
+      [
+        "DIGIT . DIGIT",
+        "$$ = {type: 'NUMBER_LITERAL', value: Number($1 + $2 + $3), column: @1.first_column, line: @1.first_line}"
+      ],
+      [
+        ". DIGIT",
+        "$$ = {type: 'NUMBER_LITERAL', value: Number('0' + $1 + $2), column: @1.first_column, line: @1.first_line}"
+      ]
+    ],
     e: [
       ["e + e", binaryExpression],
       ["e - e", binaryExpression],
@@ -90,7 +120,7 @@ const grammar = {
       ["- e", unaryExpression],
       ["+ e", unaryExpression],
       ["( e )", "$$ = $2"],
-      ["NUMBER", numberLiteral],
+      "number",
       "assignment",
       "functionCall",
       "identifier",
