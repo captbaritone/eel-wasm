@@ -38,14 +38,9 @@ test("parse", () => {
       "body": Array [
         Object {
           "column": 0,
-          "expression": Object {
-            "column": 0,
-            "line": 1,
-            "type": "NUMBER_LITERAL",
-            "value": 1,
-          },
           "line": 1,
-          "type": "STATEMENT",
+          "type": "NUMBER_LITERAL",
+          "value": 1,
         },
       ],
       "column": 0,
@@ -60,6 +55,7 @@ const testCases = [
   ["Number", "g = 5;", 5],
   ["Number with decimal", "g = 5.5;", 5.5],
   ["Number with decimal and no leading whole", "g = .5;", 0.5],
+  // ["Optional final semi", "g = 5", 5],
   ["Unary negeation", "g = -10;", -10],
   ["Unary plus", "g = +10;", 10],
   ["Multiply", "g = 10 * 10;", 100],

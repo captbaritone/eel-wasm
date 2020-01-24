@@ -47,7 +47,7 @@ const grammar = {
     // TODO: Are empty programs valid?
     SCRIPT: [
       [
-        "statements EOF",
+        "expressions EOF",
         "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}"
       ],
       [
@@ -55,21 +55,14 @@ const grammar = {
         "return {type: 'SCRIPT', body: [], column: @1.first_column, line: @1.first_line}"
       ]
     ],
-    // TODO: Are all expressions valid statements?
-    STATEMENT: [
-      [
-        "expression ;",
-        "$$ = {type: 'STATEMENT', expression: $1, column: @1.first_column, line: @1.first_line}"
-      ]
+    expressions: [
+      ["expression ;", "$$ = [$1]"],
+      ["expressions expression ;", "$$ = $1.concat([$2])"]
     ],
-    statements: [
-      ["STATEMENT", "$$ = [$1]"],
-      ["statements STATEMENT", "$$ = $1.concat([$2])"]
-    ],
-    STATEMENT_BLOCK: [
+    EXPRESSION_BLOCK: [
       [
-        "statements",
-        "$$ = {type: 'STATEMENT_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}"
+        "expressions",
+        "$$ = {type: 'EXPRESSION_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     IDENTIFIER: [
@@ -78,7 +71,7 @@ const grammar = {
         "$$ = {type: 'IDENTIFIER', value: $1, column: @1.first_column, line: @1.first_line};"
       ]
     ],
-    argument: ["expression", "STATEMENT_BLOCK"],
+    argument: ["expression", "EXPRESSION_BLOCK"],
     arguments: [
       ["argument", "$$ = [$1]"],
       ["arguments , argument", "$$ = $1.concat([$3])"]
@@ -136,7 +129,7 @@ const grammar = {
       "FUNCTION_CALL",
       "IDENTIFIER",
       "CONDITIONAL_EXPRESSION",
-      ["( STATEMENT_BLOCK )", "$$ = $2"]
+      ["( EXPRESSION_BLOCK )", "$$ = $2"]
     ]
   }
 };

@@ -99,10 +99,7 @@ function emit(ast, context) {
 
       return body.join("\n");
     }
-    case "STATEMENT": {
-      return `${emit(ast.expression, context)}`;
-    }
-    case "STATEMENT_BLOCK": {
+    case "EXPRESSION_BLOCK": {
       const body = ast.body.map((statement, i) => {
         const last = i === ast.body.length - 1;
         return `${emit(statement, context)} ${last ? "" : "drop"}`;
