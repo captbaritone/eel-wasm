@@ -6,6 +6,7 @@
   "prettier": {},
   "scripts": {
     "test": "jest",
+    "ci": "npm test && node ./scripts/milkParse",
     "perf": "node benchmark/performance.js"
   },
   "dependencies": {

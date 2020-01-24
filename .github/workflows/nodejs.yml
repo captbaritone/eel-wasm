@@ -19,6 +19,6 @@ jobs:
       - name: Run Tests
         run: |
           yarn
-          yarn test
+          yarn ci
         env:
           CI: true
