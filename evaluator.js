@@ -2,8 +2,9 @@ const wabt = require("wabt")();
 const { emit } = require("./emitter");
 const { parse } = require("./parser");
 const shims = require("./shims");
+const optimizeAst = require("./optimizers/optimize")
 
-function compileModule({ globals, functions }) {
+function compileModule({ globals, functions, optimize = false }) {
   const exportedFunctions = Object.entries(functions).map(
     ([functionName, expression]) => {
       return {
@@ -14,14 +15,18 @@ function compileModule({ globals, functions }) {
     }
   );
 
-  const ast = { type: "MODULE", exportedFunctions };
+  let ast = { type: "MODULE", exportedFunctions };
+  if(optimize) {
+    ast = optimizeAst(ast);
+  }
   return emit(ast, { globals });
 }
 
-async function loadModule({ globals, functions }) {
+async function loadModule({ globals, functions, optimize }) {
   const wat = compileModule({
     globals: new Set(Object.keys(globals)),
-    functions
+    functions,
+    optimize
   });
   const wasmModule  = wabt.parseWat("somefile.wat", wat);
   const { buffer } = wasmModule.toBinary({});
