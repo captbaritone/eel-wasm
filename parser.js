@@ -12,22 +12,11 @@ const grammar = {
       ["\\s+", "/* skip whitespace */"],
       ["//[^\n]*", "/* skip inline comments */"],
       ["[0-9]+", "return 'DIGITS_TOKEN'"],
-      ["\\.", "return '.'"],
       ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
-      ["\\*", "return '*'"],
-      ["\\/", "return '/'"],
-      ["\\%", "return '%'"],
-      ["-", "return '-'"],
-      ["\\+", "return '+'"],
-      [",", "return ','"],
-      ["\\?", "return '?'"],
-      ["\\:", "return ':'"],
-      [";", "return ';'"],
-      ["\\(", "return '('"],
-      ["\\)", "return ')'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
       ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER_TOKEN'"],
-      ["$", "return 'EOF'"]
+      ["$", "return 'EOF'"],
+      [".", "return yytext[0]"],
     ]
   },
 
