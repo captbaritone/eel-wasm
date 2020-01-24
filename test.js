@@ -33,6 +33,9 @@ test("Minimal example", async () => {
 
 const testCases = [
   ["Expressions", "g = ((6- -7)+ 3);", 16],
+  ["Number", "g = 5;", 5],
+  ["Number with decimal", "g = 5.5;", 5.5],
+  ["Number with decimal and no leading whole", "g = .5;", 0.5],
   ["Unary negeation", "g = -10;", -10],
   ["Unary plus", "g = +10;", 10],
   ["Multiply", "g = 10 * 10;", 100],
