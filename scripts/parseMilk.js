@@ -1,5 +1,5 @@
-/* 
- * Utility script for trying the parser against EEL code extracted from 
+/*
+ * Utility script for trying the parser against EEL code extracted from
  * a collection of `.milk` files. Useful for validating that the parser
  * works (or doesn't) against real world code.
  */
@@ -29,11 +29,16 @@ function validate(milkPath) {
   });
 }
 
-const milkFiles = [
-  "./fixtures/youtube_broadcast_yourself.milk",
-  "./fixtures/bdrv_flexi_va_ultramix_148_oblivion_notifier.milk"
-];
+
+const milkDir = path.join(__dirname, "../fixtures");
+const files = fs.readdirSync(milkDir);
+const milkFiles = files
+  .filter(fileName => fileName.endsWith(".milk"))
+  .map(fileName => {
+    return path.join(milkDir, fileName);
+  });
 
 milkFiles.forEach(milk => {
   validate(milk);
 });
+console.log("No errors found!");
