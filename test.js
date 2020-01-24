@@ -1,6 +1,7 @@
 const { loadModule } = require("./evaluator");
 const fs = require("fs");
 const MILKDROP_GLOBALS = require("./milkdropGlobals");
+const { parse } = require("./parser");
 
 test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).
@@ -31,7 +32,30 @@ test("Minimal example", async () => {
   expect(globals.x.value).toBe(5);
 });
 
+test("parse", () => {
+  expect(parse("1;")).toMatchInlineSnapshot(`
+    Object {
+      "body": Array [
+        Object {
+          "column": 0,
+          "expression": Object {
+            "column": 0,
+            "line": 1,
+            "type": "NUMBER_LITERAL",
+            "value": 1,
+          },
+          "line": 1,
+          "type": "STATEMENT",
+        },
+      ],
+      "column": 0,
+      "line": 1,
+      "type": "SCRIPT",
+    }
+  `);
+});
 const testCases = [
+  ["Empty program", "", 0],
   ["Expressions", "g = ((6- -7)+ 3);", 16],
   ["Number", "g = 5;", 5],
   ["Number with decimal", "g = 5.5;", 5.5],
@@ -102,7 +126,11 @@ const testCases = [
   ["Divide equals", "g = 5; g /= 2;", 2.5],
   ["Divide equals (local var)", "a = 5; a /= 2; g = a;", 2.5],
   ["Divide equals (divison operator)", "g = 5; g %= 2;", 2.5],
-  ["Divide equals (division operator) (local var)", "a = 5; a %= 2; g = a;", 2.5],
+  [
+    "Divide equals (division operator) (local var)",
+    "a = 5; a %= 2; g = a;",
+    2.5
+  ],
   // ["Mod equals", "g = 5; g %= 2;", 1],
   // ["Mod equals (local var)", "a = 5; a %= 2; g = a;", 1],
   ["Statement block as argument", "g = int(g = 5; g + 10.5;);", 15]

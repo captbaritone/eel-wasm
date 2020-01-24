@@ -47,8 +47,12 @@ const grammar = {
     // TODO: Are empty programs valid?
     SCRIPT: [
       [
-        "STATEMENT_BLOCK EOF",
+        "statements EOF",
         "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}"
+      ],
+      [
+        "EOF",
+        "return {type: 'SCRIPT', body: [], column: @1.first_column, line: @1.first_line}"
       ]
     ],
     // TODO: Are all expressions valid statements?
@@ -76,11 +80,14 @@ const grammar = {
     ],
     argument: ["expression", "STATEMENT_BLOCK"],
     arguments: [
-      ["", "$$ = []"],
       ["argument", "$$ = [$1]"],
       ["arguments , argument", "$$ = $1.concat([$3])"]
     ],
     FUNCTION_CALL: [
+      [
+        "IDENTIFIER ( )",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: [], column: @1.first_column, line: @1.first_line}"
+      ],
       [
         "IDENTIFIER ( arguments )",
         "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, column: @1.first_column, line: @1.first_line}"

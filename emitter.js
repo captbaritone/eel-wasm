@@ -5,7 +5,7 @@ const BINARY_OPERATORS = {
   "-": "f64.sub",
   "*": "f64.mul",
   "/": "f64.div",
-  "%": "f64.div",
+  "%": "f64.div"
 };
 
 const FUNCTIONS = {
@@ -88,11 +88,16 @@ function emit(ast, context) {
       // Reset the local scope. (Not strictly nessesary, but nice to clean up)
       context.locals = new Set();
       // TODO: Should functions have implicit return?
-      return `(func $${ast.name} ${locals.join(" ")} ${body} drop)
+      // This could be complex, since programs can be empty (I think).
+      return `(func $${ast.name} ${locals.join(" ")} ${body})
         (export "${ast.name}" (func $${ast.name}))`;
     }
     case "SCRIPT": {
-      return emit(ast.body, context);
+      const body = ast.body.map((statement, i) => {
+        return `${emit(statement, context)} drop`;
+      });
+
+      return body.join("\n");
     }
     case "STATEMENT": {
       return `${emit(ast.expression, context)}`;
