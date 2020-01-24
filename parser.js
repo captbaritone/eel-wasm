@@ -43,7 +43,6 @@ const grammar = {
     // TODO: Theoretically it should be possible to make `--1` a parse error.
   ],
 
-  // TODO: These keys should be capitalized by convention.
   bnf: {
     // TODO: Are empty programs valid?
     SCRIPT: [
