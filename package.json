@@ -13,11 +13,18 @@
     "wabt": "^1.0.12"
   },
   "devDependencies": {
-    "prettier": "^1.19.1",
-    "jest": "^24.9.0"
+    "jest": "^24.9.0",
+    "milkdrop-preset-utils": "^0.1.0",
+    "prettier": "^1.19.1"
   },
   "jest": {
-    "moduleFileExtensions": ["js", "eel"],
-    "testPathIgnorePatterns": ["/node_modules/", "playground"]
+    "moduleFileExtensions": [
+      "js",
+      "eel"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "playground"
+    ]
   }
 }
