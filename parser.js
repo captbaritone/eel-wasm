@@ -99,17 +99,14 @@ const grammar = {
       ]
     ],
     number: [
+      ["DIGIT", "$$ = Number($1)"],
+      ["DIGIT . DIGIT", "$$ = Number($1 + $2 + $3)"],
+      [". DIGIT", "$$ = Number('0' + $1 + $2)"]
+    ],
+    numberLiteral: [
       [
-        "DIGIT",
-        "$$ = {type: 'NUMBER_LITERAL', value: Number($1), column: @1.first_column, line: @1.first_line}"
-      ],
-      [
-        "DIGIT . DIGIT",
-        "$$ = {type: 'NUMBER_LITERAL', value: Number($1 + $2 + $3), column: @1.first_column, line: @1.first_line}"
-      ],
-      [
-        ". DIGIT",
-        "$$ = {type: 'NUMBER_LITERAL', value: Number('0' + $1 + $2), column: @1.first_column, line: @1.first_line}"
+        "number",
+        "$$ = {type: 'NUMBER_LITERAL', value: $1, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     e: [
@@ -120,7 +117,7 @@ const grammar = {
       ["- e", unaryExpression],
       ["+ e", unaryExpression],
       ["( e )", "$$ = $2"],
-      "number",
+      "numberLiteral",
       "assignment",
       "functionCall",
       "identifier",
