@@ -101,7 +101,7 @@ const grammar = {
     number: [
       [
         "DIGIT",
-        "$$ = {type: 'NUMBER_LITERAL', value: yytext, column: @1.first_column, line: @1.first_line}"
+        "$$ = {type: 'NUMBER_LITERAL', value: Number($1), column: @1.first_column, line: @1.first_line}"
       ],
       [
         "DIGIT . DIGIT",
