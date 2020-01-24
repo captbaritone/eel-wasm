@@ -13,7 +13,7 @@ const grammar = {
       ["//[^\n]*", "/* skip inline comments */"],
       ["[0-9]+", "return 'DIGIT'"],
       ["\\.", "return '.'"],
-      ["=|\\+=|-=|\\*=|\\/=", "return 'ASSIGNMENT_OPERATOR'"],
+      ["[+\\-*/]?=", "return 'ASSIGNMENT_OPERATOR'"],
       ["\\*", "return '*'"],
       ["\\/", "return '/'"],
       ["-", "return '-'"],
