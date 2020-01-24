@@ -39,6 +39,7 @@ const milkFiles = files
   });
 
 milkFiles.forEach(milk => {
+  console.log(`Validating eel in "${path.relative(process.cwd(), milk)}"...`)
   validate(milk);
 });
 console.log("No errors found!");
