@@ -22,15 +22,16 @@ function validate(milkPath) {
     try {
       parse(presetJson[key]);
     } catch (e) {
-      console.error(`Error in ${key} in ${path.basename(milkPath)}`);
       console.log(presetJson[key]);
+      console.error(`Error in ${key} in ${path.basename(milkPath)}`);
       throw e;
     }
   });
 }
 
 
-const milkDir = path.join(__dirname, "../fixtures");
+const pathArg = process.argv[2];
+const milkDir = pathArg || path.join(__dirname, "../fixtures");
 const files = fs.readdirSync(milkDir);
 const milkFiles = files
   .filter(fileName => fileName.endsWith(".milk"))
