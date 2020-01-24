@@ -11,9 +11,9 @@ const grammar = {
     rules: [
       ["\\s+", "/* skip whitespace */"],
       ["//[^\n]*", "/* skip inline comments */"],
-      ["[0-9]+", "return 'DIGIT'"],
+      ["[0-9]+", "return 'DIGITS_TOKEN'"],
       ["\\.", "return '.'"],
-      ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR'"],
+      ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
       ["\\*", "return '*'"],
       ["\\/", "return '/'"],
       ["\\%", "return '%'"],
@@ -26,7 +26,7 @@ const grammar = {
       ["\\(", "return '('"],
       ["\\)", "return ')'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
-      ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER'"],
+      ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER_TOKEN'"],
       ["$", "return 'EOF'"]
     ]
   },
@@ -36,7 +36,7 @@ const grammar = {
     // associativity. Operators of the same precedence should be on the same
     // line.
     // https://www.gnu.org/software/bison/manual/bison.html#Precedence
-    ["right", "ASSIGNMENT_OPERATOR"],
+    ["right", "ASSIGNMENT_OPERATOR_TOKEN"],
     ["right", "?"],
     ["left", "+", "-"],
     ["left", "*", "/", "%"]
@@ -46,85 +46,91 @@ const grammar = {
   // TODO: These keys should be capitalized by convention.
   bnf: {
     // TODO: Are empty programs valid?
-    script: [
+    SCRIPT: [
       [
-        "statementBlock EOF",
+        "STATEMENT_BLOCK EOF",
         "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     // TODO: Are all expressions valid statements?
-    statement: [
+    STATEMENT: [
       [
-        "e ;",
+        "expression ;",
         "$$ = {type: 'STATEMENT', expression: $1, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     statements: [
-      ["statement", "$$ = [$1]"],
-      ["statements statement", "$$ = $1.concat([$2])"]
+      ["STATEMENT", "$$ = [$1]"],
+      ["statements STATEMENT", "$$ = $1.concat([$2])"]
     ],
-    statementBlock: [
+    STATEMENT_BLOCK: [
       [
         "statements",
         "$$ = {type: 'STATEMENT_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}"
       ]
     ],
-    identifier: [
+    IDENTIFIER: [
       [
-        "IDENTIFIER",
+        "IDENTIFIER_TOKEN",
         "$$ = {type: 'IDENTIFIER', value: $1, column: @1.first_column, line: @1.first_line};"
       ]
     ],
-    argument: ["e", "statementBlock"],
+    argument: ["expression", "STATEMENT_BLOCK"],
     arguments: [
       ["", "$$ = []"],
       ["argument", "$$ = [$1]"],
       ["arguments , argument", "$$ = $1.concat([$3])"]
     ],
-    functionCall: [
+    FUNCTION_CALL: [
       [
-        "identifier ( arguments )",
+        "IDENTIFIER ( arguments )",
         "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, column: @1.first_column, line: @1.first_line}"
       ]
     ],
-    conditionalExpression: [
+    CONDITIONAL_EXPRESSION: [
       [
-        "e ? e : e",
+        "expression ? expression : expression",
         "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5, column: @1.first_column, line: @1.first_line}"
       ]
     ],
-    assignment: [
+    ASSIGNMENT: [
       [
-        "identifier ASSIGNMENT_OPERATOR e",
+        "IDENTIFIER ASSIGNMENT_OPERATOR_TOKEN expression",
         "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, column: @1.first_column, line: @1.first_line}"
       ]
     ],
     number: [
-      ["DIGIT", "$$ = Number($1)"],
-      ["DIGIT . DIGIT", "$$ = Number($1 + $2 + $3)"],
-      [". DIGIT", "$$ = Number('0' + $1 + $2)"]
+      ["DIGITS_TOKEN", "$$ = Number($1)"],
+      ["DIGITS_TOKEN . DIGITS_TOKEN", "$$ = Number($1 + $2 + $3)"],
+      [". DIGITS_TOKEN", "$$ = Number('0' + $1 + $2)"]
     ],
-    numberLiteral: [
+    NUMBER_LITERAL: [
       [
         "number",
         "$$ = {type: 'NUMBER_LITERAL', value: $1, column: @1.first_column, line: @1.first_line}"
       ]
     ],
-    e: [
-      ["e + e", binaryExpression],
-      ["e - e", binaryExpression],
-      ["e * e", binaryExpression],
-      ["e / e", binaryExpression],
-      ["e % e", binaryExpression],
-      ["- e", unaryExpression],
-      ["+ e", unaryExpression],
-      ["( e )", "$$ = $2"],
-      "numberLiteral",
-      "assignment",
-      "functionCall",
-      "identifier",
-      "conditionalExpression",
-      ["( statementBlock )", "$$ = $2"]
+    UNARY_EXPRESSION: [
+      ["- expression", unaryExpression],
+      ["+ expression", unaryExpression],
+    ],
+    BINARY_EXPRESSION: [
+      ["expression + expression", binaryExpression],
+      ["expression - expression", binaryExpression],
+      ["expression * expression", binaryExpression],
+      ["expression / expression", binaryExpression],
+      ["expression % expression", binaryExpression],
+    ],
+    expression: [
+      "BINARY_EXPRESSION",
+      "UNARY_EXPRESSION",
+      ["( expression )", "$$ = $2"],
+      "NUMBER_LITERAL",
+      "ASSIGNMENT",
+      "FUNCTION_CALL",
+      "IDENTIFIER",
+      "CONDITIONAL_EXPRESSION",
+      ["( STATEMENT_BLOCK )", "$$ = $2"]
     ]
   }
 };
