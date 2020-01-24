@@ -23,7 +23,7 @@ function validate(milkPath) {
       parse(presetJson[key]);
     } catch (e) {
       console.log(presetJson[key]);
-      console.error(`Error in ${key} in ${path.basename(milkPath)}`);
+      console.error(`Error in ${key} in "${(milkPath)}"`);
       throw e;
     }
   });
@@ -40,7 +40,7 @@ const milkFiles = files
   });
 
 milkFiles.forEach(milk => {
-  console.log(`Validating eel in "${path.relative(process.cwd(), milk)}"...`)
+  console.log(`Validating eel in "${milk}"...`)
   validate(milk);
 });
 console.log("No errors found!");
