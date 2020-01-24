@@ -16,7 +16,7 @@ const grammar = {
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
       ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER_TOKEN'"],
       ["$", "return 'EOF'"],
-      [".", "return yytext[0]"],
+      [".", "return yytext[0]"]
     ]
   },
 
@@ -100,14 +100,14 @@ const grammar = {
     ],
     UNARY_EXPRESSION: [
       ["- expression", unaryExpression],
-      ["+ expression", unaryExpression],
+      ["+ expression", unaryExpression]
     ],
     BINARY_EXPRESSION: [
       ["expression + expression", binaryExpression],
       ["expression - expression", binaryExpression],
       ["expression * expression", binaryExpression],
       ["expression / expression", binaryExpression],
-      ["expression % expression", binaryExpression],
+      ["expression % expression", binaryExpression]
     ],
     expression: [
       "BINARY_EXPRESSION",
