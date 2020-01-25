@@ -9,26 +9,50 @@ const { parse } = require("../parser");
 const { splitPreset } = require("milkdrop-preset-utils");
 
 const EEL_KEYS = ["presetInit", "perFrame", "perVertex"];
+const SUB_EEL_KEYS = ["init_eqs_str", "frame_eqs_str", "point_eqs_str"];
+
+// Hack an object out of a milk file that contains all it's eel code in the
+// form: {[name]: eel}
+function getEels(milk) {
+  const presetJson = splitPreset(milk);
+  const eels = {};
+  EEL_KEYS.forEach(key => {
+    if (presetJson[key]) {
+      eels[key] = presetJson[key];
+    }
+  });
+  presetJson.waves.forEach((wave, i) => {
+    SUB_EEL_KEYS.forEach(key => {
+      if (wave[key]) {
+        eels[`wave${i}.${key}`] = wave[key];
+      }
+    });
+  });
+  presetJson.shapes.forEach((shape, i) => {
+    SUB_EEL_KEYS.forEach(key => {
+      if (shape[key]) {
+        eels[`shape${i}.${key}`] = shape[key];
+      }
+    });
+  });
+
+  return eels;
+}
 
 function validate(milkPath) {
   const presetIni = fs.readFileSync(milkPath, { encoding: "utf8" });
-  const presetJson = splitPreset(presetIni);
+  const eels = getEels(presetIni);
 
-  EEL_KEYS.forEach(key => {
-    const eel = presetJson[key];
-    if (!eel) {
-      return;
-    }
+  Object.entries(eels).forEach(([name, eel]) => {
     try {
-      parse(presetJson[key]);
+      parse(eel);
     } catch (e) {
-      console.log(presetJson[key]);
-      console.error(`Error in ${key} in "${(milkPath)}"`);
+      // console.log(eel)
+      // console.error(`Error in ${name} in "${milkPath}"`);
       throw e;
     }
   });
 }
-
 
 const pathArg = process.argv[2];
 const milkDir = pathArg || path.join(__dirname, "../fixtures");
@@ -39,8 +63,29 @@ const milkFiles = files
     return path.join(milkDir, fileName);
   });
 
+const errors = {};
+let good = 0;
+let bad = 0;
 milkFiles.forEach(milk => {
-  console.log(`Validating eel in "${milk}"...`)
-  validate(milk);
+  // console.log(`Validating eel in "${milk}"...`);
+  try {
+    validate(milk);
+    good++;
+  } catch (e) {
+    // console.error(e);
+    const error = e.message.split("\n")[3];
+    if (error in errors) {
+      errors[error]++;
+    } else {
+      errors[error] = 1;
+    }
+    bad++;
+  }
 });
-console.log("No errors found!");
+
+if (bad === 0) {
+  console.log("No errors found!");
+} else {
+  console.log({ errors, good, bad });
+  throw new Error("Errors found");
+}

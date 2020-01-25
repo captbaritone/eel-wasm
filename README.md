@@ -14,6 +14,14 @@ A **secondary goal** is to improve the performance of Butterchurn. Currently exe
 
 This project is currently just a sketch of a proof of concept.
 
+## Parser Status
+
+Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.winamp.com/showthread.php?t=396662).
+
+| Commit Hash | Parse   | Fail    | Ratio |
+| ----------- | ------- | ------- | ------|
+| cfeed6      | 34840   | 15455   | 69%   |
+
 ## TODO
 
 - [ ] Fails in Node 10 with "CompileError: AsyncCompile: Wasm decoding failed: mutable globals cannot be imported @+42"
