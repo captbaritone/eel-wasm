@@ -60,7 +60,7 @@ const testCases = [
   ["Unary plus", "g = +10;", 10],
   ["Multiply", "g = 10 * 10;", 100],
   ["Divide", "g = 10 / 10;", 1],
-  ["Divide (division symbol)", "g = 10 % 10;", 1],
+  ["Mod", "g = 5 % 2;", 1],
   ["Order of operations (+ and *)", "g = 1 + 1 * 10;", 11],
   ["Parens", "g = (1 + 1) * 10;", 20],
   ["Absolute value negative", "g = abs(-10);", 10],
@@ -121,14 +121,8 @@ const testCases = [
   ["Times equals (local var)", "a = 5; a *= 4; g = a;", 20],
   ["Divide equals", "g = 5; g /= 2;", 2.5],
   ["Divide equals (local var)", "a = 5; a /= 2; g = a;", 2.5],
-  ["Divide equals (divison operator)", "g = 5; g %= 2;", 2.5],
-  [
-    "Divide equals (division operator) (local var)",
-    "a = 5; a %= 2; g = a;",
-    2.5
-  ],
-  // ["Mod equals", "g = 5; g %= 2;", 1],
-  // ["Mod equals (local var)", "a = 5; a %= 2; g = a;", 1],
+  ["Mod equals", "g = 5; g %= 2;", 1],
+  ["Mod equals (local var)", "a = 5; a %= 2; g = a;", 1],
   ["Statement block as argument", "g = int(g = 5; g + 10.5;);", 15]
 ];
 

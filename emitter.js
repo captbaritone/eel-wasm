@@ -5,7 +5,7 @@ const BINARY_OPERATORS = {
   "-": "f64.sub",
   "*": "f64.mul",
   "/": "f64.div",
-  "%": "f64.div"
+  "%": "call $mod",
 };
 
 const FUNCTIONS = {
@@ -67,6 +67,14 @@ function emit(ast, context) {
           i32.const 0
           i32.ne
           f64.convert_s/i32
+        )
+        (func $mod (param $a f64) (param $b f64) (result f64) 
+          get_local $a
+          i64.trunc_s/f64
+          get_local $b
+          i64.trunc_s/f64
+          i64.rem_s
+          f64.convert_s/i64
         )
         (func $bnot (param $x f64) (result f64) 
           get_local $x
@@ -168,8 +176,9 @@ function emit(ast, context) {
         case "*=":
           return `${get} ${right} f64.mul ${set} ${get}`;
         case "/=":
-        case "%=":
           return `${get} ${right} f64.div ${set} ${get}`;
+        case "%=":
+          return `${get} ${right} call $mod ${set} ${get}`;
         default:
           throw new Error(`Unknown assignment operator "${ast.operator}"`);
       }
