@@ -1,5 +1,70 @@
 const shims = require("./shims");
 
+function makeNamespaceResolver(prefix) {
+  let counter = -1;
+  const map = new Map();
+  return (name) => {
+
+    if (!map.has(name)) {
+      counter++;
+      map.set(name, counter);
+    }
+    return `$${prefix}${map.get(name)}`;
+  }
+}
+
+const STANDARD_LIBRARY = `
+;; TODO: We should double check that this does not short circut
+(func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
+  get_local $consiquent
+  get_local $alternate
+  get_local $test
+  f64.const 0 f64.ne
+  select 
+)
+;; TODO: Simplify all this type coersion
+(func $bor (param $a f64) (param $b f64) (result f64) 
+  get_local $a
+  i32.trunc_s/f64
+  get_local $b
+  i32.trunc_s/f64
+  i32.or
+  i32.const 0
+  i32.ne
+  f64.convert_s/i32
+)
+(func $mod (param $a f64) (param $b f64) (result f64) 
+  get_local $a
+  i64.trunc_s/f64
+  get_local $b
+  i64.trunc_s/f64
+  i64.rem_s
+  f64.convert_s/i64
+)
+(func $bitwiseAnd (param $a f64) (param $b f64) (result f64) 
+  get_local $a
+  i64.trunc_s/f64
+  get_local $b
+  i64.trunc_s/f64
+  i64.and
+  f64.convert_s/i64
+)
+(func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
+  get_local $a
+  i64.trunc_s/f64
+  get_local $b
+  i64.trunc_s/f64
+  i64.or
+  f64.convert_s/i64
+)
+(func $bnot (param $x f64) (result f64) 
+  get_local $x
+  i32.trunc_s/f64
+  i32.eqz
+  f64.convert_s/i32
+)
+`;
+
 const BINARY_OPERATORS = {
   "+": "f64.add",
   "-": "f64.sub",
@@ -35,8 +100,13 @@ Object.entries(shims).forEach(([key, value]) => {
 function emit(ast, context) {
   switch (ast.type) {
     case "MODULE": {
+      context.resolveGlobal = makeNamespaceResolver("G")
+      context.resolveImport = makeNamespaceResolver("F")
+
       const globals = Array.from(context.globals).map(name => {
-        return `(global $${name} (import "js" "${name}") (mut f64))`;
+        return `(global ${context.resolveGlobal(
+          name
+        )} (import "js" "${name}") (mut f64))`;
       });
       const exportedFunctions = ast.exportedFunctions.map(func => {
         return `${emit(func, context)}`;
@@ -51,72 +121,29 @@ function emit(ast, context) {
       return `(module
         ${globals.join("\n")}
         ${imports.join("\n")}
-        ;; TODO: We should double check that this does not short circut
-        (func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
-          get_local $consiquent
-          get_local $alternate
-          get_local $test
-          f64.const 0 f64.ne
-          select 
-        )
-        ;; TODO: Simplify all this type coersion
-        (func $bor (param $a f64) (param $b f64) (result f64) 
-          get_local $a
-          i32.trunc_s/f64
-          get_local $b
-          i32.trunc_s/f64
-          i32.or
-          i32.const 0
-          i32.ne
-          f64.convert_s/i32
-        )
-        (func $mod (param $a f64) (param $b f64) (result f64) 
-          get_local $a
-          i64.trunc_s/f64
-          get_local $b
-          i64.trunc_s/f64
-          i64.rem_s
-          f64.convert_s/i64
-        )
-        (func $bitwiseAnd (param $a f64) (param $b f64) (result f64) 
-          get_local $a
-          i64.trunc_s/f64
-          get_local $b
-          i64.trunc_s/f64
-          i64.and
-          f64.convert_s/i64
-        )
-        (func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
-          get_local $a
-          i64.trunc_s/f64
-          get_local $b
-          i64.trunc_s/f64
-          i64.or
-          f64.convert_s/i64
-        )
-        (func $bnot (param $x f64) (result f64) 
-          get_local $x
-          i32.trunc_s/f64
-          i32.eqz
-          f64.convert_s/i32
-        )
+        ${STANDARD_LIBRARY}
+        
         ${exportedFunctions.join("\n")}
       )`;
     }
     case "FUNCTION_EXPORT": {
       // Set the local scope.
+      // context.localNames = new NamespaceMap({ prefix: "L" });
+      context.resolveLocal = makeNamespaceResolver("L")
       context.locals = new Set();
       const body = emit(ast.function, context);
 
       const locals = Array.from(context.locals).map(name => {
-        return `(local $${name} f64)`;
+        return `(local ${context.resolveLocal(name)} f64)`;
       });
       // Reset the local scope. (Not strictly nessesary, but nice to clean up)
       context.locals = new Set();
       // TODO: Should functions have implicit return?
       // This could be complex, since programs can be empty (I think).
-      return `(func $${ast.name} ${locals.join(" ")} ${body})
-        (export "${ast.name}" (func $${ast.name}))`;
+      return `(func ${context.resolveImport(ast.name)} ${locals.join(
+        " "
+      )} ${body})
+        (export "${ast.name}" (func ${context.resolveImport(ast.name)}))`;
     }
     case "SCRIPT": {
       const body = ast.body.map((statement, i) => {
@@ -178,11 +205,11 @@ function emit(ast, context) {
       // drop it, we could use `tee_local`. This might also be a good peephole
       // optimizaiton.
       const get = global
-        ? `global.get $${variableName}`
-        : `get_local $${variableName}`;
+        ? `global.get ${context.resolveGlobal(variableName)}`
+        : `get_local ${context.resolveLocal(variableName)}`;
       const set = global
-        ? `global.set $${variableName}`
-        : `set_local $${variableName}`;
+        ? `global.set ${context.resolveGlobal(variableName)}`
+        : `set_local ${context.resolveLocal(variableName)}`;
 
       switch (ast.operator) {
         case "=":
@@ -231,10 +258,10 @@ function emit(ast, context) {
         // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
         // function calls and assignments we just peek at the name and never emit
         // it.
-        return `global.get $${variableName}`;
+        return `global.get ${context.resolveGlobal(variableName)}`;
       }
       if (context.locals.has(variableName)) {
-        return `local.get $${variableName}`;
+        return `local.get ${context.resolveLocal(variableName)}`;
       }
       throw new Error(`Unknown variable "${variableName}"`);
     case "NUMBER_LITERAL":
