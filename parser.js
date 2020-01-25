@@ -25,10 +25,12 @@ const grammar = {
     // associativity. Operators of the same precedence should be on the same
     // line.
     // https://www.gnu.org/software/bison/manual/bison.html#Precedence
+    // TODO: Confirm these orders
     ["right", "ASSIGNMENT_OPERATOR_TOKEN"],
     ["right", "?"],
     ["left", "+", "-"],
-    ["left", "*", "/", "%"]
+    ["left", "*", "/", "%"],
+    ["left", , "&", "|" /* "~"" will go here as well */],
     // TODO: Theoretically it should be possible to make `--1` a parse error.
   ],
 
@@ -107,7 +109,9 @@ const grammar = {
       ["expression - expression", binaryExpression],
       ["expression * expression", binaryExpression],
       ["expression / expression", binaryExpression],
-      ["expression % expression", binaryExpression]
+      ["expression % expression", binaryExpression],
+      ["expression & expression", binaryExpression],
+      ["expression | expression", binaryExpression],
     ],
     expression: [
       "BINARY_EXPRESSION",

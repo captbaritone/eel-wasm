@@ -28,6 +28,8 @@ Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.wi
 - [ ] Are expressions folled by a `;` valid statements, or is that just assignements?
 - [ ] Check if Milkdrop `if(test, consiquent, alternate)` is actually supposed to shortcircut.
 - [ ] Don't use EEL variable names in output code. Use a map of incrementing numbers for each namespace instead.
+- [ ] Confirm that operator precidence is respected correctly.
+- [ ] Confirm that signed values behave correctly.
 
 ## Usage
 

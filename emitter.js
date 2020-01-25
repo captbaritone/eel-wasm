@@ -6,6 +6,8 @@ const BINARY_OPERATORS = {
   "*": "f64.mul",
   "/": "f64.div",
   "%": "call $mod",
+  "|": "call $bitwiseOr",
+  "&": "call $bitwiseAnd"
 };
 
 const FUNCTIONS = {
@@ -74,6 +76,22 @@ function emit(ast, context) {
           get_local $b
           i64.trunc_s/f64
           i64.rem_s
+          f64.convert_s/i64
+        )
+        (func $bitwiseAnd (param $a f64) (param $b f64) (result f64) 
+          get_local $a
+          i64.trunc_s/f64
+          get_local $b
+          i64.trunc_s/f64
+          i64.and
+          f64.convert_s/i64
+        )
+        (func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
+          get_local $a
+          i64.trunc_s/f64
+          get_local $b
+          i64.trunc_s/f64
+          i64.or
           f64.convert_s/i64
         )
         (func $bnot (param $x f64) (result f64) 
