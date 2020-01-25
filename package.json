@@ -7,7 +7,8 @@
   "scripts": {
     "test": "jest",
     "ci": "npm test && node ./scripts/parseMilk.js",
-    "perf": "node benchmark/performance.js"
+    "perf": "node benchmark/performance.js",
+    "test-parse": "node scripts/parseMilk.js ./fixtures/mega"
   },
   "dependencies": {
     "jison": "^0.4.18",
