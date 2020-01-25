@@ -5,9 +5,8 @@ const CHILDREN = {
     { type: "NODE", key: "left" },
     { type: "NODE", key: "right" }
   ],
-  SCRIPT: [{ type: "NODE", key: "body" }],
-  STATEMENT_BLOCK: [{ type: "ARRAY", key: "body" }],
-  STATEMENT: [{ type: "NODE", key: "expression" }],
+  SCRIPT: [{ type: "ARRAY", key: "body" }],
+  EXPRESSION_BLOCK: [{ type: "ARRAY", key: "body" }],
   UNARY_EXPRESSION: [{ type: "NODE", key: "value" }],
   NUMBER_LITERAL: [],
   IDENTIFIER: [],
