@@ -1,5 +1,7 @@
 # EEL -> Wasm Compiler
 
+** PRE-ALPHA (incomplete!) **
+
 EEL (or NS-EEL) is a small expression language that is used in a handful of applications to allow users to author plugins or presets. Both AVS and Milkdrop, the audio visualizors for Winamp, allowed users to author "presets" which were user defined visualizations. Both types of presets used EEL as the language that users would write their equations.
 
 ## Motivation
@@ -31,6 +33,12 @@ Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.wi
 - [x] Don't use EEL variable names in output code. Use a map of incrementing numbers for each namespace instead.
 - [ ] Confirm that operator precidence is respected correctly.
 - [ ] Confirm that signed values behave correctly.
+
+## Challenges
+
+- [ ] Wasm exposes no trig functions. We'll have to write our own?
+- [ ] Wasm exposes no rand function. We'll have to write our own? Where do we get our seed?
+- [ ] Will we always need `wabt` or can we reasonably emit binary by hand? [It's huge](https://bundlephobia.com/result?p=wabt@1.0.12).
 
 ## Usage
 
@@ -64,11 +72,6 @@ globals.y.value = 5;
 mod.exports.setXToY();
 expect(globals.x.value).toBe(5);
 ```
-
-## Challenges
-
-- [ ] Wasm exposes no trig functions. We'll have to write our own?
-- [ ] Wasm exposes no rand function. We'll have to write our own? Where do we get our seed?
 
 ## How to use this project
 
