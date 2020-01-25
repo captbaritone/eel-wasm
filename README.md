@@ -18,10 +18,10 @@ This project is currently just a sketch of a proof of concept.
 
 Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.winamp.com/showthread.php?t=396662).
 
-| Hash                                     | Feature        | Error # | Error % |
-| ---------------------------------------- | -------------- | :-----: | :-----: |
-| cfeed6b74d3c279df0efd9f191a5e2fbf97972c5 | (Initial run)  | 15,455  |   31%   |
-| ab89a8a780fdffba0470678033974a990b1a7b1e | Bitwise and/or | 13,759  |   28%   |
+| Hash    | Feature        | Error # | Error % |
+| ------- | -------------- | :-----: | :-----: |
+| cfeed6b | (Initial run)  | 15,455  |   31%   |
+| ab89a8a | Bitwise and/or | 13,759  |   28%   |
 
 ## TODO
 
