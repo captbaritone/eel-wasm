@@ -18,16 +18,17 @@ This project is currently just a sketch of a proof of concept.
 
 Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.winamp.com/showthread.php?t=396662).
 
-| Commit Hash | Parse   | Fail    | Ratio |
-| ----------- | ------- | ------- | ------|
-| cfeed6      | 34840   | 15455   | 69%   |
+|  Hash  | Feature         | Error #  | Error % |
+| ------ | --------------- | -------- | ------- |
+| cfeed6 | (Initial run)   | 15,455   | 31%     |
+| ab89a8 | Bitwise & and | | 13,759   | 28%     |
 
 ## TODO
 
 - [ ] Fails in Node 10 with "CompileError: AsyncCompile: Wasm decoding failed: mutable globals cannot be imported @+42"
 - [ ] Are expressions folled by a `;` valid statements, or is that just assignements?
 - [ ] Check if Milkdrop `if(test, consiquent, alternate)` is actually supposed to shortcircut.
-- [ ] Don't use EEL variable names in output code. Use a map of incrementing numbers for each namespace instead.
+- [x] Don't use EEL variable names in output code. Use a map of incrementing numbers for each namespace instead.
 - [ ] Confirm that operator precidence is respected correctly.
 - [ ] Confirm that signed values behave correctly.
 
