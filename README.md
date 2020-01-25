@@ -21,7 +21,7 @@ Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.wi
 |  Hash  | Feature         | Error #  | Error % |
 | ------ | --------------- | -------- | ------- |
 | cfeed6 | (Initial run)   | 15,455   | 31%     |
-| ab89a8 | Bitwise & and | | 13,759   | 28%     |
+| ab89a8 | Bitwise and/or  | 13,759   | 28%     |
 
 ## TODO
 
