@@ -1,6 +1,6 @@
 # EEL -> Wasm Compiler
 
-** PRE-ALPHA (incomplete!) **
+**PRE-ALPHA (incomplete!)**
 
 EEL (or NS-EEL) is a small expression language that is used in a handful of applications to allow users to author plugins or presets. Both AVS and Milkdrop, the audio visualizors for Winamp, allowed users to author "presets" which were user defined visualizations. Both types of presets used EEL as the language that users would write their equations.
 
