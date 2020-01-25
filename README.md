@@ -18,10 +18,10 @@ This project is currently just a sketch of a proof of concept.
 
 Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.winamp.com/showthread.php?t=396662).
 
-|  Hash  | Feature         | Error #  | Error % |
-| ------- | --------------- |:--------:|:-------:|
-| cfeed6b | (Initial run)   | 15,455   | 31%     |
-| ab89a8a | Bitwise and/or  | 13,759   | 28%     |
+| Hash                                     | Feature        | Error # | Error % |
+| ---------------------------------------- | -------------- | :-----: | :-----: |
+| cfeed6b74d3c279df0efd9f191a5e2fbf97972c5 | (Initial run)  | 15,455  |   31%   |
+| ab89a8a780fdffba0470678033974a990b1a7b1e | Bitwise and/or | 13,759  |   28%   |
 
 ## TODO
 
@@ -70,7 +70,6 @@ expect(globals.x.value).toBe(5);
 - [ ] Wasm exposes no trig functions. We'll have to write our own?
 - [ ] Wasm exposes no rand function. We'll have to write our own? Where do we get our seed?
 
-
 ## How to use this project
 
 First install dependencies:
@@ -93,14 +92,13 @@ yarn perf
 
 ## Prior Art
 
-* [Milkdrop's EEL compiler](https://github.com/WACUP/vis_milk2/tree/master/ns-eel2), written in C
-* [WDL](https://www.cockos.com/wdl/) includes an [EEL2 compiler](https://github.com/justinfrankel/WDL/tree/master/WDL/eel2).
-* [Butterchun's existing EEL -> JavaScript compiler](https://github.com/jberg/milkdrop-eel-parser), written in Clojure.
-* WebVS includes an [EEL -> JavaScript compiler](https://github.com/azeem/webvs/tree/master/src/expr) written in TypeScript.
+- [Milkdrop's EEL compiler](https://github.com/WACUP/vis_milk2/tree/master/ns-eel2), written in C
+- [WDL](https://www.cockos.com/wdl/) includes an [EEL2 compiler](https://github.com/justinfrankel/WDL/tree/master/WDL/eel2).
+- [Butterchun's existing EEL -> JavaScript compiler](https://github.com/jberg/milkdrop-eel-parser), written in Clojure.
+- WebVS includes an [EEL -> JavaScript compiler](https://github.com/azeem/webvs/tree/master/src/expr) written in TypeScript.
 
 ## Related Documentation
 
 - Mikdrop Preset documentation: http://www.geisswerks.com/hosted/milkdrop2/milkdrop_preset_authoring.html
 - EEL2 Documentation (may vary from EEL): https://www.cockos.com/EEL2/
 - Web Assembly spec: https://webassembly.github.io/spec/core/index.html
-
