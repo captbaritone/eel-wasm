@@ -125,7 +125,9 @@ const testCases = [
   ["Divide equals (local var)", "a = 5; a /= 2; g = a;", 2.5],
   ["Mod equals", "g = 5; g %= 2;", 1],
   ["Mod equals (local var)", "a = 5; a %= 2; g = a;", 1],
-  ["Statement block as argument", "g = int(g = 5; g + 10.5;);", 15]
+  ["Statement block as argument", "g = int(g = 5; g + 10.5;);", 15],
+  // ["Boolean and", "g = 1 && 2;", 2],
+  // ["Boolean and", "g = 1 || 2;", 1],
 ];
 
 describe("Small test cases", () => {

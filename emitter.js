@@ -242,6 +242,9 @@ function emit(ast, context) {
         end
       `;
     }
+    case "LOGICAL_EXPRESSION": {
+      throw new Error("Logical expressions are not implemented yet.")
+    }
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value, context);
       switch (ast.operator) {

@@ -13,6 +13,7 @@ const grammar = {
       ["//[^\n]*", "/* skip inline comments */"],
       ["[0-9]+", "return 'DIGITS_TOKEN'"],
       ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
+      ["(\\&\\&)|\\|\\|", "return 'LOGICAL_OPERATOR_TOKEN'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
       ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER_TOKEN'"],
       ["$", "return 'EOF'"],
@@ -30,7 +31,8 @@ const grammar = {
     ["right", "?"],
     ["left", "+", "-"],
     ["left", "*", "/", "%"],
-    ["left", , "&", "|" /* "~"" will go here as well */],
+    ["left", "&", "|" /* "~"" will go here as well */],
+    ["left", "LOGICAL_OPERATOR_TOKEN"],
     // TODO: Theoretically it should be possible to make `--1` a parse error.
   ],
 
@@ -83,6 +85,9 @@ const grammar = {
         "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5, column: @1.first_column, line: @1.first_line}"
       ]
     ],
+    LOGICAL_EXPRESSION: [
+      ["expression LOGICAL_OPERATOR_TOKEN expression", "$$ = {type: 'LOGICAL_EXPRESSION', left: $1, right: $3, operator: $2, column: @1.first_column, line: @1.first_line}"]
+    ],
     ASSIGNMENT: [
       [
         "IDENTIFIER ASSIGNMENT_OPERATOR_TOKEN expression",
@@ -122,6 +127,7 @@ const grammar = {
       "FUNCTION_CALL",
       "IDENTIFIER",
       "CONDITIONAL_EXPRESSION",
+      "LOGICAL_EXPRESSION",
       ["( EXPRESSION_BLOCK )", "$$ = $2"]
     ]
   }
