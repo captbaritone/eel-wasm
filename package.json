@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "jest": "^24.9.0",
+    "milkdrop-eel-parser": "^0.0.4",
     "milkdrop-preset-utils": "^0.1.0",
     "prettier": "^1.19.1"
   },
