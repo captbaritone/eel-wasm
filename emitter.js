@@ -13,6 +13,8 @@ function makeNamespaceResolver(prefix) {
   }
 }
 
+// TODO: These functions could either be lazily added (only appended when used)
+// or inlined.
 const STANDARD_LIBRARY = `
 ;; TODO: We should double check that this does not short circut
 (func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
@@ -23,7 +25,7 @@ const STANDARD_LIBRARY = `
   select 
 )
 ;; TODO: Simplify all this type coersion
-(func $bor (param $a f64) (param $b f64) (result f64) 
+(func $booleanOr (param $a f64) (param $b f64) (result f64) 
   get_local $a
   i32.trunc_s/f64
   get_local $b
@@ -57,7 +59,7 @@ const STANDARD_LIBRARY = `
   i64.or
   f64.convert_s/i64
 )
-(func $bnot (param $x f64) (result f64) 
+(func $booleanNot (param $x f64) (result f64) 
   get_local $x
   i32.trunc_s/f64
   i32.eqz
@@ -88,8 +90,8 @@ const FUNCTIONS = {
   // We use `gt` here rather than `lt` because the stack is backwards.
   below: { arity: 2, instruction: "f64.gt f64.convert_i32_s" },
   equal: { arity: 2, instruction: "f64.eq f64.convert_i32_s" },
-  bnot: { arity: 1, instruction: "call $bnot" },
-  bor: { arity: 2, instruction: "call $bor" },
+  bnot: { arity: 1, instruction: "call $booleanNot" },
+  bor: { arity: 2, instruction: "call $booleanOr" },
   if: { arity: 3, instruction: "call $if" }
 };
 
@@ -154,10 +156,9 @@ function emit(ast, context) {
     }
     case "EXPRESSION_BLOCK": {
       const body = ast.body.map((statement, i) => {
-        const last = i === ast.body.length - 1;
-        return `${emit(statement, context)} ${last ? "" : "drop"}`;
+        return emit(statement, context)
       });
-      return `${body.join("\n")}`;
+      return `${body.join(" drop\n")}`;
     }
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
