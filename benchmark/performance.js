@@ -1,10 +1,8 @@
 const fs = require("fs");
+const path = require("path");
 const { performance } = require("perf_hooks");
-const {
-  splitPreset,
-  createBasePresetFuns
-} = require("../node_modules/milkdrop-preset-utils");
-const milkdropParser = require("../node_modules/milkdrop-eel-parser");
+const { splitPreset, createBasePresetFuns } = require("milkdrop-preset-utils");
+const milkdropParser = require("milkdrop-eel-parser");
 
 const patch = require("./patchGlobal");
 const MILKDROP_GLOBALS = require("../milkdropGlobals");
@@ -76,7 +74,7 @@ class WasmHarness {
 }
 
 const ITERATIONS = 1000;
-function benchmark(harness, presetParts) {
+function benchmarkHarness(harness, presetParts) {
   // MilkDrop globals
   const texsizeX = 1200;
   const texsizeY = 800;
@@ -147,15 +145,11 @@ function benchmark(harness, presetParts) {
   const end = performance.now();
   const duration = end - start;
 
-  const iterationsPerSecond = Math.round(
-    (ITERATIONS / duration) * 1000
-  ).toLocaleString();
-
-  console.log(harness.name, iterationsPerSecond, "iterations / second");
+  return Math.round((ITERATIONS / duration) * 1000);
 }
 
-async function main() {
-  const preset = fs.readFileSync("./fixtures/youtube_broadcast_yourself.milk", {
+async function benchmarkMilk(filePath) {
+  const preset = fs.readFileSync(filePath, {
     encoding: "utf8"
   });
   let mainPresetText = preset.split("[preset00]")[1];
@@ -177,8 +171,29 @@ async function main() {
   const jsHarness = new JsHarness(presetMap);
   const wasmHarness = await WasmHarness.init(presetParts);
 
-  benchmark(jsHarness, presetParts);
-  benchmark(wasmHarness, presetParts);
+  const jsIterationsPerSecond = benchmarkHarness(jsHarness, presetParts);
+  const wasmIteationsPerSecond = benchmarkHarness(wasmHarness, presetParts);
+
+  return {
+    js: jsIterationsPerSecond,
+    wasm: wasmIteationsPerSecond
+  };
 }
 
+const milkFiles = [
+  "./fixtures/youtube_broadcast_yourself.milk",
+  "./fixtures/Cope - Cartune (extrusion machine) [fixed].milk",
+  "./fixtures/27_super_goats - neon country frequent flier program.milk",
+  "./fixtures/bdrv_flexi_va_ultramix_148_oblivion_notifier.milk"
+];
+
+async function main() {
+  const results = [];
+  for (const milkFile of milkFiles) {
+    const name = path.basename(milkFile);
+    const result = await benchmarkMilk(milkFile);
+    results.push({ name, ...result });
+  }
+  console.log(JSON.stringify(results, null, 2));
+}
 main();
