@@ -39,6 +39,7 @@ Result of running the parser on [a set of 52k Milkdrop Presets](http://forums.wi
 - [ ] Wasm exposes no trig functions. We'll have to write our own?
 - [ ] Wasm exposes no rand function. We'll have to write our own? Where do we get our seed?
 - [ ] Will we always need `wabt` or can we reasonably emit binary by hand? [It's huge](https://bundlephobia.com/result?p=wabt@1.0.12).
+- [ ] Will we need to add epsilon checking? https://en.wikipedia.org/wiki/Machine_epsilon
 
 ## Usage
 
