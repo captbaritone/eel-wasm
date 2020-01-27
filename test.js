@@ -107,7 +107,7 @@ const testCases = [
   ["Sign (10)", "g = sign(10);", 1],
   ["Sign (-10)", "g = sign(-10);", -1],
   ["Sign (0)", "g = sign(0);", 0],
-  ["Sign (-0)", "g = sign(-0);", -0],
+  ["Sign (-0)", "g = sign(-0);", 0],
   ["Local variables", "a = 10; g = a * a;", 100],
   ["Local variable assignment (implicit return)", "g = a = 10;", 10],
   ["Bor (true, false)", "g = bor(10, 0);", 1],

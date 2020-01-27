@@ -11,5 +11,4 @@ module.exports = {
   pow: Math.pow,
   log: Math.log,
   log10: Math.log10,
-  sign: Math.sign,
 };

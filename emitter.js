@@ -69,6 +69,18 @@ const STANDARD_LIBRARY = `
   get_local $x
   f64.mul
 )
+(func $sign (param $x f64) (result f64) 
+  f64.const 0
+  get_local $x
+  f64.lt
+
+  get_local $x
+  f64.const 0
+  f64.lt
+
+  i32.sub
+  f64.convert_s/i32
+)
 `;
 
 const BINARY_OPERATORS = {
@@ -85,6 +97,7 @@ const FUNCTIONS = {
   abs: { arity: 1, instruction: "f64.abs" },
   sqrt: { arity: 1, instruction: "f64.sqrt" },
   sqr: { arity: 1, instruction: "call $sqr" },
+  sign: { arity: 1, instruction: "call $sign" },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },
