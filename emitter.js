@@ -64,6 +64,11 @@ const STANDARD_LIBRARY = `
   i32.eqz
   f64.convert_s/i32
 )
+(func $sqr (param $x f64) (result f64) 
+  get_local $x
+  get_local $x
+  f64.mul
+)
 `;
 
 const BINARY_OPERATORS = {
@@ -79,6 +84,7 @@ const BINARY_OPERATORS = {
 const FUNCTIONS = {
   abs: { arity: 1, instruction: "f64.abs" },
   sqrt: { arity: 1, instruction: "f64.sqrt" },
+  sqr: { arity: 1, instruction: "call $sqr" },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: "f64.floor" },
