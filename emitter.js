@@ -3,14 +3,13 @@ const shims = require("./shims");
 function makeNamespaceResolver(prefix) {
   let counter = -1;
   const map = new Map();
-  return (name) => {
-
+  return name => {
     if (!map.has(name)) {
       counter++;
       map.set(name, counter);
     }
     return `$${prefix}${map.get(name)}`;
-  }
+  };
 }
 
 // TODO: These functions could either be lazily added (only appended when used)
@@ -102,49 +101,42 @@ Object.entries(shims).forEach(([key, value]) => {
 function emit(ast, context) {
   switch (ast.type) {
     case "MODULE": {
-      context.resolveGlobal = makeNamespaceResolver("G")
-      context.resolveImport = makeNamespaceResolver("F")
+      // Intialize a new module context. External variables are called
+      // `context.globals` for legacy reasonse.
+      context.resolveExternalVar = makeNamespaceResolver("E");
+      context.resolveImport = makeNamespaceResolver("F");
+      context.resolveUserVar = makeNamespaceResolver("U");
+      context.userVars = new Set();
 
-      const globals = Array.from(context.globals).map(name => {
-        return `(global ${context.resolveGlobal(
+      const externals = Array.from(context.globals).map(name => {
+        return `(global ${context.resolveExternalVar(
           name
         )} (import "js" "${name}") (mut f64))`;
       });
       const exportedFunctions = ast.exportedFunctions.map(func => {
-        return `${emit(func, context)}`;
+        return emit(func, context);
       });
-
-      const imports = Object.entries(shims).map(([key, value]) => {
+      const importedFunctions = Object.entries(shims).map(([key, value]) => {
         const arity = value.length;
         const params = new Array(arity).fill("(param f64)").join(" ");
         return `(func $${key} (import "imports" "${key}") ${params} (result f64))`;
       });
-
+      const userVars = Array.from(context.userVars).map(name => {
+        return `(global ${context.resolveUserVar(name)} (mut f64) f64.const 0)`;
+      });
       return `(module
-        ${globals.join("\n")}
-        ${imports.join("\n")}
+        ${externals.join("\n")}
+        ${importedFunctions.join("\n")}
         ${STANDARD_LIBRARY}
-        
+        ${userVars.join(" ")}
         ${exportedFunctions.join("\n")}
       )`;
     }
     case "FUNCTION_EXPORT": {
-      // Set the local scope.
-      // context.localNames = new NamespaceMap({ prefix: "L" });
-      context.resolveLocal = makeNamespaceResolver("L")
-      context.locals = new Set();
       const body = emit(ast.function, context);
-
-      const locals = Array.from(context.locals).map(name => {
-        return `(local ${context.resolveLocal(name)} f64)`;
-      });
-      // Reset the local scope. (Not strictly nessesary, but nice to clean up)
-      context.locals = new Set();
       // TODO: Should functions have implicit return?
       // This could be complex, since programs can be empty (I think).
-      return `(func ${context.resolveImport(ast.name)} ${locals.join(
-        " "
-      )} ${body})
+      return `(func ${context.resolveImport(ast.name)}  ${body})
         (export "${ast.name}" (func ${context.resolveImport(ast.name)}))`;
     }
     case "SCRIPT": {
@@ -156,9 +148,9 @@ function emit(ast, context) {
     }
     case "EXPRESSION_BLOCK": {
       const body = ast.body.map((statement, i) => {
-        return emit(statement, context)
+        return emit(statement, context);
       });
-      return `${body.join(" drop\n")}`;
+      return body.join(" drop\n");
     }
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
@@ -191,26 +183,20 @@ function emit(ast, context) {
       const global = context.globals.has(variableName);
 
       // Ensure we have registed this as a local variable.
-      if (!global && !context.locals.has(variableName)) {
-        context.locals.add(variableName);
+      if (!global && !context.userVars.has(variableName)) {
+        context.userVars.add(variableName);
       }
-      // TODO: Find a way to manage mapping global variables that need a $
-      // prefix to EEL variables that cannot use $.
+
+      const resolvedName = global
+        ? context.resolveExternalVar(variableName)
+        : context.resolveUserVar(variableName);
 
       // TODO: In lots of cases we don't care about the return value. In those
       // cases we should try to find a way to omit the `get/drop` combo.
       // Peephole optimization seems to be the conventional way to do this.
       // https://en.wikipedia.org/wiki/Peephole_optimization
-
-      // TODO: In the cases where we set and then get a local an _don't_ want to
-      // drop it, we could use `tee_local`. This might also be a good peephole
-      // optimizaiton.
-      const get = global
-        ? `global.get ${context.resolveGlobal(variableName)}`
-        : `get_local ${context.resolveLocal(variableName)}`;
-      const set = global
-        ? `global.set ${context.resolveGlobal(variableName)}`
-        : `set_local ${context.resolveLocal(variableName)}`;
+      const get = `global.get ${resolvedName}`;
+      const set = `global.set ${resolvedName}`;
 
       switch (ast.operator) {
         case "=":
@@ -243,7 +229,7 @@ function emit(ast, context) {
       `;
     }
     case "LOGICAL_EXPRESSION": {
-      throw new Error("Logical expressions are not implemented yet.")
+      throw new Error("Logical expressions are not implemented yet.");
     }
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value, context);
@@ -262,12 +248,14 @@ function emit(ast, context) {
         // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
         // function calls and assignments we just peek at the name and never emit
         // it.
-        return `global.get ${context.resolveGlobal(variableName)}`;
+        return `global.get ${context.resolveExternalVar(variableName)}`;
       }
-      if (context.locals.has(variableName)) {
-        return `local.get ${context.resolveLocal(variableName)}`;
+      if (!context.userVars.has(variableName)) {
+        // EEL lets you access variables before you define them, so we register
+        // each access that we encounter.
+        context.userVars.add(variableName);
       }
-      throw new Error(`Unknown variable "${variableName}"`);
+      return `global.get ${context.resolveUserVar(variableName)}`;
     case "NUMBER_LITERAL":
       return `f64.const ${ast.value}`;
     default:
