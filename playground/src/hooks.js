@@ -3,12 +3,17 @@ import { parse } from "parser";
 import { emit } from "emitter";
 import shims from "shims";
 import _wabt from "wabt";
+import optimizeAst from "optimizers/optimize";
 
 const wabt = _wabt();
 
 const identity = val => val;
 
-export function useUrlState(key, initial, {serialize = identity, deserialize = identity} = {}) {
+export function useUrlState(
+  key,
+  initial,
+  { serialize = identity, deserialize = identity } = {}
+) {
   const [eel, setEel] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const urlEel = params.get(key);
@@ -50,19 +55,23 @@ async function modFromWat(wat, globals) {
   return await WebAssembly.instantiate(mod, importObject);
 }
 
-export function useAst(eel) {
+export function useAst(eel, optimize) {
   const [ast, setAst] = useState(null);
   const [astError, setAstError] = useState(null);
   useEffect(() => {
     try {
-      setAst(parse(eel));
+      let _ast = parse(eel);
+      if (optimize) {
+        _ast = optimizeAst(_ast);
+      }
+      setAst(_ast);
       setAstError(null);
     } catch (e) {
       setAstError(e.message);
     }
-  }, [eel]);
+  }, [eel, optimize]);
 
-  return [ast, astError];
+  return [ast, astError, optimize];
 }
 
 export function useWasm(ast, globals) {
@@ -118,7 +127,7 @@ export function useMod(wasm, globals) {
     // new `wasm` rather than trying to build the mod with the old `wasm` and the
     // new `globals`.
     // eslint-disable-next-line
-  }, [ wasm]);
+  }, [wasm]);
 
   return mod;
 }
@@ -157,21 +166,27 @@ export function useGlobals() {
     { serialize: serializeGlobals, deserialize: deserializeGlobals }
   );
 
-  const addGlobal = useCallback(name => {
-    setGlobals(globals => {
-      return {
-        ...globals,
-        [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
-      };
-    });
-  }, [setGlobals]);
+  const addGlobal = useCallback(
+    name => {
+      setGlobals(globals => {
+        return {
+          ...globals,
+          [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+        };
+      });
+    },
+    [setGlobals]
+  );
 
-  const removeGlobal = useCallback(name => {
-    setGlobals(globals => {
-      const { [name]: _, ...newGlobals } = globals;
-      return newGlobals;
-    });
-  }, [setGlobals]);
+  const removeGlobal = useCallback(
+    name => {
+      setGlobals(globals => {
+        const { [name]: _, ...newGlobals } = globals;
+        return newGlobals;
+      });
+    },
+    [setGlobals]
+  );
 
   return { globals, addGlobal, removeGlobal };
 }

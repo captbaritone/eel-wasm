@@ -35,14 +35,20 @@ const EDITOR_OPTIONS = {
 };
 
 function App() {
+  const [optimize, setOptimize] = useUrlState("optimize", false, {
+    serialize: bool => (bool ? 1 : 0),
+    deserialize: val => Boolean(Number(val))
+  });
   const { globals, addGlobal, removeGlobal } = useGlobals();
   const [eel, setEel] = useUrlState("eel", "foo = 1;");
   const [astString, setAstString] = useState(null);
-  const [ast, astError] = useAst(eel);
+  const [ast, astError] = useAst(eel, optimize);
   const [wasm, wasmError] = useWasm(ast, globals);
   const anyErrors = astError != null || wasmError != null;
   const mod = useMod(anyErrors ? null : wasm, globals);
   const forceUpdate = useForceUpdate();
+
+
 
   const run = useMemo(() => {
     if (mod == null) {
@@ -113,6 +119,16 @@ function App() {
       </Column>
       <Column>
         <h2>AST</h2>
+        <label>
+          Optimize{" "}
+          <input
+            type="checkbox"
+            checked={optimize}
+            onChange={e => {
+              setOptimize(e.target.checked);
+            }}
+          />
+        </label>
         {astError != null && <ErrorBlock>{astError}</ErrorBlock>}
         <Editor
           height="90vh"
