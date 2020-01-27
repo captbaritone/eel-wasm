@@ -73,6 +73,18 @@ class WasmHarness {
   }
 }
 
+class NoopHarness {
+  constructor() {
+    this.initEqs = () => {};
+    this.frameEqs = () => {};
+    this.pixelEqs = () => {};
+    this.name = "Noop";
+  }
+
+  setVal(_key, _val) { }
+}
+
+
 const ITERATIONS = 1000;
 function benchmarkHarness(harness, presetParts) {
   // MilkDrop globals
@@ -170,13 +182,16 @@ async function benchmarkMilk(filePath) {
   );
   const jsHarness = new JsHarness(presetMap);
   const wasmHarness = await WasmHarness.init(presetParts);
+  const noopHarness = new NoopHarness(presetParts);
 
   const jsIterationsPerSecond = benchmarkHarness(jsHarness, presetParts);
   const wasmIteationsPerSecond = benchmarkHarness(wasmHarness, presetParts);
+  const noopIteationsPerSecond = benchmarkHarness(noopHarness, presetParts);
 
   return {
     js: jsIterationsPerSecond,
-    wasm: wasmIteationsPerSecond
+    wasm: wasmIteationsPerSecond,
+    noop: noopIteationsPerSecond,
   };
 }
 
