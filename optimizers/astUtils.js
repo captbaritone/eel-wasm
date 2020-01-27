@@ -2,15 +2,22 @@ const CHILDREN = {
   MODULE: [{ type: "ARRAY", key: "exportedFunctions" }],
   FUNCTION_EXPORT: [{ type: "NODE", key: "function" }],
   ASSIGNMENT_EXPRESSION: [
-    { type: "NODE", key: "left" },
     { type: "NODE", key: "right" }
+    // `left` is a child node, but IDENTIFER is not emitted in the same way, so
+    // we skip here.
+    /* { type: "NODE", key: "left" },*/
   ],
   SCRIPT: [{ type: "ARRAY", key: "body" }],
   EXPRESSION_BLOCK: [{ type: "ARRAY", key: "body" }],
   UNARY_EXPRESSION: [{ type: "NODE", key: "value" }],
   NUMBER_LITERAL: [],
   IDENTIFIER: [],
-  CALL_EXPRESSION: [{type: "ARRAY", key: "arguments"}, {type: "NODE", key: "callee"}],
+  CALL_EXPRESSION: [
+    { type: "ARRAY", key: "arguments" }
+    // `callee` is a child node, but IDENTIFER is not emitted in the same way, so
+    // we skip here.
+    /* {type: "NODE", key: "callee"}*/
+  ],
   BINARY_EXPRESSION: [
     { type: "NODE", key: "left" },
     { type: "NODE", key: "right" }
@@ -25,7 +32,9 @@ const CHILDREN = {
 function mapAst(ast, cb) {
   const children = CHILDREN[ast.type];
   let newAst = ast;
-  if (children != null) {
+  if (children == null) {
+    throw new Error(`Unknown children definition for ${ast.type}`);
+  }
     children.forEach(child => {
       if (child.type === "NODE") {
         const orignalChild = ast[child.key];
@@ -46,9 +55,6 @@ function mapAst(ast, cb) {
         }
       }
     });
-  } else {
-    throw new Error(`Unknown children definitin for ${ast.type}`);
-  }
 
   return cb(newAst);
 }
