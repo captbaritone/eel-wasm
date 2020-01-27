@@ -36,7 +36,7 @@ class JsHarness {
 }
 
 class WasmHarness {
-  static async init(presetParts) {
+  static async init(presetParts, optimize = false) {
     const globals = {};
     MILKDROP_GLOBALS.forEach(name => {
       globals[name] = new WebAssembly.Global(
@@ -53,7 +53,8 @@ class WasmHarness {
 
     const mod = await loadModule({
       globals,
-      functions
+      functions,
+      optimize
     });
 
     return new WasmHarness(mod, globals);
@@ -182,15 +183,18 @@ async function benchmarkMilk(filePath) {
   );
   const jsHarness = new JsHarness(presetMap);
   const wasmHarness = await WasmHarness.init(presetParts);
+  const wasmOptimizedHarness = await WasmHarness.init(presetParts, true);
   const noopHarness = new NoopHarness(presetParts);
 
   const jsIterationsPerSecond = benchmarkHarness(jsHarness, presetParts);
   const wasmIteationsPerSecond = benchmarkHarness(wasmHarness, presetParts);
+  const wasmOptimizedIteationsPerSecond = benchmarkHarness(wasmOptimizedHarness, presetParts);
   const noopIteationsPerSecond = benchmarkHarness(noopHarness, presetParts);
 
   return {
     js: jsIterationsPerSecond,
     wasm: wasmIteationsPerSecond,
+    wasmOptimized: wasmOptimizedIteationsPerSecond,
     noop: noopIteationsPerSecond,
   };
 }

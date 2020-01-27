@@ -135,19 +135,33 @@ const testCases = [
 
 describe("Small test cases", () => {
   testCases.forEach(testCase => {
-    const [description, expression, expectedResult, debug] = testCase;
-    test(`${description}: "${expression}"`, async () => {
-      const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
-      const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+    const [description, expression, expectedResult] = testCase;
+    describe(`${description}: "${expression}"`, () => {
+      test("not optimized", async () => {
+        const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
+        const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 
-      const mod = await loadModule({
-        globals: { g, x },
-        functions: { run: expression },
-        debug: debug === true
+        const mod = await loadModule({
+          globals: { g, x },
+          functions: { run: expression },
+        });
+
+        mod.exports.run();
+        expect(g.value).toBe(expectedResult);
       });
+      test("optimized", async () => {
+        const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
+        const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 
-      mod.exports.run();
-      expect(g.value).toBe(expectedResult);
+        const mod = await loadModule({
+          globals: { g, x },
+          functions: { run: expression },
+          optimize: true
+        });
+
+        mod.exports.run();
+        expect(g.value).toBe(expectedResult);
+      });
     });
   });
 });
