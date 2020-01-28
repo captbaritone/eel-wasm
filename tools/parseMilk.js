@@ -8,6 +8,9 @@ const path = require("path");
 const { parse } = require("../src/parser");
 const { splitPreset } = require("milkdrop-preset-utils");
 
+// Turn this on to get a specific error report, not just an aggregate.
+const FIND_ERROR = false;
+
 const EEL_KEYS = ["presetInit", "perFrame", "perVertex"];
 const SUB_EEL_KEYS = ["init_eqs_str", "frame_eqs_str", "point_eqs_str"];
 
@@ -47,8 +50,10 @@ function validate(milkPath) {
     try {
       parse(eel);
     } catch (e) {
-      // console.log(eel)
-      // console.error(`Error in ${name} in "${milkPath}"`);
+      if (FIND_ERROR) {
+        console.log(eel);
+        console.error(`Error in ${name} in "${milkPath}"`);
+      }
       throw e;
     }
   });
@@ -72,6 +77,9 @@ milkFiles.forEach(milk => {
     validate(milk);
     good++;
   } catch (e) {
+    if(FIND_ERROR) {
+      throw new Error(e);
+    }
     // console.error(e);
     const error = e.message.split("\n")[3];
     if (error in errors) {
