@@ -40,7 +40,7 @@ const grammar = {
     // TODO: Are empty programs valid?
     SCRIPT: [
       [
-        "expressions EOF",
+        "expressionsOptionalTrailingSemi EOF",
         "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}"
       ],
       [
@@ -52,9 +52,16 @@ const grammar = {
       ["expression ;", "$$ = [$1]"],
       ["expressions expression ;", "$$ = $1.concat([$2])"]
     ],
+    // This feels like a hack, but I haven't managed to find another way to
+    // express optional semicolons while still keeping the grammar unambiguous.
+    // Notably this does not allow single expressions to omit the trailing semi.
+    expressionsOptionalTrailingSemi: [
+      ["expressions", "$$ = $1"],
+      ["expressions expression", "$$ = $1.concat([$2])"]
+    ],
     EXPRESSION_BLOCK: [
       [
-        "expressions",
+        "expressionsOptionalTrailingSemi",
         "$$ = {type: 'EXPRESSION_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}"
       ]
     ],
