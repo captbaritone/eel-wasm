@@ -6,9 +6,9 @@
   "prettier": {},
   "scripts": {
     "test": "jest",
-    "ci": "npm test && node ./scripts/parseMilk.js",
-    "perf": "node benchmark/performance.js",
-    "test-parse": "node scripts/parseMilk.js ./fixtures/mega"
+    "ci": "npm test && node tools/parseMilk.js",
+    "perf": "node tools/benchmark/performance.js",
+    "test-parse": "node tools/parseMilk.js ./fixtures/mega"
   },
   "dependencies": {
     "jison": "^0.4.18",

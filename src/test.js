@@ -1,6 +1,6 @@
-const { loadModule } = require("./evaluator");
+const { loadModule } = require("../tools/evaluator");
 const fs = require("fs");
-const MILKDROP_GLOBALS = require("./milkdropGlobals");
+const MILKDROP_GLOBALS = require("../tools/milkdropGlobals");
 const { parse } = require("./parser");
 
 test("Minimal example", async () => {

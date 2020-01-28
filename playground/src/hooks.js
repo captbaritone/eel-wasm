@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { parse } from "parser";
-import { emit } from "emitter";
-import shims from "shims";
+import { parse } from "src/parser";
+import { emit } from "src/emitter";
+import shims from "src/shims";
 import _wabt from "wabt";
-import optimizeAst from "optimizers/optimize";
+import optimizeAst from "src/optimizers/optimize";
 
 const wabt = _wabt();
 

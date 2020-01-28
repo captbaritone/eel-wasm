@@ -4,7 +4,7 @@ const printDiff = require("print-diff");
 const fs = require("fs");
 const path = require("path");
 const { parse } = require("../parser");
-const { print } = require("../prettyPrinter");
+const { print } = require("./prettyPrinter");
 const optimize = require("../optimizers/optimize");
 
 function main() {

@@ -1,7 +1,7 @@
 const foldConstants = require("./constantFolding");
 const propagateConstants = require("./constantPropagation");
 const { parse } = require("../parser");
-const { print } = require("../prettyPrinter");
+const { print } = require("../../tools/prettyPrinter");
 
 function runPass(ast) {
   return propagateConstants(foldConstants(ast));

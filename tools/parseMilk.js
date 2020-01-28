@@ -5,7 +5,7 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { parse } = require("../parser");
+const { parse } = require("../src/parser");
 const { splitPreset } = require("milkdrop-preset-utils");
 
 const EEL_KEYS = ["presetInit", "perFrame", "perVertex"];

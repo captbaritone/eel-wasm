@@ -1,6 +1,6 @@
 const foldConstants = require("./constantFolding");
 const { parse } = require("../parser");
-const {print} = require("../prettyPrinter")
+const { print } = require("../../tools/prettyPrinter");
 
 const TESTS = [
   ["Unary negetion", "-1;", -1],
