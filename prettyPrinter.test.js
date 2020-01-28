@@ -5,6 +5,10 @@ function transform(code) {
   return print(parse(code));
 }
 
+function joinLines(str) {
+  return str.replace("\n", " ")
+}
+
 const expressions = [
   "x = 5;",
   "x = if(1, 2, 3);",
@@ -16,6 +20,6 @@ const expressions = [
 ];
 expressions.forEach(expression => {
   test(`"${expression}" can be pretty printed`, () => {
-    expect(transform(expression)).toBe(expression);
+    expect(joinLines(transform(expression))).toBe(expression);
   });
 });

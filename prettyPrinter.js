@@ -7,10 +7,10 @@ function print(ast) {
       throw new Error("FUNCTION_EXPORT cannot be pretty printed");
     }
     case "SCRIPT": {
-      return ast.body.map(expression => print(expression)).join(" ");
+      return ast.body.map(expression => print(expression)).join("\n");
     }
     case "EXPRESSION_BLOCK": {
-      return ast.body.map(expression => print(expression)).join(" ");
+      return ast.body.map(expression => print(expression)).join("\n");
     }
     case "BINARY_EXPRESSION": {
       return `${print(ast.left)} ${ast.operator} ${print(ast.right)}`;

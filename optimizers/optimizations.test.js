@@ -14,5 +14,9 @@ test("Optimizaitions", () => {
     ast = newAst;
     newAst = runPass(newAst);
   }
-  expect(print(newAst)).toMatchInlineSnapshot(`"a = 10; b = 20; c = 2;"`);
+  expect(print(newAst)).toMatchInlineSnapshot(`
+    "a = 10;
+    b = 20;
+    c = 2;"
+  `);
 });
