@@ -910,6 +910,11 @@ diff-sequences@^24.9.0:
   resolved "https://registry.yarnpkg.com/diff-sequences/-/diff-sequences-24.9.0.tgz#5715d6244e2aa65f48bba0bc972db0b0b11e95b5"
   integrity sha512-Dj6Wk3tWyTE+Fo1rW8v0Xhwk80um6yFYKbuAxc9c3EZxIHFDYwbi34Uk42u1CdnIiVorvt4RmlSDjIPyzGC2ew==
 
+diff@^4.0.1:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/diff/-/diff-4.0.2.tgz#60f3aecb89d5fae520c11aa19efc2bb982aade7d"
+  integrity sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==
+
 domexception@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/domexception/-/domexception-1.0.1.tgz#937442644ca6a31261ef36e3ec677fe805582c90"
@@ -2601,6 +2606,13 @@ pretty-format@^24.9.0:
     ansi-regex "^4.0.0"
     ansi-styles "^3.2.0"
     react-is "^16.8.4"
+
+print-diff@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/print-diff/-/print-diff-1.0.0.tgz#acd02edc899bf6c320fd3a30769b7a7374c71059"
+  integrity sha512-tvYT1pVzXxTOMLDRyu6ncaF2LL69d0EAchmGGGJoLc/2GOcnRKcO4PV89l7/s3Er1CpXTgFv7jB4XDgd+yxBjA==
+  dependencies:
+    diff "^4.0.1"
 
 prompts@^2.0.1:
   version "2.3.0"
