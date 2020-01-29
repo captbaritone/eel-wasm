@@ -12,15 +12,6 @@ function makeNamespaceResolver(prefix) {
   };
 }
 
-// These are temporary functions to help get us from wat to wasm
-function cat(arr) {
-  return arr;
-}
-
-function split(str) {
-  return str;
-}
-
 function arrayJoin(arr, joiner) {
   const newArr = [];
   for (let i = 0; i < arr.length; i++) {
@@ -207,7 +198,7 @@ function emit(ast, context) {
     }
     case "FUNCTION_EXPORT": {
       // We do a real join here since from here on out we must have strings
-      const body = split(emit(ast.function, context)).join(" ");
+      const body = emit(ast.function, context).join(" ");
       // TODO: Should functions have implicit return?
       // This could be complex, since programs can be empty (I think).
       return `(func ${context.resolveImport(ast.name)}  ${body})
@@ -215,25 +206,25 @@ function emit(ast, context) {
     }
     case "SCRIPT": {
       const body = ast.body.map((statement, i) => {
-        return [...split(emit(statement, context)), "drop"];
+        return [...emit(statement, context), "drop"];
       });
 
-      return cat(flatten(body));
+      return flatten(body);
     }
     case "EXPRESSION_BLOCK": {
       const body = ast.body.map((statement, i) => {
-        return split(emit(statement, context));
+        return emit(statement, context);
       });
-      return cat(flatten(arrayJoin(body, ["drop"])));
+      return flatten(arrayJoin(body, ["drop"]));
     }
     case "BINARY_EXPRESSION": {
-      const left = split(emit(ast.left, context));
-      const right = split(emit(ast.right, context));
+      const left = emit(ast.left, context);
+      const right = emit(ast.right, context);
       const instruction = BINARY_OPERATORS[ast.operator];
       if (instruction == null) {
         throw new Error(`Unknown binary operator ${ast.operator}`);
       }
-      return cat([...left, ...right, ...instruction]);
+      return [...left, ...right, ...instruction];
     }
     case "CALL_EXPRESSION": {
       const func = FUNCTIONS[ast.callee.value];
@@ -250,13 +241,13 @@ function emit(ast, context) {
       }
       const args = flatten(
         ast.arguments.map(node => {
-          return split(emit(node, context));
+          return emit(node, context);
         })
       );
-      return cat([...args, ...instruction]);
+      return [...args, ...instruction];
     }
     case "ASSIGNMENT_EXPRESSION": {
-      const right = split(emit(ast.right, context));
+      const right = emit(ast.right, context);
       const variableName = ast.left.value;
       const global = context.globals.has(variableName);
 
@@ -278,17 +269,17 @@ function emit(ast, context) {
 
       switch (ast.operator) {
         case "=":
-          return cat([...right, ...set, ...get]);
+          return [...right, ...set, ...get];
         case "+=":
-          return cat([...get, ...right, "f64.add", ...set, ...get]);
+          return [...get, ...right, "f64.add", ...set, ...get];
         case "-=":
-          return cat([...get, ...right, "f64.sub", ...set, ...get]);
+          return [...get, ...right, "f64.sub", ...set, ...get];
         case "*=":
-          return cat([...get, ...right, "f64.mul", ...set, ...get]);
+          return [...get, ...right, "f64.mul", ...set, ...get];
         case "/=":
-          return cat([...get, ...right, "f64.div", ...set, ...get]);
+          return [...get, ...right, "f64.div", ...set, ...get];
         case "%=":
-          return cat([...get, ...right, "call", "$mod", ...set, ...get]);
+          return [...get, ...right, "call", "$mod", ...set, ...get];
         default:
           throw new Error(`Unknown assignment operator "${ast.operator}"`);
       }
@@ -296,10 +287,10 @@ function emit(ast, context) {
     case "CONDITIONAL_EXPRESSION": {
       // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
       // Is that an optimization that we might want as well?
-      const test = split(emit(ast.test, context));
-      const consiquent = split(emit(ast.consiquent, context));
-      const alternate = split(emit(ast.alternate, context));
-      return cat([
+      const test = emit(ast.test, context);
+      const consiquent = emit(ast.consiquent, context);
+      const alternate = emit(ast.alternate, context);
+      return [
         ...test,
         "f64.const",
         0,
@@ -312,18 +303,18 @@ function emit(ast, context) {
         "else",
         ...alternate,
         "end"
-      ]);
+      ];
     }
     case "LOGICAL_EXPRESSION": {
       throw new Error("Logical expressions are not implemented yet.");
     }
     case "UNARY_EXPRESSION": {
-      const value = split(emit(ast.value, context));
+      const value = emit(ast.value, context);
       switch (ast.operator) {
         case "-":
-          return cat([...value, `f64.neg`]);
+          return [...value, `f64.neg`];
         case "+":
-          return cat([...value]);
+          return [...value];
         default:
           throw new Error(`Unknown unary operator ${ast.operator}`);
       }
@@ -334,16 +325,16 @@ function emit(ast, context) {
         // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
         // function calls and assignments we just peek at the name and never emit
         // it.
-        return cat([`global.get`, context.resolveExternalVar(variableName)]);
+        return [`global.get`, context.resolveExternalVar(variableName)];
       }
       if (!context.userVars.has(variableName)) {
         // EEL lets you access variables before you define them, so we register
         // each access that we encounter.
         context.userVars.add(variableName);
       }
-      return cat([`global.get`, context.resolveUserVar(variableName)]);
+      return [`global.get`, context.resolveUserVar(variableName)];
     case "NUMBER_LITERAL":
-      return cat([`f64.const`, ast.value]);
+      return [`f64.const`, ast.value];
     default:
       throw new Error(`Unknown AST node type ${ast.type}`);
   }
