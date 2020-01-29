@@ -32,133 +32,183 @@ function flatten(arr) {
   return newArr;
 }
 
+const op = {
+  select: "select",
+  call: "call",
+  drop: "drop",
+  get_local: "get_local",
+  i32_or: "i32.or",
+  i32_const: "i32.const",
+  i32_ne: "i32.ne",
+  // i32_eq: "i32.eq",
+  i32_eqz: "i32.eqz",
+  i64_and: "i64.and",
+  i64_or: "i64.or",
+  f64_const: "f64.const",
+  f64_ne: "f64.ne",
+  f64_neg: "f64.neg",
+  f64_add: "f64.add",
+  f64_sub: "f64.sub",
+  f64_mul: "f64.mul",
+  f64_div: "f64.div",
+  f64_lt: "f64.lt",
+  global_get: "global.get",
+  global_set: "global.set",
+}
+
+// We do a little hack here. We wrap every opcode output in an array. Arrays
+// containing a single string stringify to that string, so it's safe to use as a
+// string, but it allows us to do a test in `joinCode` to see if anyone is using
+// a string where they should be using the constant.
+Object.keys(op).forEach(opKey => {
+  op[opKey] = [op[opKey]]
+})
+const KNOWN_OPS = new Set(Object.values(op).map(value => value.toString()))
+
+// Having a choke point where all code gets joined will let us make assertions
+// about code before it gets stringified. This will help as we migrate to binary
+// output.
+function joinCode(arr) {
+  arr.forEach(value => {
+    if(KNOWN_OPS.has(value)) {
+      console.warn(`Found opcode that was not using the constant: "${value}"`)
+    }
+  })
+  return arr.join(" ");
+}
+
+
 // TODO: These functions could either be lazily added (only appended when used)
 // or inlined.
 const STANDARD_LIBRARY = `
 ;; TODO: We should double check that this does not short circut
 (func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
-  ${[
-    "get_local",
+  ${joinCode([
+    op.get_local,
     "$consiquent",
-    "get_local",
+    op.get_local,
     "$alternate",
-    "get_local",
+    op.get_local,
     "$test",
-    "f64.const",
+    op.f64_const,
     0,
-    "f64.ne",
-    "select"
-  ].join(" ")}
+    op.f64_ne,
+    op.select
+  ])}
 )
 ;; TODO: Simplify all this type coersion
 (func $booleanOr (param $a f64) (param $b f64) (result f64) 
-  ${[
-    "get_local",
+  ${joinCode([
+    op.get_local,
     "$a",
     "i32.trunc_s/f64",
-    "get_local",
+    op.get_local,
     "$b",
     "i32.trunc_s/f64",
-    "i32.or",
-    "i32.const",
+    op.i32_or,
+    op.i32_const,
     0,
-    "i32.ne",
+    op.i32_ne,
     "f64.convert_s/i32"
-  ].join(" ")}
+  ])}
 )
 (func $mod (param $a f64) (param $b f64) (result f64) 
-  ${[
-    "get_local",
+  ${joinCode([
+    op.get_local,
     "$a",
     "i64.trunc_s/f64",
-    "get_local",
+    op.get_local,
     "$b",
     "i64.trunc_s/f64",
     "i64.rem_s",
     "f64.convert_s/i64"
-  ].join(" ")}
+  ])}
 )
 (func $bitwiseAnd (param $a f64) (param $b f64) (result f64) 
-  ${[
-    "get_local",
+  ${joinCode([
+    op.get_local,
     "$a",
     "i64.trunc_s/f64",
-    "get_local",
+    op.get_local,
     "$b",
     "i64.trunc_s/f64",
-    "i64.and",
+    op.i64_and,
     "f64.convert_s/i64"
-  ].join(" ")})
+  ])})
 (func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
-  ${[
-    "get_local",
+  ${joinCode([
+    op.get_local,
     "$a",
     "i64.trunc_s/f64",
-    "get_local",
+    op.get_local,
     "$b",
     "i64.trunc_s/f64",
-    "i64.or",
+    op.i64_or,
     "f64.convert_s/i64"
-  ].join(" ")}
+  ])}
 )
 (func $booleanNot (param $x f64) (result f64) 
-  ${["get_local", "$x", "i32.trunc_s/f64", "i32.eqz", "f64.convert_s/i32"].join(
-    " "
-  )})
+  ${joinCode([
+    op.get_local,
+    "$x",
+    "i32.trunc_s/f64",
+    op.i32_eqz,
+    "f64.convert_s/i32"
+  ])})
 (func $sqr (param $x f64) (result f64) 
-  ${["get_local", "$x", "get_local", "$x", "f64.mul"].join(" ")}
+  ${joinCode([op.get_local, "$x", op.get_local, "$x", op.f64_mul])}
 )
 (func $sign (param $x f64) (result f64) 
-  ${[
-    "f64.const",
+  ${joinCode([
+    op.f64_const,
     0,
-    "get_local",
+    op.get_local,
     "$x",
-    "f64.lt",
-    "get_local",
+    op.f64_lt,
+    op.get_local,
     "$x",
-    "f64.const",
+    op.f64_const,
     0,
-    "f64.lt",
+    op.f64_lt,
     "i32.sub",
     "f64.convert_s/i32"
-  ].join(" ")})
+  ])})
 `;
 
 const BINARY_OPERATORS = {
-  "+": ["f64.add"],
-  "-": ["f64.sub"],
-  "*": ["f64.mul"],
-  "/": ["f64.div"],
-  "%": ["call", "$mod"],
-  "|": ["call", "$bitwiseOr"],
-  "&": ["call", "$bitwiseAnd"]
+  "+": [op.f64_add],
+  "-": [op.f64_sub],
+  "*": [op.f64_mul],
+  "/": [op.f64_div],
+  "%": [op.call, "$mod"],
+  "|": [op.call, "$bitwiseOr"],
+  "&": [op.call, "$bitwiseAnd"]
 };
 
 const FUNCTIONS = {
   abs: { arity: 1, instruction: ["f64.abs"] },
   sqrt: { arity: 1, instruction: ["f64.sqrt"] },
-  sqr: { arity: 1, instruction: ["call", "$sqr"] },
-  sign: { arity: 1, instruction: ["call", "$sign"] },
+  sqr: { arity: 1, instruction: [op.call, "$sqr"] },
+  sign: { arity: 1, instruction: [op.call, "$sign"] },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
   int: { arity: 1, instruction: ["f64.floor"] },
   min: { arity: 2, instruction: ["f64.min"] },
   max: { arity: 2, instruction: ["f64.max"] },
   // We use `lt` here rather than `gt` because the stack is backwards.
-  above: { arity: 2, instruction: ["f64.lt", "f64.convert_i32_s"] },
+  above: { arity: 2, instruction: [op.f64_lt, "f64.convert_i32_s"] },
   // We use `gt` here rather than `lt` because the stack is backwards.
   below: { arity: 2, instruction: ["f64.gt", "f64.convert_i32_s"] },
   equal: { arity: 2, instruction: ["f64.eq", "f64.convert_i32_s"] },
-  bnot: { arity: 1, instruction: ["call", "$booleanNot"] },
-  bor: { arity: 2, instruction: ["call", "$booleanOr"] },
-  if: { arity: 3, instruction: ["call", "$if"] }
+  bnot: { arity: 1, instruction: [op.call, "$booleanNot"] },
+  bor: { arity: 2, instruction: [op.call, "$booleanOr"] },
+  if: { arity: 3, instruction: [op.call, "$if"] }
 };
 
 Object.entries(shims).forEach(([key, value]) => {
   FUNCTIONS[key] = {
     arity: value.length,
-    instruction: [`call`, "$" + key]
+    instruction: [op.call, "$" + key]
   };
 });
 
@@ -198,7 +248,7 @@ function emit(ast, context) {
     }
     case "FUNCTION_EXPORT": {
       // We do a real join here since from here on out we must have strings
-      const body = emit(ast.function, context).join(" ");
+      const body = joinCode(emit(ast.function, context));
       // TODO: Should functions have implicit return?
       // This could be complex, since programs can be empty (I think).
       return `(func ${context.resolveImport(ast.name)}  ${body})
@@ -206,7 +256,7 @@ function emit(ast, context) {
     }
     case "SCRIPT": {
       const body = ast.body.map((statement, i) => {
-        return [...emit(statement, context), "drop"];
+        return [...emit(statement, context), op.drop];
       });
 
       return flatten(body);
@@ -215,7 +265,7 @@ function emit(ast, context) {
       const body = ast.body.map((statement, i) => {
         return emit(statement, context);
       });
-      return flatten(arrayJoin(body, ["drop"]));
+      return flatten(arrayJoin(body, [op.drop]));
     }
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
@@ -264,22 +314,22 @@ function emit(ast, context) {
       // cases we should try to find a way to omit the `get/drop` combo.
       // Peephole optimization seems to be the conventional way to do this.
       // https://en.wikipedia.org/wiki/Peephole_optimization
-      const get = [`global.get`, resolvedName];
-      const set = [`global.set`, resolvedName];
+      const get = [op.global_get, resolvedName];
+      const set = [op.global_set, resolvedName];
 
       switch (ast.operator) {
         case "=":
           return [...right, ...set, ...get];
         case "+=":
-          return [...get, ...right, "f64.add", ...set, ...get];
+          return [...get, ...right, op.f64_add, ...set, ...get];
         case "-=":
-          return [...get, ...right, "f64.sub", ...set, ...get];
+          return [...get, ...right, op.f64_sub, ...set, ...get];
         case "*=":
-          return [...get, ...right, "f64.mul", ...set, ...get];
+          return [...get, ...right, op.f64_mul, ...set, ...get];
         case "/=":
-          return [...get, ...right, "f64.div", ...set, ...get];
+          return [...get, ...right, op.f64_div, ...set, ...get];
         case "%=":
-          return [...get, ...right, "call", "$mod", ...set, ...get];
+          return [...get, ...right, op.call, "$mod", ...set, ...get];
         default:
           throw new Error(`Unknown assignment operator "${ast.operator}"`);
       }
@@ -292,9 +342,9 @@ function emit(ast, context) {
       const alternate = emit(ast.alternate, context);
       return [
         ...test,
-        "f64.const",
+        op.f64_const,
         0,
-        "f64.ne",
+        op.f64_ne,
         "if",
         // TODO: This will have to be cleaned up when we switch to binary
         "(result",
@@ -312,7 +362,7 @@ function emit(ast, context) {
       const value = emit(ast.value, context);
       switch (ast.operator) {
         case "-":
-          return [...value, `f64.neg`];
+          return [...value, op.f64_neg];
         case "+":
           return [...value];
         default:
@@ -325,16 +375,16 @@ function emit(ast, context) {
         // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
         // function calls and assignments we just peek at the name and never emit
         // it.
-        return [`global.get`, context.resolveExternalVar(variableName)];
+        return [op.global_get, context.resolveExternalVar(variableName)];
       }
       if (!context.userVars.has(variableName)) {
         // EEL lets you access variables before you define them, so we register
         // each access that we encounter.
         context.userVars.add(variableName);
       }
-      return [`global.get`, context.resolveUserVar(variableName)];
+      return [op.global_get, context.resolveUserVar(variableName)];
     case "NUMBER_LITERAL":
-      return [`f64.const`, ast.value];
+      return [op.f64_const, ast.value];
     default:
       throw new Error(`Unknown AST node type ${ast.type}`);
   }
