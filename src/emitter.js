@@ -12,29 +12,13 @@ function makeNamespaceResolver(prefix) {
   };
 }
 
-const TRY = false;
-
 // These are temporary functions to help get us from wat to wasm
 function cat(arr) {
-  if(TRY) {
-    return arr;
-  }
-  arr.forEach(val => {
-    if (Array.isArray(val)) {
-      throw new Error("Cat an array", val);
-    }
-    if(/\s/.test(val)) {
-      // throw new Error(`Value had a space! "${val}"`)
-    }
-  });
-  return arr.join(" ");
+  return arr;
 }
 
 function split(str) {
-  if(TRY) {
-    return str;
-  }
-  return str.split(" ");
+  return str;
 }
 
 function arrayJoin(arr, joiner) {
@@ -62,7 +46,7 @@ function flatten(arr) {
 const STANDARD_LIBRARY = `
 ;; TODO: We should double check that this does not short circut
 (func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
-  ${cat([
+  ${[
     "get_local",
     "$consiquent",
     "get_local",
@@ -73,11 +57,11 @@ const STANDARD_LIBRARY = `
     0,
     "f64.ne",
     "select"
-  ])}
+  ].join(" ")}
 )
 ;; TODO: Simplify all this type coersion
 (func $booleanOr (param $a f64) (param $b f64) (result f64) 
-  ${cat([
+  ${[
     "get_local",
     "$a",
     "i32.trunc_s/f64",
@@ -89,10 +73,10 @@ const STANDARD_LIBRARY = `
     0,
     "i32.ne",
     "f64.convert_s/i32"
-  ])}
+  ].join(" ")}
 )
 (func $mod (param $a f64) (param $b f64) (result f64) 
-  ${cat([
+  ${[
     "get_local",
     "$a",
     "i64.trunc_s/f64",
@@ -101,10 +85,10 @@ const STANDARD_LIBRARY = `
     "i64.trunc_s/f64",
     "i64.rem_s",
     "f64.convert_s/i64"
-  ])}
+  ].join(" ")}
 )
 (func $bitwiseAnd (param $a f64) (param $b f64) (result f64) 
-  ${cat([
+  ${[
     "get_local",
     "$a",
     "i64.trunc_s/f64",
@@ -113,9 +97,9 @@ const STANDARD_LIBRARY = `
     "i64.trunc_s/f64",
     "i64.and",
     "f64.convert_s/i64"
-  ])})
+  ].join(" ")})
 (func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
-  ${cat([
+  ${[
     "get_local",
     "$a",
     "i64.trunc_s/f64",
@@ -124,21 +108,17 @@ const STANDARD_LIBRARY = `
     "i64.trunc_s/f64",
     "i64.or",
     "f64.convert_s/i64"
-  ])}
+  ].join(" ")}
 )
 (func $booleanNot (param $x f64) (result f64) 
-  ${cat([
-    "get_local",
-    "$x",
-    "i32.trunc_s/f64",
-    "i32.eqz",
-    "f64.convert_s/i32"
-  ])})
+  ${["get_local", "$x", "i32.trunc_s/f64", "i32.eqz", "f64.convert_s/i32"].join(
+    " "
+  )})
 (func $sqr (param $x f64) (result f64) 
-  ${cat(["get_local", "$x", "get_local", "$x", "f64.mul"])}
+  ${["get_local", "$x", "get_local", "$x", "f64.mul"].join(" ")}
 )
 (func $sign (param $x f64) (result f64) 
-  ${cat([
+  ${[
     "f64.const",
     0,
     "get_local",
@@ -151,7 +131,7 @@ const STANDARD_LIBRARY = `
     "f64.lt",
     "i32.sub",
     "f64.convert_s/i32"
-  ])})
+  ].join(" ")})
 `;
 
 const BINARY_OPERATORS = {
@@ -227,7 +207,7 @@ function emit(ast, context) {
     }
     case "FUNCTION_EXPORT": {
       // We do a real join here since from here on out we must have strings
-      const body = split(emit(ast.function, context)).join(' ');
+      const body = split(emit(ast.function, context)).join(" ");
       // TODO: Should functions have implicit return?
       // This could be complex, since programs can be empty (I think).
       return `(func ${context.resolveImport(ast.name)}  ${body})
@@ -235,10 +215,10 @@ function emit(ast, context) {
     }
     case "SCRIPT": {
       const body = ast.body.map((statement, i) => {
-        return cat([...split(emit(statement, context)), "drop"]);
+        return [...split(emit(statement, context)), "drop"];
       });
 
-      return cat(arrayJoin(body, "\n"));
+      return cat(flatten(body));
     }
     case "EXPRESSION_BLOCK": {
       const body = ast.body.map((statement, i) => {
@@ -268,9 +248,11 @@ function emit(ast, context) {
           `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
         );
       }
-      const args = flatten(ast.arguments.map(node => {
-        return split(emit(node, context))
-      }));
+      const args = flatten(
+        ast.arguments.map(node => {
+          return split(emit(node, context));
+        })
+      );
       return cat([...args, ...instruction]);
     }
     case "ASSIGNMENT_EXPRESSION": {
@@ -314,15 +296,23 @@ function emit(ast, context) {
     case "CONDITIONAL_EXPRESSION": {
       // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
       // Is that an optimization that we might want as well?
-      return `
-        ${emit(ast.test, context)}
-        f64.const 0 f64.ne
-        if (result f64)
-          ${emit(ast.consiquent, context)}
-        else
-          ${emit(ast.alternate, context)}
-        end
-      `;
+      const test = split(emit(ast.test, context));
+      const consiquent = split(emit(ast.consiquent, context));
+      const alternate = split(emit(ast.alternate, context));
+      return cat([
+        ...test,
+        "f64.const",
+        0,
+        "f64.ne",
+        "if",
+        // TODO: This will have to be cleaned up when we switch to binary
+        "(result",
+        "f64)",
+        ...consiquent,
+        "else",
+        ...alternate,
+        "end"
+      ]);
     }
     case "LOGICAL_EXPRESSION": {
       throw new Error("Logical expressions are not implemented yet.");
