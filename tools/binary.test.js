@@ -37,7 +37,9 @@ const EXPORT_TYPE = {
 const OPS = {
   i32_const: 0x41,
   f64_const: 0x44,
-  end: 0x0b
+  end: 0x0b,
+  drop: 0x1a,
+  global_set: 0x24
 };
 const VAL_TYPE = {
   i32: 0x7f,
@@ -175,6 +177,10 @@ test("Can execute hand crafted binary Wasm", async () => {
     ...encodeVector([]),
     // Code proper
     OPS.f64_const,
+    ...encodeNumber(100),
+    OPS.global_set,
+    0x00, // Offset into globals
+    OPS.f64_const,
     ...encodeNumber(10),
     // End
     OPS.end
@@ -198,6 +204,8 @@ test("Can execute hand crafted binary Wasm", async () => {
   const wat = `(module
     (global $U0 (mut f64) f64.const 0)
     (func (result f64)
+        f64.const 100
+        global.set $U0
         f64.const 10
     )
     (export "run" (func 0))
