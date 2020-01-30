@@ -1,3 +1,5 @@
+const { parse } = require("../src/parser");
+const { emit } = require("../src/emitter");
 // An intial attempt to construct a Wasm binary by hand.
 const SECTION = {
   TYPE: 1,
@@ -44,6 +46,26 @@ const flatten = arr => [].concat.apply([], arr);
 // https://webassembly.github.io/spec/core/binary/conventions.html#binary-vec
 // Vectors are encoded with their length followed by their element sequence
 const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
+
+test.only("Can emit binary (eventually)", () => {
+  const program = parse("10;");
+  expect(program).toMatchInlineSnapshot(`
+    Object {
+      "body": Array [
+        Object {
+          "column": 0,
+          "line": 1,
+          "type": "NUMBER_LITERAL",
+          "value": 10,
+        },
+      ],
+      "column": 0,
+      "line": 1,
+      "type": "SCRIPT",
+    }
+  `);
+  expect(emit(program).join(" ")).toMatchInlineSnapshot(`"f64.const 10 drop"`);
+});
 
 // An attempt at generating Wasm binary directly (without the help fo wabt)
 test.only("Can execute hand crafted binary Wasm", async () => {
