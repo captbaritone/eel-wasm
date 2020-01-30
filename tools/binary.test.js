@@ -1,5 +1,5 @@
 const { parse } = require("../src/parser");
-const { emit } = require("../src/emitter");
+const { emit } = require("../src/emitterBinary");
 // An intial attempt to construct a Wasm binary by hand.
 const SECTION = {
   TYPE: 1,
@@ -17,11 +17,14 @@ const EXPORT_TYPE = {
 
 const OPS = {
   i32_const: 0x41,
+  f64_const: 0x44,
   end: 0x0b
 };
 const VAL_TYPE = {
   i32: 0x7f,
-  f32: 0x7d
+  i64: 0x7e,
+  f32: 0x7d,
+  f64: 0x7c,
 };
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
@@ -47,7 +50,7 @@ const flatten = arr => [].concat.apply([], arr);
 // Vectors are encoded with their length followed by their element sequence
 const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
 
-test.only("Can emit binary (eventually)", () => {
+test("Can emit binary (eventually)", () => {
   const program = parse("10;");
   expect(program).toMatchInlineSnapshot(`
     Object {
@@ -64,11 +67,18 @@ test.only("Can emit binary (eventually)", () => {
       "type": "SCRIPT",
     }
   `);
-  expect(emit(program).join(" ")).toMatchInlineSnapshot(`"f64.const 10 drop"`);
+  expect(new Uint8Array(emit(program)))
+    .toMatchInlineSnapshot(`
+    Uint8Array [
+      68,
+      10,
+      26,
+    ]
+  `);
 });
 
 // An attempt at generating Wasm binary directly (without the help fo wabt)
-test.only("Can execute hand crafted binary Wasm", async () => {
+test("Can execute hand crafted binary Wasm", async () => {
   const magicModuleHeader = [0x00, 0x61, 0x73, 0x6d];
   const moduleVersion = [0x01, 0x00, 0x00, 0x00];
 
