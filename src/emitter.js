@@ -1,5 +1,14 @@
 const shims = require("./shims");
 
+class Wrapped {
+  constructor(val) {
+    this._val = val;
+  }
+  toString() {
+    return this._val;
+  }
+}
+
 function makeNamespaceResolver(prefix) {
   let counter = -1;
   const map = new Map();
@@ -8,7 +17,7 @@ function makeNamespaceResolver(prefix) {
       counter++;
       map.set(name, counter);
     }
-    return `$${prefix}${map.get(name)}`;
+    return new Wrapped(`$${prefix}${map.get(name)}`);
   };
 }
 
@@ -40,10 +49,13 @@ const op = {
   i32_or: "i32.or",
   i32_const: "i32.const",
   i32_ne: "i32.ne",
-  // i32_eq: "i32.eq",
+  i32_sub: "i32.sub",
   i32_eqz: "i32.eqz",
+  i32_trunc_s_f64: "i32.trunc_s/f64",
   i64_and: "i64.and",
   i64_or: "i64.or",
+  i64_rem_s: "i64.rem_s",
+  i64_trunc_s_f64: "i64.trunc_s/f64",
   f64_const: "f64.const",
   f64_ne: "f64.ne",
   f64_neg: "f64.neg",
@@ -52,31 +64,59 @@ const op = {
   f64_mul: "f64.mul",
   f64_div: "f64.div",
   f64_lt: "f64.lt",
+  f64_abs: "f64.abs",
+  f64_sqrt: "f64.sqrt",
+  f64_floor: "f64.floor",
+  f64_min: "f64.min",
+  f64_max: "f64.max",
+  f64_gt: "f64.gt",
+  f64_eq: "f64.eq",
+  f64_lt: "f64.lt",
+  f64_convert_s_i32: "f64.convert_s/i32",
+  f64_convert_s_i64: "f64.convert_s/i64",
+  f64_convert_i32_s: "f64.convert_i32_s",
   global_get: "global.get",
-  global_set: "global.set",
-}
+  global_set: "global.set"
+};
 
-// We do a little hack here. We wrap every opcode output in an array. Arrays
-// containing a single string stringify to that string, so it's safe to use as a
-// string, but it allows us to do a test in `joinCode` to see if anyone is using
-// a string where they should be using the constant.
+const valueType = {
+  f64: new Wrapped("f64")
+};
+
+// We do a little hack here. We wrap every opcode. In an object that stringifies to
+// the original string this allows us todo a test in `joinCode` to see if anyone
+// is using a string where they should be using the constant.
 Object.keys(op).forEach(opKey => {
-  op[opKey] = [op[opKey]]
-})
-const KNOWN_OPS = new Set(Object.values(op).map(value => value.toString()))
+  op[opKey] = new Wrapped(op[opKey]);
+});
 
 // Having a choke point where all code gets joined will let us make assertions
 // about code before it gets stringified. This will help as we migrate to binary
 // output.
 function joinCode(arr) {
   arr.forEach(value => {
-    if(KNOWN_OPS.has(value)) {
-      console.warn(`Found opcode that was not using the constant: "${value}"`)
+    if (!(value instanceof Wrapped)) {
+      console.warn(`Unwrapped: "${value}"`);
     }
-  })
+  });
   return arr.join(" ");
 }
 
+function funcName(name) {
+  return new Wrapped(name);
+}
+
+function paramName(name) {
+  return new Wrapped(name);
+}
+
+function float(number) {
+  return new Wrapped(number)
+}
+
+function int(number) {
+  return new Wrapped(number)
+}
 
 // TODO: These functions could either be lazily added (only appended when used)
 // or inlined.
@@ -85,13 +125,13 @@ const STANDARD_LIBRARY = `
 (func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
   ${joinCode([
     op.get_local,
-    "$consiquent",
+    paramName("$consiquent"),
     op.get_local,
-    "$alternate",
+    paramName("$alternate"),
     op.get_local,
-    "$test",
+    paramName("$test"),
     op.f64_const,
-    0,
+    float(0),
     op.f64_ne,
     op.select
   ])}
@@ -100,78 +140,78 @@ const STANDARD_LIBRARY = `
 (func $booleanOr (param $a f64) (param $b f64) (result f64) 
   ${joinCode([
     op.get_local,
-    "$a",
-    "i32.trunc_s/f64",
+    paramName("$a"),
+    op.i32_trunc_s_f64,
     op.get_local,
-    "$b",
-    "i32.trunc_s/f64",
+    paramName("$b"),
+    op.i32_trunc_s_f64,
     op.i32_or,
     op.i32_const,
-    0,
+    int(0),
     op.i32_ne,
-    "f64.convert_s/i32"
+    op.f64_convert_s_i32
   ])}
 )
 (func $mod (param $a f64) (param $b f64) (result f64) 
   ${joinCode([
     op.get_local,
-    "$a",
-    "i64.trunc_s/f64",
+    paramName("$a"),
+    op.i64_trunc_s_f64,
     op.get_local,
-    "$b",
-    "i64.trunc_s/f64",
-    "i64.rem_s",
-    "f64.convert_s/i64"
+    paramName("$b"),
+    op.i64_trunc_s_f64,
+    op.i64_rem_s,
+    op.f64_convert_s_i64
   ])}
 )
 (func $bitwiseAnd (param $a f64) (param $b f64) (result f64) 
   ${joinCode([
     op.get_local,
-    "$a",
-    "i64.trunc_s/f64",
+    paramName("$a"),
+    op.i64_trunc_s_f64,
     op.get_local,
-    "$b",
-    "i64.trunc_s/f64",
+    paramName("$b"),
+    op.i64_trunc_s_f64,
     op.i64_and,
-    "f64.convert_s/i64"
+    op.f64_convert_s_i64
   ])})
 (func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
   ${joinCode([
     op.get_local,
-    "$a",
-    "i64.trunc_s/f64",
+    paramName("$a"),
+    op.i64_trunc_s_f64,
     op.get_local,
-    "$b",
-    "i64.trunc_s/f64",
+    paramName("$b"),
+    op.i64_trunc_s_f64,
     op.i64_or,
-    "f64.convert_s/i64"
+    op.f64_convert_s_i64
   ])}
 )
 (func $booleanNot (param $x f64) (result f64) 
   ${joinCode([
     op.get_local,
-    "$x",
-    "i32.trunc_s/f64",
+    paramName("$x"),
+    op.i32_trunc_s_f64,
     op.i32_eqz,
-    "f64.convert_s/i32"
+    op.f64_convert_s_i32
   ])})
 (func $sqr (param $x f64) (result f64) 
-  ${joinCode([op.get_local, "$x", op.get_local, "$x", op.f64_mul])}
+  ${joinCode([op.get_local, paramName("$x"), op.get_local, paramName("$x"), op.f64_mul])}
 )
 (func $sign (param $x f64) (result f64) 
   ${joinCode([
     op.f64_const,
-    0,
+    float(0),
     op.get_local,
-    "$x",
+    paramName("$x"),
     op.f64_lt,
     op.get_local,
-    "$x",
+    paramName("$x"),
     op.f64_const,
-    0,
+    float(0),
     op.f64_lt,
-    "i32.sub",
-    "f64.convert_s/i32"
+    op.i32_sub,
+    op.f64_convert_s_i32
   ])})
 `;
 
@@ -180,35 +220,35 @@ const BINARY_OPERATORS = {
   "-": [op.f64_sub],
   "*": [op.f64_mul],
   "/": [op.f64_div],
-  "%": [op.call, "$mod"],
-  "|": [op.call, "$bitwiseOr"],
-  "&": [op.call, "$bitwiseAnd"]
+  "%": [op.call, funcName("$mod")],
+  "|": [op.call, funcName("$bitwiseOr")],
+  "&": [op.call, funcName("$bitwiseAnd")]
 };
 
 const FUNCTIONS = {
-  abs: { arity: 1, instruction: ["f64.abs"] },
-  sqrt: { arity: 1, instruction: ["f64.sqrt"] },
-  sqr: { arity: 1, instruction: [op.call, "$sqr"] },
-  sign: { arity: 1, instruction: [op.call, "$sign"] },
+  abs: { arity: 1, instruction: [op.f64_abs] },
+  sqrt: { arity: 1, instruction: [op.f64_sqrt] },
+  sqr: { arity: 1, instruction: [op.call, funcName("$sqr")] },
+  sign: { arity: 1, instruction: [op.call, funcName("$sign")] },
   // TODO: What's the difference between trunc and floor?
   // TODO: Is a rounded float the right thing here, or do we want an int?
-  int: { arity: 1, instruction: ["f64.floor"] },
-  min: { arity: 2, instruction: ["f64.min"] },
-  max: { arity: 2, instruction: ["f64.max"] },
+  int: { arity: 1, instruction: [op.f64_floor] },
+  min: { arity: 2, instruction: [op.f64_min] },
+  max: { arity: 2, instruction: [op.f64_max] },
   // We use `lt` here rather than `gt` because the stack is backwards.
-  above: { arity: 2, instruction: [op.f64_lt, "f64.convert_i32_s"] },
+  above: { arity: 2, instruction: [op.f64_lt, op.f64_convert_i32_s] },
   // We use `gt` here rather than `lt` because the stack is backwards.
-  below: { arity: 2, instruction: ["f64.gt", "f64.convert_i32_s"] },
-  equal: { arity: 2, instruction: ["f64.eq", "f64.convert_i32_s"] },
-  bnot: { arity: 1, instruction: [op.call, "$booleanNot"] },
-  bor: { arity: 2, instruction: [op.call, "$booleanOr"] },
-  if: { arity: 3, instruction: [op.call, "$if"] }
+  below: { arity: 2, instruction: [op.f64_gt, op.f64_convert_i32_s] },
+  equal: { arity: 2, instruction: [op.f64_eq, op.f64_convert_i32_s] },
+  bnot: { arity: 1, instruction: [op.call, funcName("$booleanNot")] },
+  bor: { arity: 2, instruction: [op.call, funcName("$booleanOr")] },
+  if: { arity: 3, instruction: [op.call, funcName("$if")] }
 };
 
 Object.entries(shims).forEach(([key, value]) => {
   FUNCTIONS[key] = {
     arity: value.length,
-    instruction: [op.call, "$" + key]
+    instruction: [op.call, new Wrapped("$" + key)]
   };
 });
 
@@ -329,7 +369,7 @@ function emit(ast, context) {
         case "/=":
           return [...get, ...right, op.f64_div, ...set, ...get];
         case "%=":
-          return [...get, ...right, op.call, "$mod", ...set, ...get];
+          return [...get, ...right, op.call, funcName("$mod"), ...set, ...get];
         default:
           throw new Error(`Unknown assignment operator "${ast.operator}"`);
       }
@@ -343,12 +383,13 @@ function emit(ast, context) {
       return [
         ...test,
         op.f64_const,
-        0,
+        float(0),
         op.f64_ne,
         "if",
         // TODO: This will have to be cleaned up when we switch to binary
         "(result",
-        "f64)",
+        valueType.f64,
+        ")",
         ...consiquent,
         "else",
         ...alternate,
@@ -384,7 +425,7 @@ function emit(ast, context) {
       }
       return [op.global_get, context.resolveUserVar(variableName)];
     case "NUMBER_LITERAL":
-      return [op.f64_const, ast.value];
+      return [op.f64_const, float(ast.value)];
     default:
       throw new Error(`Unknown AST node type ${ast.type}`);
   }
