@@ -1,8 +1,7 @@
 const { parse } = require("../src/parser");
 const { emit } = require("../src/emitter");
 const wabt = require("wabt")();
-
-
+const ieee754 = require("ieee754");
 
 // An intial attempt to construct a Wasm binary by hand.
 /*
@@ -49,18 +48,12 @@ const VAL_TYPE = {
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 const FUNCTION_TYPE = 0x60;
 
+// f64
 function encodeNumber(num) {
-  if (num === 10) {
-    return new Uint8Array([0, 0, 0, 0, 0, 0, 0x24, 0x40]);
-  }
-  throw new Error("I don't know how to generate binary for floats yet");
+  const arr = new Uint8Array(8);
+  ieee754.write(arr, num, 0, true, 52, 8);
+  return arr;
 }
-
-test("Encode float 64", () => {
-  expect(encodeNumber(10)).toEqual(
-    new Uint8Array([0, 0, 0, 0, 0, 0, 0x24, 0x40])
-  );
-});
 
 const encodeString = str => [
   str.length,
@@ -99,7 +92,14 @@ test.skip("Can emit binary (eventually)", () => {
   expect(new Uint8Array(emit(program))).toMatchInlineSnapshot(`
     Uint8Array [
       68,
-      10,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      36,
+      64,
       26,
     ]
   `);
@@ -118,24 +118,27 @@ test("Can execute hand crafted binary Wasm", async () => {
     ...encodeVector([VAL_TYPE.f64])
   ];
 
+  // https://webassembly.github.io/spec/core/binary/modules.html#type-section
   const typeSection = [
     SECTION.TYPE,
     ...encodeVector(encodeVector([runTypeSignature]))
   ];
 
+  // https://webassembly.github.io/spec/core/binary/modules.html#function-section
   const funcSection = [
     SECTION.FUNC,
     0x02, // Vector length?
     0x01,
     0x00,
-    0x07
+    0x07 // Could this actually be the secion type for export?
   ];
 
   const runExport = [...encodeString("run"), EXPORT_TYPE.FUNC, 0x00];
 
-  // the export section is a vector of exported functions
+  // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
   const exportSection = [SECTION.EXPORT, ...encodeVector([runExport])];
 
+  // https://webassembly.github.io/spec/core/binary/modules.html#code-section
   const codeSection = [
     SECTION.CODE,
     0x0d, // WAT?

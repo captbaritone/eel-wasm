@@ -1,4 +1,5 @@
 const shims = require("./shims");
+const ieee754 = require("ieee754")
 
 const BINARY = false;
 
@@ -86,10 +87,10 @@ const valueType = {
 // output.
 function joinCode(arr) {
   arr.forEach(val => {
-    if(Array.isArray(val)) {
-      throw new Error(`Array! "${val}"`)
+    if (Array.isArray(val)) {
+      throw new Error(`Array! "${val}"`);
     }
-  })
+  });
   return arr.join(" ");
 }
 
@@ -101,7 +102,13 @@ function paramName(name) {
   return name;
 }
 
+// f64
 function float(number) {
+  if (BINARY) {
+    const arr = new Uint8Array(8);
+    ieee754.write(arr, number, 0, true, 52, 8);
+    return arr;
+  }
   return [number];
 }
 

@@ -11,6 +11,7 @@
     "test-parse": "node tools/parseMilk.js ./fixtures/mega"
   },
   "dependencies": {
+    "ieee754": "^1.1.13",
     "jison": "^0.4.18",
     "wabt": "^1.0.12"
   },
