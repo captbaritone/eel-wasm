@@ -1,5 +1,10 @@
 const shims = require("./shims");
 
+// As we transition from outputting Wat to outputting binary Wasm, we first need
+// to ensure that every emitted instruction/immediate is getting processed
+// through the right channels. To do this, we wrap every value when it goes
+// through a blessed channel, and then check before we convert it to a string
+// that every value has been wrapped.
 class Wrapped {
   constructor(val) {
     this._val = val;
