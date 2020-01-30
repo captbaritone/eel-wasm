@@ -1,5 +1,5 @@
 const shims = require("./shims");
-const ieee754 = require("ieee754")
+const ieee754 = require("ieee754");
 
 const BINARY = false;
 
