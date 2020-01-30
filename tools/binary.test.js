@@ -134,15 +134,16 @@ test("Can execute hand crafted binary Wasm", async () => {
     ...encodeVector(encodeVector([runTypeSignature]))
   ];
 
+  const runFunction = [
+    // Offset into types
+    0x00
+  ];
+
+  const funcs = encodeVector([runFunction]);
+
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
   // This makes no sense. It should be a vector of length one containing a single value 0.
-  const funcSection = [
-    SECTION.FUNC,
-    0x02, // Vector length?
-    0x01,
-    0x00
-    // 0x07 // Could this actually be the secion type for export?
-  ];
+  const funcSection = [SECTION.FUNC, ...encodeVector(funcs)];
 
   const gGlobal = [
     VAL_TYPE.f64,
