@@ -1,11 +1,30 @@
 const { parse } = require("../src/parser");
-const { emit } = require("../src/emitterBinary");
+const { emit } = require("../src/emitter");
+const wabt = require("wabt")();
+
+
+
 // An intial attempt to construct a Wasm binary by hand.
+/*
+0	custom section
+1	type section
+2	import section
+3	function section
+4	table section
+5	memory section
+6	global section
+7	export section
+8	start section
+9	element section
+10	code section
+11	data section
+*/
+// https://webassembly.github.io/spec/core/binary/modules.html#sections
 const SECTION = {
   TYPE: 1,
   FUNC: 3,
-  CODE: 6,
-  EXPORT: 7
+  EXPORT: 7,
+  CODE: 10
 };
 
 const EXPORT_TYPE = {
@@ -24,15 +43,24 @@ const VAL_TYPE = {
   i32: 0x7f,
   i64: 0x7e,
   f32: 0x7d,
-  f64: 0x7c,
+  f64: 0x7c
 };
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 const FUNCTION_TYPE = 0x60;
 
 function encodeNumber(num) {
-  return num;
+  if (num === 10) {
+    return new Uint8Array([0, 0, 0, 0, 0, 0, 0x24, 0x40]);
+  }
+  throw new Error("I don't know how to generate binary for floats yet");
 }
+
+test("Encode float 64", () => {
+  expect(encodeNumber(10)).toEqual(
+    new Uint8Array([0, 0, 0, 0, 0, 0, 0x24, 0x40])
+  );
+});
 
 const encodeString = str => [
   str.length,
@@ -50,7 +78,8 @@ const flatten = arr => [].concat.apply([], arr);
 // Vectors are encoded with their length followed by their element sequence
 const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
 
-test("Can emit binary (eventually)", () => {
+// This test only passes when BINARY=true in emitter.js
+test.skip("Can emit binary (eventually)", () => {
   const program = parse("10;");
   expect(program).toMatchInlineSnapshot(`
     Object {
@@ -67,8 +96,7 @@ test("Can emit binary (eventually)", () => {
       "type": "SCRIPT",
     }
   `);
-  expect(new Uint8Array(emit(program)))
-    .toMatchInlineSnapshot(`
+  expect(new Uint8Array(emit(program))).toMatchInlineSnapshot(`
     Uint8Array [
       68,
       10,
@@ -87,7 +115,7 @@ test("Can execute hand crafted binary Wasm", async () => {
     // Vector of args
     ...encodeVector([]),
     // Vector of returns (currently may be at most one)
-    ...encodeVector([VAL_TYPE.i32])
+    ...encodeVector([VAL_TYPE.f64])
   ];
 
   const typeSection = [
@@ -103,19 +131,20 @@ test("Can execute hand crafted binary Wasm", async () => {
     0x07
   ];
 
-  const runExport = [...encodeString("run"), EXPORT_TYPE.FUNC, 0x00, 0x0a];
+  const runExport = [...encodeString("run"), EXPORT_TYPE.FUNC, 0x00];
 
   // the export section is a vector of exported functions
   const exportSection = [SECTION.EXPORT, ...encodeVector([runExport])];
 
   const codeSection = [
     SECTION.CODE,
+    0x0d, // WAT?
     ...encodeVector([
       encodeVector([
         // vector of locals
         ...encodeVector([]),
         // Code proper
-        ...[OPS.i32_const, encodeNumber(10)],
+        ...[OPS.f64_const, ...encodeNumber(10)],
         OPS.end
       ])
     ])
@@ -129,6 +158,26 @@ test("Can execute hand crafted binary Wasm", async () => {
     ...exportSection,
     ...codeSection
   ]);
+
+  const wat = `(module
+    (func (result f64)
+        f64.const 10
+    )
+    (export "run" (func 0))
+  )`;
+  const wasmModule = wabt.parseWat("somefile.wat", wat);
+  const { buffer: minimal } = wasmModule.toBinary({});
+
+  function toHex(arr) {
+    return Array.from(arr).map(val =>
+      val
+        .toString(16)
+        .padStart(2, 0)
+        .toUpperCase()
+    );
+  }
+
+  expect(toHex(buffer)).toEqual(toHex(minimal));
 
   const mod = await WebAssembly.compile(buffer);
   const instance = await WebAssembly.instantiate(mod);
