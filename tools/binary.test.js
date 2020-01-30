@@ -40,7 +40,8 @@ const OPS = {
   f64_const: 0x44,
   end: 0x0b,
   drop: 0x1a,
-  global_set: 0x24
+  global_set: 0x24,
+  global_get: 0x23
 };
 const VAL_TYPE = {
   i32: 0x7f,
@@ -81,42 +82,8 @@ const flatten = arr => [].concat.apply([], arr);
 // Vectors are encoded with their length followed by their element sequence
 const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
 
-// This test only passes when BINARY=true in emitter.js
-test.skip("Can emit binary (eventually)", () => {
-  const program = parse("10;");
-  expect(program).toMatchInlineSnapshot(`
-    Object {
-      "body": Array [
-        Object {
-          "column": 0,
-          "line": 1,
-          "type": "NUMBER_LITERAL",
-          "value": 10,
-        },
-      ],
-      "column": 0,
-      "line": 1,
-      "type": "SCRIPT",
-    }
-  `);
-  expect(new Uint8Array(emit(program))).toMatchInlineSnapshot(`
-    Uint8Array [
-      68,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      36,
-      64,
-      26,
-    ]
-  `);
-});
-
 // An attempt at generating Wasm binary directly (without the help fo wabt)
-test("Can execute hand crafted binary Wasm", async () => {
+test.skip("Can execute hand crafted binary Wasm", async () => {
   const magicModuleHeader = [0x00, 0x61, 0x73, 0x6d];
   const moduleVersion = [0x01, 0x00, 0x00, 0x00];
 
@@ -125,7 +92,7 @@ test("Can execute hand crafted binary Wasm", async () => {
     // Vector of args
     ...encodeVector([]),
     // Vector of returns (currently may be at most one)
-    ...encodeVector([VAL_TYPE.f64])
+    ...encodeVector([])
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
@@ -142,9 +109,6 @@ test("Can execute hand crafted binary Wasm", async () => {
   const funcs = encodeVector([runFunction]);
 
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
-  // This makes no sense. It should be a vector of length one containing a single value 0.
-  const funcSection = [SECTION.FUNC, ...encodeVector(funcs)];
-
   const gGlobal = [
     VAL_TYPE.f64,
     MUTABILITY.var,
@@ -176,17 +140,28 @@ test("Can execute hand crafted binary Wasm", async () => {
   // used to skip functions when navigating through a binary. The module is
   // malformed if a size does not match the length of the respective function
   // code."
+
+  function makeNamespaceResolver(prefix) {
+    let counter = -1;
+    const map = new Map();
+    return name => {
+      if (!map.has(name)) {
+        counter++;
+        map.set(name, counter);
+      }
+      return counter;
+    };
+  }
+
+  const funcSection = [SECTION.FUNC, ...encodeVector(funcs)];
+  const program = parse("g = 100;");
+  const resolveExternalVar = makeNamespaceResolver();
+  const code = emit(program, { globals: new Set(["g"]), resolveExternalVar });
+
   const runCode = encodeVector([
     // vector of locals
     ...encodeVector([]),
-    // Code proper
-    OPS.f64_const,
-    ...encodeNumber(100),
-    OPS.global_set,
-    0x00, // Offset into globals
-    OPS.f64_const,
-    ...encodeNumber(10),
-    // End
+    ...code,
     OPS.end
   ]);
   const codes = encodeVector([runCode]);
@@ -218,10 +193,11 @@ test("Can execute hand crafted binary Wasm", async () => {
   const wat = `(module
     (global $E0 (import "js" "g") (mut f64))
     (global $U0 (mut f64) f64.const 0)
-    (func (result f64)
+    (func 
         f64.const 100
         global.set $E0
-        f64.const 10
+        global.get $E0
+        drop
     )
     (export "run" (func 0))
   )`;
@@ -247,7 +223,6 @@ test("Can execute hand crafted binary Wasm", async () => {
 
   const mod = await WebAssembly.compile(buffer);
   const instance = await WebAssembly.instantiate(mod, importObject);
-  const result = instance.exports.run();
-  expect(result).toBe(10);
+  instance.exports.run();
   expect(importObject.js.g.value).toBe(100);
 });

@@ -76,6 +76,8 @@ const op = {
 if (BINARY) {
   op.drop = 0x1a;
   op.f64_const = 0x44;
+  op.global_get = 0x23;
+  op.global_set = 0x24;
 }
 
 const valueType = {
