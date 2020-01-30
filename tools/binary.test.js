@@ -21,6 +21,7 @@ const ieee754 = require("ieee754");
 // https://webassembly.github.io/spec/core/binary/modules.html#sections
 const SECTION = {
   TYPE: 1,
+  IMPORT: 2,
   FUNC: 3,
   GLOBAL: 6,
   EXPORT: 7,
@@ -55,6 +56,7 @@ const MUTABILITY = {
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 const FUNCTION_TYPE = 0x60;
+const GLOBAL_TYPE = 0x03;
 
 // f64
 function encodeNumber(num) {
@@ -143,8 +145,6 @@ test("Can execute hand crafted binary Wasm", async () => {
   ];
 
   const gGlobal = [
-    // globalType
-    0x01, // WAT?
     VAL_TYPE.f64,
     MUTABILITY.var,
     OPS.f64_const,
@@ -152,7 +152,9 @@ test("Can execute hand crafted binary Wasm", async () => {
     OPS.end
   ];
 
-  const globalSection = [SECTION.GLOBAL, ...encodeVector([...gGlobal])];
+  const globals = encodeVector([gGlobal]);
+
+  const globalSection = [SECTION.GLOBAL, ...encodeVector(globals)];
 
   const runFunctionFunctionIndex = 0; // Offset
   const runFunctionExportDescription = EXPORT_TYPE.FUNC;
@@ -162,9 +164,10 @@ test("Can execute hand crafted binary Wasm", async () => {
     runFunctionExportDescription,
     runFunctionFunctionIndex
   ];
+  const expts = encodeVector([runExport]);
 
   // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
-  const exportSection = [SECTION.EXPORT, ...encodeVector([runExport])];
+  const exportSection = [SECTION.EXPORT, ...encodeVector(expts)];
 
   // This outer vector adds the "size" of the code.
   //
@@ -190,22 +193,33 @@ test("Can execute hand crafted binary Wasm", async () => {
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
   const codeSection = [SECTION.CODE, ...encodeVector(codes)];
 
+  const gImport = [
+    ...encodeString("js"),
+    ...encodeString("g"),
+    ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var]
+  ];
+
+  const imports = encodeVector([gImport]);
+
+  const importSection = [SECTION.IMPORT, ...encodeVector(imports)];
+
   const buffer = new Uint8Array([
     ...magicModuleHeader,
     ...moduleVersion,
     ...typeSection,
+    ...importSection,
     ...funcSection,
     ...globalSection,
-    0x07, // WAT?
     ...exportSection,
     ...codeSection
   ]);
 
   const wat = `(module
+    (global $E0 (import "js" "g") (mut f64))
     (global $U0 (mut f64) f64.const 0)
     (func (result f64)
         f64.const 100
-        global.set $U0
+        global.set $E0
         f64.const 10
     )
     (export "run" (func 0))
@@ -224,8 +238,15 @@ test("Can execute hand crafted binary Wasm", async () => {
 
   expect(toHex(buffer)).toEqual(toHex(minimal));
 
+  var importObject = {
+    js: {
+      g: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+    }
+  };
+
   const mod = await WebAssembly.compile(buffer);
-  const instance = await WebAssembly.instantiate(mod);
+  const instance = await WebAssembly.instantiate(mod, importObject);
   const result = instance.exports.run();
   expect(result).toBe(10);
+  expect(importObject.js.g.value).toBe(100);
 });
