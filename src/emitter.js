@@ -1,18 +1,6 @@
 const shims = require("./shims");
 
-// As we transition from outputting Wat to outputting binary Wasm, we first need
-// to ensure that every emitted instruction/immediate is getting processed
-// through the right channels. To do this, we wrap every value when it goes
-// through a blessed channel, and then check before we convert it to a string
-// that every value has been wrapped.
-class Wrapped {
-  constructor(val) {
-    this._val = val;
-  }
-  toString() {
-    return this._val;
-  }
-}
+const BINARY = false;
 
 function makeNamespaceResolver(prefix) {
   let counter = -1;
@@ -22,7 +10,7 @@ function makeNamespaceResolver(prefix) {
       counter++;
       map.set(name, counter);
     }
-    return new Wrapped(`$${prefix}${map.get(name)}`);
+    return `$${prefix}${map.get(name)}`;
   };
 }
 
@@ -84,43 +72,41 @@ const op = {
   global_set: "global.set"
 };
 
-const valueType = {
-  f64: new Wrapped("f64")
-};
+if (BINARY) {
+  op.drop = 0x1a;
+  op.f64_const = 0x44;
+}
 
-// We do a little hack here. We wrap every opcode. In an object that stringifies to
-// the original string this allows us todo a test in `joinCode` to see if anyone
-// is using a string where they should be using the constant.
-Object.keys(op).forEach(opKey => {
-  op[opKey] = new Wrapped(op[opKey]);
-});
+const valueType = {
+  f64: "f64"
+};
 
 // Having a choke point where all code gets joined will let us make assertions
 // about code before it gets stringified. This will help as we migrate to binary
 // output.
 function joinCode(arr) {
-  arr.forEach(value => {
-    if (!(value instanceof Wrapped)) {
-      console.warn(`Unwrapped: "${value}"`);
+  arr.forEach(val => {
+    if(Array.isArray(val)) {
+      throw new Error(`Array! "${val}"`)
     }
-  });
+  })
   return arr.join(" ");
 }
 
 function funcName(name) {
-  return new Wrapped(name);
+  return name;
 }
 
 function paramName(name) {
-  return new Wrapped(name);
+  return name;
 }
 
 function float(number) {
-  return new Wrapped(number)
+  return [number];
 }
 
 function int(number) {
-  return new Wrapped(number)
+  return [number];
 }
 
 // TODO: These functions could either be lazily added (only appended when used)
@@ -136,7 +122,7 @@ const STANDARD_LIBRARY = `
     op.get_local,
     paramName("$test"),
     op.f64_const,
-    float(0),
+    ...float(0),
     op.f64_ne,
     op.select
   ])}
@@ -152,7 +138,7 @@ const STANDARD_LIBRARY = `
     op.i32_trunc_s_f64,
     op.i32_or,
     op.i32_const,
-    int(0),
+    ...int(0),
     op.i32_ne,
     op.f64_convert_s_i32
   ])}
@@ -201,19 +187,25 @@ const STANDARD_LIBRARY = `
     op.f64_convert_s_i32
   ])})
 (func $sqr (param $x f64) (result f64) 
-  ${joinCode([op.get_local, paramName("$x"), op.get_local, paramName("$x"), op.f64_mul])}
+  ${joinCode([
+    op.get_local,
+    paramName("$x"),
+    op.get_local,
+    paramName("$x"),
+    op.f64_mul
+  ])}
 )
 (func $sign (param $x f64) (result f64) 
   ${joinCode([
     op.f64_const,
-    float(0),
+    ...float(0),
     op.get_local,
     paramName("$x"),
     op.f64_lt,
     op.get_local,
     paramName("$x"),
     op.f64_const,
-    float(0),
+    ...float(0),
     op.f64_lt,
     op.i32_sub,
     op.f64_convert_s_i32
@@ -253,7 +245,7 @@ const FUNCTIONS = {
 Object.entries(shims).forEach(([key, value]) => {
   FUNCTIONS[key] = {
     arity: value.length,
-    instruction: [op.call, new Wrapped("$" + key)]
+    instruction: [op.call, funcName("$" + key)]
   };
 });
 
@@ -388,7 +380,7 @@ function emit(ast, context) {
       return [
         ...test,
         op.f64_const,
-        float(0),
+        ...float(0),
         op.f64_ne,
         "if",
         // TODO: This will have to be cleaned up when we switch to binary
@@ -430,7 +422,7 @@ function emit(ast, context) {
       }
       return [op.global_get, context.resolveUserVar(variableName)];
     case "NUMBER_LITERAL":
-      return [op.f64_const, float(ast.value)];
+      return [op.f64_const, ...float(ast.value)];
     default:
       throw new Error(`Unknown AST node type ${ast.type}`);
   }
