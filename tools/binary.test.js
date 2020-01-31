@@ -105,20 +105,24 @@ function makeNamespaceResolver(prefix) {
 test("Can execute hand crafted binary Wasm", async () => {
   const program = parse("g = 100;");
   const globalVariables = new Set(["g"]);
+  const userVars = new Set("a");
   const resolveExternalVar = makeNamespaceResolver();
   const resolveUserVar = makeNamespaceResolver();
   const code = emit(program, {
     globals: globalVariables,
     resolveExternalVar,
-    resolveUserVar
+    resolveUserVar,
+    userVars
   });
-  const g = {
-    type: VAL_TYPE.f64,
-    mutability: MUTABILITY.var,
-    initial: 0
-  };
 
-  const moduleGlobals = [g];
+  const userGlobals = Array.from(userVars).map(name => {
+    return {
+      type: VAL_TYPE.f64,
+      mutability: MUTABILITY.var,
+      initial: 0
+    };
+  });
+  
   const func = {
     code,
     exportName: "run",
@@ -146,7 +150,7 @@ test("Can execute hand crafted binary Wasm", async () => {
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
   const globals = encodeVector(
-    moduleGlobals.map(global => {
+    userGlobals.map(global => {
       return [
         global.type,
         global.mutability,
@@ -204,6 +208,10 @@ test("Can execute hand crafted binary Wasm", async () => {
     (global $E0 (import "js" "g") (mut f64))
     (global $U0 (mut f64) f64.const 0)
     (func 
+        ;; f64.const 1
+        ;; global.set $U0
+        ;; global.get $U0
+        ;; drop
         f64.const 100
         global.set $E0
         global.get $E0
