@@ -82,112 +82,122 @@ const flatten = arr => [].concat.apply([], arr);
 // Vectors are encoded with their length followed by their element sequence
 const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
 
-// An attempt at generating Wasm binary directly (without the help fo wabt)
-test.skip("Can execute hand crafted binary Wasm", async () => {
-  const magicModuleHeader = [0x00, 0x61, 0x73, 0x6d];
-  const moduleVersion = [0x01, 0x00, 0x00, 0x00];
+function encodeSection(type, subSections) {
+  // The size of this vector is not needed for decoding, but can be
+  // used to skip sections when navigating through a binary.
 
-  const runTypeSignature = [
-    FUNCTION_TYPE,
-    // Vector of args
-    ...encodeVector([]),
-    // Vector of returns (currently may be at most one)
-    ...encodeVector([])
-  ];
+  return [type, ...encodeVector(subSections)];
+}
+
+function makeNamespaceResolver(prefix) {
+  let counter = -1;
+  const map = new Map();
+  return name => {
+    if (!map.has(name)) {
+      counter++;
+      map.set(name, counter);
+    }
+    return counter;
+  };
+}
+
+// An attempt at generating Wasm binary directly (without the help fo wabt)
+test("Can execute hand crafted binary Wasm", async () => {
+  const program = parse("g = 100;");
+  const globalVariables = new Set(["g"]);
+  const resolveExternalVar = makeNamespaceResolver();
+  const resolveUserVar = makeNamespaceResolver();
+  const code = emit(program, {
+    globals: globalVariables,
+    resolveExternalVar,
+    resolveUserVar
+  });
+  const g = {
+    type: VAL_TYPE.f64,
+    mutability: MUTABILITY.var,
+    initial: 0
+  };
+
+  const moduleGlobals = [g];
+  const func = {
+    code,
+    exportName: "run",
+    args: [],
+    returns: [],
+    locals: []
+  };
+  const moduleFuncs = [func];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
-  const typeSection = [
-    SECTION.TYPE,
-    ...encodeVector(encodeVector([runTypeSignature]))
-  ];
-
-  const runFunction = [
-    // Offset into types
-    0x00
-  ];
-
-  const funcs = encodeVector([runFunction]);
+  const types = encodeVector(
+    moduleFuncs.map(func => {
+      return [
+        FUNCTION_TYPE,
+        // Vector of args
+        ...encodeVector(func.args),
+        // Vector of returns (currently may be at most one)
+        ...encodeVector(func.returns)
+      ];
+    })
+  );
 
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
-  const gGlobal = [
-    VAL_TYPE.f64,
-    MUTABILITY.var,
-    OPS.f64_const,
-    ...encodeNumber(0),
-    OPS.end
-  ];
+  const funcs = encodeVector(moduleFuncs.map((_, i) => i));
 
-  const globals = encodeVector([gGlobal]);
-
-  const globalSection = [SECTION.GLOBAL, ...encodeVector(globals)];
-
-  const runFunctionFunctionIndex = 0; // Offset
-  const runFunctionExportDescription = EXPORT_TYPE.FUNC;
-
-  const runExport = [
-    ...encodeString("run"),
-    runFunctionExportDescription,
-    runFunctionFunctionIndex
-  ];
-  const expts = encodeVector([runExport]);
+  // https://webassembly.github.io/spec/core/binary/modules.html#global-section
+  const globals = encodeVector(
+    moduleGlobals.map(global => {
+      return [
+        global.type,
+        global.mutability,
+        OPS.f64_const,
+        ...encodeNumber(global.initial),
+        OPS.end
+      ];
+    })
+  );
 
   // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
-  const exportSection = [SECTION.EXPORT, ...encodeVector(expts)];
-
-  // This outer vector adds the "size" of the code.
-  //
-  // "Like with sections, the code size is not needed for decoding, but can be
-  // used to skip functions when navigating through a binary. The module is
-  // malformed if a size does not match the length of the respective function
-  // code."
-
-  function makeNamespaceResolver(prefix) {
-    let counter = -1;
-    const map = new Map();
-    return name => {
-      if (!map.has(name)) {
-        counter++;
-        map.set(name, counter);
-      }
-      return counter;
-    };
-  }
-
-  const funcSection = [SECTION.FUNC, ...encodeVector(funcs)];
-  const program = parse("g = 100;");
-  const resolveExternalVar = makeNamespaceResolver();
-  const code = emit(program, { globals: new Set(["g"]), resolveExternalVar });
-
-  const runCode = encodeVector([
-    // vector of locals
-    ...encodeVector([]),
-    ...code,
-    OPS.end
-  ]);
-  const codes = encodeVector([runCode]);
+  const expts = encodeVector(
+    moduleFuncs.map((func, i) => {
+      return [...encodeString(func.exportName), EXPORT_TYPE.FUNC, i];
+    })
+  );
 
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
-  const codeSection = [SECTION.CODE, ...encodeVector(codes)];
+  const codes = encodeVector(
+    moduleFuncs.map(func => {
+      return encodeVector([
+        // vector of locals
+        ...encodeVector(func.locals),
+        ...func.code,
+        OPS.end
+      ]);
+    })
+  );
 
-  const gImport = [
-    ...encodeString("js"),
-    ...encodeString("g"),
-    ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var]
-  ];
-
-  const imports = encodeVector([gImport]);
-
-  const importSection = [SECTION.IMPORT, ...encodeVector(imports)];
+  // https://webassembly.github.io/spec/core/binary/modules.html#import-section
+  const imports = encodeVector(
+    Array.from(globalVariables).map(name => {
+      return [
+        ...encodeString("js"),
+        ...encodeString(name),
+        ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var]
+      ];
+    })
+  );
 
   const buffer = new Uint8Array([
-    ...magicModuleHeader,
-    ...moduleVersion,
-    ...typeSection,
-    ...importSection,
-    ...funcSection,
-    ...globalSection,
-    ...exportSection,
-    ...codeSection
+    // Magic module header
+    ...[0x00, 0x61, 0x73, 0x6d],
+    // Version number
+    ...[0x01, 0x00, 0x00, 0x00],
+    ...encodeSection(SECTION.TYPE, types),
+    ...encodeSection(SECTION.IMPORT, imports),
+    ...encodeSection(SECTION.FUNC, funcs),
+    ...encodeSection(SECTION.GLOBAL, globals),
+    ...encodeSection(SECTION.EXPORT, expts),
+    ...encodeSection(SECTION.CODE, codes)
   ]);
 
   const wat = `(module
