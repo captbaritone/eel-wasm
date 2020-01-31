@@ -35,7 +35,7 @@ function flatten(arr) {
   return newArr;
 }
 
-const op = {
+let op = {
   select: "select",
   call: "call",
   drop: "drop",
@@ -66,18 +66,48 @@ const op = {
   f64_gt: "f64.gt",
   f64_eq: "f64.eq",
   f64_lt: "f64.lt",
-  f64_convert_s_i32: "f64.convert_s/i32",
   f64_convert_s_i64: "f64.convert_s/i64",
-  f64_convert_i32_s: "f64.convert_i32_s",
+  f64_convert_i32_s: "f64.convert_s/i32",
   global_get: "global.get",
   global_set: "global.set"
 };
 
 if (BINARY) {
-  op.drop = 0x1a;
-  op.f64_const = 0x44;
-  op.global_get = 0x23;
-  op.global_set = 0x24;
+  op = {
+    select: 0x1b,
+    call: 0x10,
+    drop: 0x1a,
+    get_local: 0x20,
+    i32_or: 0x72,
+    i32_const: 0x41,
+    i32_ne: 0x47,
+    i32_sub: 0x6b,
+    i32_eqz: 0x45,
+    i32_trunc_s_f64: 0xaa,
+    i64_and: 0x83,
+    i64_or: 0x84,
+    i64_rem_s: 0x81,
+    f64_const: 0x44,
+    f64_ne: 0x62,
+    f64_neg: 0x9a,
+    f64_add: 0xa0,
+    f64_sub: 0xa1,
+    f64_mul: 0xa2,
+    f64_div: 0xa3,
+    f64_abs: 0x99,
+    f64_sqrt: 0x9f,
+    f64_floor: 0x9c,
+    f64_min: 0xa4,
+    f64_max: 0xa5,
+    f64_gt: 0x64,
+    f64_eq: 0x61,
+    f64_lt: 0x63,
+    i64_trunc_s_f64: 0xb0,
+    f64_convert_s_i64: 0xb9,
+    f64_convert_i32_s: 0xb7,
+    global_get: 0x23,
+    global_set: 0x24
+  };
 }
 
 const valueType = {
@@ -149,7 +179,7 @@ const STANDARD_LIBRARY = `
     op.i32_const,
     ...int(0),
     op.i32_ne,
-    op.f64_convert_s_i32
+    op.f64_convert_i32_s
   ])}
 )
 (func $mod (param $a f64) (param $b f64) (result f64) 
@@ -193,7 +223,7 @@ const STANDARD_LIBRARY = `
     paramName("$x"),
     op.i32_trunc_s_f64,
     op.i32_eqz,
-    op.f64_convert_s_i32
+    op.f64_convert_i32_s
   ])})
 (func $sqr (param $x f64) (result f64) 
   ${joinCode([
@@ -217,7 +247,7 @@ const STANDARD_LIBRARY = `
     ...float(0),
     op.f64_lt,
     op.i32_sub,
-    op.f64_convert_s_i32
+    op.f64_convert_i32_s
   ])})
 `;
 
@@ -437,4 +467,4 @@ function emit(ast, context) {
   }
 }
 
-module.exports = { emit };
+module.exports = { emit, BINARY };
