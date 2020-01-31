@@ -148,63 +148,90 @@ function int(number) {
   return [number];
 }
 
+function joinFunction({ args, name, result, code }) {
+  return `(func $${name} ${args.map(name => `(param ${name} f64)`).join(" ")} ${
+    result ? "(result f64)" : ""
+  }
+    ${joinCode(code)}
+  )`;
+}
+
+const STD_LIBRARY = [
+  {
+    name: "if",
+    args: ["$test", "$consiquent", "$alternate"],
+    result: 1,
+    // TODO: We should double check that this does not short circut
+    code: [
+      op.get_local,
+      paramName("$consiquent"),
+      op.get_local,
+      paramName("$alternate"),
+      op.get_local,
+      paramName("$test"),
+      op.f64_const,
+      ...float(0),
+      op.f64_ne,
+      op.select
+    ]
+  },
+  {
+    name: "booleanOr",
+    args: ["$a", "$b"],
+    result: 1,
+    // TODO: Simplify all this type coersion
+    code: [
+      op.get_local,
+      paramName("$a"),
+      op.i32_trunc_s_f64,
+      op.get_local,
+      paramName("$b"),
+      op.i32_trunc_s_f64,
+      op.i32_or,
+      op.i32_const,
+      ...int(0),
+      op.i32_ne,
+      op.f64_convert_i32_s
+    ]
+  },
+  {
+    name: "mod",
+    args: ["$a", "$b"],
+    result: 1,
+    // TODO: Simplify all this type coersion
+    code: [
+      op.get_local,
+      paramName("$a"),
+      op.i64_trunc_s_f64,
+      op.get_local,
+      paramName("$b"),
+      op.i64_trunc_s_f64,
+      op.i64_rem_s,
+      op.f64_convert_s_i64
+    ]
+  },
+  {
+    name: "bitwiseAnd",
+    args: ["$a", "$b"],
+    result: 1,
+    code: [
+      op.get_local,
+      paramName("$a"),
+      op.i64_trunc_s_f64,
+      op.get_local,
+      paramName("$b"),
+      op.i64_trunc_s_f64,
+      op.i64_and,
+      op.f64_convert_s_i64
+    ]
+  }
+];
+
 // TODO: These functions could either be lazily added (only appended when used)
 // or inlined.
 const STANDARD_LIBRARY = `
-;; TODO: We should double check that this does not short circut
-(func $if (param $test f64) (param $consiquent f64) (param $alternate f64) (result f64) 
-  ${joinCode([
-    op.get_local,
-    paramName("$consiquent"),
-    op.get_local,
-    paramName("$alternate"),
-    op.get_local,
-    paramName("$test"),
-    op.f64_const,
-    ...float(0),
-    op.f64_ne,
-    op.select
-  ])}
-)
-;; TODO: Simplify all this type coersion
-(func $booleanOr (param $a f64) (param $b f64) (result f64) 
-  ${joinCode([
-    op.get_local,
-    paramName("$a"),
-    op.i32_trunc_s_f64,
-    op.get_local,
-    paramName("$b"),
-    op.i32_trunc_s_f64,
-    op.i32_or,
-    op.i32_const,
-    ...int(0),
-    op.i32_ne,
-    op.f64_convert_i32_s
-  ])}
-)
-(func $mod (param $a f64) (param $b f64) (result f64) 
-  ${joinCode([
-    op.get_local,
-    paramName("$a"),
-    op.i64_trunc_s_f64,
-    op.get_local,
-    paramName("$b"),
-    op.i64_trunc_s_f64,
-    op.i64_rem_s,
-    op.f64_convert_s_i64
-  ])}
-)
-(func $bitwiseAnd (param $a f64) (param $b f64) (result f64) 
-  ${joinCode([
-    op.get_local,
-    paramName("$a"),
-    op.i64_trunc_s_f64,
-    op.get_local,
-    paramName("$b"),
-    op.i64_trunc_s_f64,
-    op.i64_and,
-    op.f64_convert_s_i64
-  ])})
+${STD_LIBRARY.map(joinFunction).join("\n")}
+
 (func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
   ${joinCode([
     op.get_local,
