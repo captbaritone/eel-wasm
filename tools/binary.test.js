@@ -122,7 +122,7 @@ test("Can execute hand crafted binary Wasm", async () => {
       initial: 0
     };
   });
-  
+
   const func = {
     code,
     exportName: "run",
@@ -133,6 +133,7 @@ test("Can execute hand crafted binary Wasm", async () => {
   const moduleFuncs = [func];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
+  // TODO: Theoretically we could merge identiacal type definitions
   const types = encodeVector(
     moduleFuncs.map(func => {
       return [
@@ -146,7 +147,7 @@ test("Can execute hand crafted binary Wasm", async () => {
   );
 
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
-  const funcs = encodeVector(moduleFuncs.map((_, i) => i));
+  const functions = encodeVector(moduleFuncs.map((_, i) => i));
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
   const globals = encodeVector(
@@ -162,7 +163,7 @@ test("Can execute hand crafted binary Wasm", async () => {
   );
 
   // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
-  const expts = encodeVector(
+  const xports = encodeVector(
     moduleFuncs.map((func, i) => {
       return [...encodeString(func.exportName), EXPORT_TYPE.FUNC, i];
     })
@@ -198,9 +199,9 @@ test("Can execute hand crafted binary Wasm", async () => {
     ...[0x01, 0x00, 0x00, 0x00],
     ...encodeSection(SECTION.TYPE, types),
     ...encodeSection(SECTION.IMPORT, imports),
-    ...encodeSection(SECTION.FUNC, funcs),
+    ...encodeSection(SECTION.FUNC, functions),
     ...encodeSection(SECTION.GLOBAL, globals),
-    ...encodeSection(SECTION.EXPORT, expts),
+    ...encodeSection(SECTION.EXPORT, xports),
     ...encodeSection(SECTION.CODE, codes)
   ]);
 
