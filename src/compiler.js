@@ -2,7 +2,7 @@ const { parse } = require("./parser");
 const { emit, BINARY } = require("./emitter");
 const ieee754 = require("ieee754");
 const optimizeAst = require("./optimizers/optimize");
-const wabt = require("wabt")()
+const wabt = require("wabt")();
 
 // An intial attempt to construct a Wasm binary by hand.
 /*
@@ -58,7 +58,9 @@ const MUTABILITY = {
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 const FUNCTION_TYPE = 0x60;
+// I think these might actually be specific to importdesc
 const GLOBAL_TYPE = 0x03;
+const TYPE_IDX = 0x00;
 
 // f64
 function encodeNumber(num) {
@@ -83,16 +85,17 @@ const flatten = arr => [].concat.apply([], arr);
 // Vectors are encoded with their length followed by their element sequence
 const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
 
+// subSections is an array of arrays
 function encodeSection(type, subSections) {
   // Sections are all optional, so if we get an empty vector of subSections, we
   // can omit the whole section.
-  if (subSections.length === 1 && subSections[0] === 0) {
+  if (subSections.length === 0) {
     return [];
   }
 
   // The size of this vector is not needed for decoding, but can be
   // used to skip sections when navigating through a binary.
-  return [type, ...encodeVector(subSections)];
+  return [type, ...encodeVector(encodeVector(subSections))];
 }
 
 // TODO: Make this a class
@@ -122,8 +125,17 @@ function makeNamespaceResolver(initial) {
 function compileModule({
   globals: globalVariables,
   functions: functionCode,
+  shims,
   optimize
 }) {
+  const functionImports = Object.entries(shims).map(([name, func]) => {
+    return {
+      args: new Array(func.length).fill(null).map(_ => VAL_TYPE.f64),
+      // Shims implicitly always return a number
+      returns: [VAL_TYPE.f64],
+      name
+    };
+  });
   // TODO: Merge these
   // Imported globals must come first, so we pre-seed the namespace with the "globals".
   const resolveExternalVar = (resolveUserVar = makeNamespaceResolver(
@@ -154,8 +166,17 @@ function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
   // TODO: Theoretically we could merge identiacal type definitions
-  const types = encodeVector(
-    moduleFuncs.map(func => {
+  const types = [
+    ...functionImports.map(func => {
+      return [
+        FUNCTION_TYPE,
+        // Vector of args
+        ...encodeVector(func.args),
+        // Vector of returns (currently may be at most one)
+        ...encodeVector(func.returns)
+      ];
+    }),
+    ...moduleFuncs.map(func => {
       return [
         FUNCTION_TYPE,
         // Vector of args
@@ -164,54 +185,60 @@ function compileModule({
         ...encodeVector(func.returns)
       ];
     })
-  );
-
-  // https://webassembly.github.io/spec/core/binary/modules.html#function-section
-  const functions = encodeVector(moduleFuncs.map((_, i) => i));
-
-  // https://webassembly.github.io/spec/core/binary/modules.html#global-section
-  const globals = encodeVector(
-    resolveExternalVar.map(global => {
-      return [
-        VAL_TYPE.f64,
-        MUTABILITY.var,
-        OPS.f64_const,
-        ...encodeNumber(0),
-        OPS.end
-      ];
-    })
-  );
-
-  // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
-  const xports = encodeVector(
-    moduleFuncs.map((func, i) => {
-      return [...encodeString(func.exportName), EXPORT_TYPE.FUNC, i];
-    })
-  );
-
-  // https://webassembly.github.io/spec/core/binary/modules.html#code-section
-  const codes = encodeVector(
-    moduleFuncs.map(func => {
-      return encodeVector([
-        // vector of locals
-        ...encodeVector(func.locals),
-        ...func.binary,
-        OPS.end
-      ]);
-    })
-  );
+  ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
-  // Somehow these implicitly map to the first n indexes of the globals section?
-  const imports = encodeVector(
-    Array.from(globalVariables).map(name => {
+  const imports = [
+    // Somehow these implicitly map to the first n indexes of the globals section?
+    ...Array.from(globalVariables).map(name => {
       return [
         ...encodeString("js"),
         ...encodeString(name),
         ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var]
       ];
+    }),
+    ...functionImports.map((func, i) => {
+      return [
+        ...encodeString("imports"),
+        ...encodeString(func.name),
+        // TODO: Get i from a registry
+        ...[TYPE_IDX, i]
+      ];
     })
-  );
+  ];
+
+  // https://webassembly.github.io/spec/core/binary/modules.html#function-section
+  // "Functions are referenced through function indices, starting with the smallest index not referencing a function import."
+    // TODO: Get this index from a registry
+  const functions = moduleFuncs.map((_, i) => i + functionImports.length);
+
+  // https://webassembly.github.io/spec/core/binary/modules.html#global-section
+  const globals = resolveExternalVar.map(global => {
+    return [
+      VAL_TYPE.f64,
+      MUTABILITY.var,
+      OPS.f64_const,
+      ...encodeNumber(0),
+      OPS.end
+    ];
+  });
+
+  // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
+  const xports = moduleFuncs.map((func, i) => {
+    // TODO: Get this index from a registry
+    const funcIndex = i + functionImports.length;
+    return [...encodeString(func.exportName), EXPORT_TYPE.FUNC, funcIndex];
+  });
+
+  // https://webassembly.github.io/spec/core/binary/modules.html#code-section
+  const codes = moduleFuncs.map(func => {
+    return encodeVector([
+      // vector of locals
+      ...encodeVector(func.locals),
+      ...func.binary,
+      OPS.end
+    ]);
+  });
 
   return new Uint8Array([
     // Magic module header

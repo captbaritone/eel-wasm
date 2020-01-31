@@ -7,7 +7,8 @@ async function loadModule({ globals, functions, optimize }) {
   const buffer = compileModule({
     globals: new Set(Object.keys(globals)),
     functions,
-    optimize
+    optimize,
+    shims
   });
   const mod = await WebAssembly.compile(buffer);
 
