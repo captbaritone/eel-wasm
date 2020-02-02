@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { parse } from "src/parser";
 import { emit } from "src/emitter";
 import shims from "src/shims";
+import { print } from "tools/prettyPrinter";
 import _wabt from "wabt";
 import optimizeAst from "src/optimizers/optimize";
 
@@ -55,23 +56,41 @@ async function modFromWat(wat, globals) {
   return await WebAssembly.instantiate(mod, importObject);
 }
 
-export function useAst(eel, optimize) {
+export function useAst(eel) {
   const [ast, setAst] = useState(null);
   const [astError, setAstError] = useState(null);
   useEffect(() => {
     try {
       let _ast = parse(eel);
-      if (optimize) {
-        _ast = optimizeAst(_ast);
-      }
       setAst(_ast);
       setAstError(null);
     } catch (e) {
       setAstError(e.message);
     }
-  }, [eel, optimize]);
+  }, [eel]);
 
-  return [ast, astError, optimize];
+  return [ast, astError];
+}
+
+export function useOptimizedAst(ast, optimize) {
+  const [optimizedAst, setOptimizedAst] = useState(null);
+  useEffect(() => {
+    if (optimize && ast != null) {
+      setOptimizedAst(optimizeAst(ast));
+    } else {
+      setOptimizedAst(ast);
+    }
+  }, [ast, optimize]);
+
+  return optimizedAst;
+}
+
+export function usePrettyPrintedEel(ast) {
+  const [eel, setEel] = useState(null);
+  useEffect(() => {
+    setEel(ast == null ? null : print(ast));
+  }, [ast]);
+  return eel;
 }
 
 export function useWasm(ast, globals) {

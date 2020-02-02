@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useMemo } from "react";
 import "./App.css";
-import Editor, { ControlledEditor } from "@monaco-editor/react";
+import Editor, { ControlledEditor, DiffEditor } from "@monaco-editor/react";
 import {
   useUrlState,
   useForceUpdate,
   useGlobals,
   useAst,
   useWasm,
-  useMod
+  useMod,
+  useOptimizedAst,
+  usePrettyPrintedEel
 } from "./hooks";
 
 function Column({ children }) {
@@ -42,13 +44,14 @@ function App() {
   const { globals, addGlobal, removeGlobal } = useGlobals();
   const [eel, setEel] = useUrlState("eel", "foo = 1;");
   const [astString, setAstString] = useState(null);
-  const [ast, astError] = useAst(eel, optimize);
+  const [ast, astError] = useAst(eel);
+  const optimizedAst = useOptimizedAst(ast, optimize);
+  const prettyEel = usePrettyPrintedEel(ast);
+  const optimizedEel = usePrettyPrintedEel(optimizedAst);
   const [wasm, wasmError] = useWasm(ast, globals);
   const anyErrors = astError != null || wasmError != null;
   const mod = useMod(anyErrors ? null : wasm, globals);
   const forceUpdate = useForceUpdate();
-
-
 
   const run = useMemo(() => {
     if (mod == null) {
@@ -61,8 +64,8 @@ function App() {
   }, [forceUpdate, mod]);
 
   useEffect(() => {
-    setAstString(JSON.stringify(ast, null, 2));
-  }, [ast]);
+    setAstString(JSON.stringify(optimizedAst, null, 2));
+  }, [optimizedAst]);
 
   return (
     <div style={{ display: "flex", width: "100vw", alignContent: "stretch" }}>
@@ -131,12 +134,28 @@ function App() {
         </label>
         {astError != null && <ErrorBlock>{astError}</ErrorBlock>}
         <Editor
-          height="90vh"
+          height={optimize ? "40vh" : "90vh"}
           width="100%"
           language="json"
           value={astString}
           options={{ ...EDITOR_OPTIONS, readOnly: true }}
         />
+        {optimize && (
+          <>
+            <h2>Optimization Changes</h2>
+            <DiffEditor
+              height="40vh"
+              width="100%"
+              original={prettyEel}
+              modified={optimizedEel}
+              options={{
+                ...EDITOR_OPTIONS,
+                lineNumbers: "on",
+                readOnly: true
+              }}
+            />
+          </>
+        )}
       </Column>
       <Column>
         <h2>Wasm</h2>
