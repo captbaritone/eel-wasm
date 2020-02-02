@@ -1,5 +1,6 @@
 const foldConstants = require("./constantFolding");
 const propagateConstants = require("./constantPropagation");
+// const hoistConstants = require("./constantHoisting");
 
 function runPass(ast) {
   return propagateConstants(foldConstants(ast));
@@ -11,6 +12,7 @@ function optimize(ast) {
     ast = newAst;
     newAst = runPass(newAst);
   }
+  // newAst = hoistConstants(newAst);
   return newAst;
 }
 
