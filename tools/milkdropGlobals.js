@@ -1,5 +1,6 @@
 const MILKDROP_GLOBALS = [
   // Per frame
+  "enabled",
   "rating",
   "gammaadj",
   "decay",
