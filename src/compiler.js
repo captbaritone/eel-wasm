@@ -209,7 +209,7 @@ function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
   // "Functions are referenced through function indices, starting with the smallest index not referencing a function import."
-    // TODO: Get this index from a registry
+  // TODO: Get this index from a registry
   const functions = moduleFuncs.map((_, i) => i + functionImports.length);
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
