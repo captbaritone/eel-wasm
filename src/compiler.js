@@ -1,112 +1,22 @@
 const { parse } = require("./parser");
 const { emit, BINARY } = require("./emitter");
-const ieee754 = require("ieee754");
 const optimizeAst = require("./optimizers/optimize");
 const wabt = require("wabt")();
-
-// An intial attempt to construct a Wasm binary by hand.
-/*
-0	custom section
-1	type section
-2	import section
-3	function section
-4	table section
-5	memory section
-6	global section
-7	export section
-8	start section
-9	element section
-10	code section
-11	data section
-*/
-// https://webassembly.github.io/spec/core/binary/modules.html#sections
-const SECTION = {
-  TYPE: 1,
-  IMPORT: 2,
-  FUNC: 3,
-  GLOBAL: 6,
-  EXPORT: 7,
-  CODE: 10,
-};
-
-const EXPORT_TYPE = {
-  FUNC: 0x00,
-  TABLE: 0x01,
-  MEMORY: 0x02,
-  GLOBAL: 0x03,
-};
-
-const OPS = {
-  i32_const: 0x41,
-  f64_const: 0x44,
-  f64_mul: 0xa2,
-  end: 0x0b,
-  drop: 0x1a,
-  local_get: 0x20,
-  global_set: 0x24,
-  global_get: 0x23,
-};
-const VAL_TYPE = {
-  i32: 0x7f,
-  i64: 0x7e,
-  f32: 0x7d,
-  f64: 0x7c,
-};
-
-const MUTABILITY = {
-  const: 0x00,
-  var: 0x01,
-};
-
-// http://webassembly.github.io/spec/core/binary/types.html#function-types
-const FUNCTION_TYPE = 0x60;
-// I think these might actually be specific to importdesc
-const GLOBAL_TYPE = 0x03;
-const TYPE_IDX = 0x00;
-
-// f64
-function encodeNumber(num) {
-  const arr = new Uint8Array(8);
-  ieee754.write(arr, num, 0, true, 52, 8);
-  return arr;
-}
-
-const encodeString = str => [
-  str.length,
-  ...str.split("").map(s => s.charCodeAt(0)),
-];
-
-function unsignedLEB128(n) {
-  const buffer = [];
-  do {
-    let byte = n & 0x7f;
-    n >>>= 7;
-    if (n !== 0) {
-      byte |= 0x80;
-    }
-    buffer.push(byte);
-  } while (n !== 0);
-  return buffer;
-}
-
-const flatten = arr => [].concat.apply([], arr);
-
-// https://webassembly.github.io/spec/core/binary/conventions.html#binary-vec
-// Vectors are encoded with their length followed by their element sequence
-const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
-
-// subSections is an array of arrays
-function encodeSection(type, subSections) {
-  // Sections are all optional, so if we get an empty vector of subSections, we
-  // can omit the whole section.
-  if (subSections.length === 0) {
-    return [];
-  }
-
-  // The size of this vector is not needed for decoding, but can be
-  // used to skip sections when navigating through a binary.
-  return [type, ...encodeVector(encodeVector(subSections))];
-}
+const {
+  encodef64,
+  encodeString,
+  encodeVector,
+  encodeSection,
+  ops,
+  VAL_TYPE,
+  FUNCTION_TYPE,
+  GLOBAL_TYPE,
+  MUTABILITY,
+  TYPE_IDX,
+  EXPORT_TYPE,
+  SECTION,
+} = require("./encoding");
+const { localFuncMap } = require("./wasmFunctions");
 
 class NamespaceResolver {
   constructor(initial = []) {
@@ -127,21 +37,6 @@ class NamespaceResolver {
     return Array.from(this._map.entries()).map(([value, i]) => cb(value, i));
   }
 }
-
-const localFuncMap = {
-  sqr: {
-    args: [VAL_TYPE.f64],
-    returns: [VAL_TYPE.f64],
-    locals: [],
-    binary: [
-      OPS.local_get,
-      ...unsignedLEB128(0),
-      OPS.local_get,
-      ...unsignedLEB128(0),
-      OPS.f64_mul,
-    ],
-  },
-};
 
 function compileModule({
   globals: globalVariables,
@@ -242,9 +137,9 @@ function compileModule({
     return [
       VAL_TYPE.f64,
       MUTABILITY.var,
-      OPS.f64_const,
-      ...encodeNumber(0),
-      OPS.end,
+      ops.f64_const,
+      ...encodef64(0),
+      ops.end,
     ];
   });
 
@@ -261,7 +156,7 @@ function compileModule({
     return encodeVector([
       ...encodeVector(func.locals),
       ...func.binary,
-      OPS.end,
+      ops.end,
     ]);
   });
 

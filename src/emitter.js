@@ -1,5 +1,5 @@
 const shims = require("./shims");
-const ieee754 = require("ieee754");
+const { ops, encodef64, unsignedLEB128 } = require("./encoding");
 
 const BINARY = false;
 
@@ -73,43 +73,8 @@ let op = {
 };
 
 if (BINARY) {
-  op = {
-    select: 0x1b,
-    call: 0x10,
-    drop: 0x1a,
-    get_local: 0x20,
-    i32_or: 0x72,
-    i32_const: 0x41,
-    i32_ne: 0x47,
-    i32_sub: 0x6b,
-    i32_eqz: 0x45,
-    i32_trunc_s_f64: 0xaa,
-    i64_and: 0x83,
-    i64_or: 0x84,
-    i64_rem_s: 0x81,
-    f64_const: 0x44,
-    f64_ne: 0x62,
-    f64_neg: 0x9a,
-    f64_add: 0xa0,
-    f64_sub: 0xa1,
-    f64_mul: 0xa2,
-    f64_div: 0xa3,
-    f64_abs: 0x99,
-    f64_sqrt: 0x9f,
-    f64_floor: 0x9c,
-    f64_min: 0xa4,
-    f64_max: 0xa5,
-    f64_gt: 0x64,
-    f64_eq: 0x61,
-    f64_lt: 0x63,
-    i64_trunc_s_f64: 0xb0,
-    f64_convert_s_i64: 0xb9,
-    f64_convert_i32_s: 0xb7,
-    global_get: 0x23,
-    global_set: 0x24,
-  };
+  op = ops;
 }
-
 const valueType = {
   f64: "f64",
 };
@@ -137,24 +102,13 @@ function paramName(name) {
 // f64
 function float(number) {
   if (BINARY) {
-    const arr = new Uint8Array(8);
-    ieee754.write(arr, number, 0, true, 52, 8);
-    return arr;
+    return encodef64(number);
   }
   return [number];
 }
 
 function int(n) {
-  const buffer = [];
-  do {
-    let byte = n & 0x7f;
-    n >>>= 7;
-    if (n !== 0) {
-      byte |= 0x80;
-    }
-    buffer.push(byte);
-  } while (n !== 0);
-  return buffer;
+  return unsignedLEB128(n);
 }
 
 function joinFunction({ args, name, result, code }) {
@@ -389,7 +343,7 @@ function emit(ast, context) {
       return [...left, ...right, ...instruction];
     }
     case "CALL_EXPRESSION": {
-      if (BINARY) {
+      /*
         const args = flatten(
           ast.arguments.map(node => {
             return emit(node, context);
@@ -403,6 +357,7 @@ function emit(ast, context) {
           ...int(offset),
         ];
       }
+      */
       const func = FUNCTIONS[ast.callee.value];
       if (func == null) {
         throw new Error(
