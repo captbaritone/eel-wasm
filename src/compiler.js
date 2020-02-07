@@ -120,6 +120,21 @@ class NamespaceResolver {
   }
 }
 
+const localFuncMap = {
+  sqr: {
+    args: [VAL_TYPE.f64],
+    returns: [VAL_TYPE.f64],
+    locals: [],
+    binary: [
+      OPS.local_get,
+      ...unsignedLEB128(0),
+      OPS.local_get,
+      ...unsignedLEB128(0),
+      OPS.f64_mul,
+    ],
+  },
+};
+
 function compileModule({
   globals: globalVariables,
   functions: functionCode,
@@ -163,21 +178,6 @@ function compileModule({
       locals: [],
     };
   });
-
-  const localFuncMap = {
-    sqr: {
-      args: [VAL_TYPE.f64],
-      returns: [VAL_TYPE.f64],
-      locals: [],
-      binary: [
-        OPS.local_get,
-        ...unsignedLEB128(0),
-        OPS.local_get,
-        ...unsignedLEB128(0),
-        OPS.f64_mul,
-      ],
-    },
-  };
 
   const localFuncs = localFuncResolver
     .map(name => name)
