@@ -136,9 +136,7 @@ function compileModule({
   });
 
   const externalVarsResolver = new NamespaceResolver(globalVariables);
-  const resolveExternalVar = name => externalVarsResolver.get(name);
   const userVarsResolver = new NamespaceResolver();
-  const resolveUserVar = name => userVarsResolver.get(name);
 
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
     let ast = parse(code);
@@ -147,8 +145,8 @@ function compileModule({
     }
     const binary = emit(ast, {
       globals: globalVariables,
-      resolveExternalVar,
-      resolveUserVar,
+      resolveExternalVar: name => externalVarsResolver.get(name),
+      resolveUserVar: name => userVarsResolver.get(name),
       // TODO: Get rid of userVars
       userVars: new Set()
     });
@@ -182,37 +180,17 @@ function compileModule({
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
   // TODO: Theoretically we could merge identiacal type definitions
   const types = [
-    ...functionImports.map(func => {
-      return [
-        FUNCTION_TYPE,
-        // Vector of args
-        ...encodeVector(func.args),
-        // Vector of returns (currently may be at most one)
-        ...encodeVector(func.returns)
-      ];
-    }),
-    ...moduleFuncs.map(func => {
-      return [
-        FUNCTION_TYPE,
-        // Vector of args
-        ...encodeVector(func.args),
-        // Vector of returns (currently may be at most one)
-        ...encodeVector(func.returns)
-      ];
-    })
-    /*
+    ...functionImports,
+    ...moduleFuncs
     // This might be omitted from the compiled version because it matches a previous function type
-    ...localFuncs.map(func => {
-      return [
-        FUNCTION_TYPE,
-        // Vector of args
-        ...encodeVector(func.args),
-        // Vector of returns (currently may be at most one)
-        ...encodeVector(func.returns)
-      ];
-    })
-    */
-  ];
+    // ...localFuncs
+  ].map(func => {
+    return [
+      FUNCTION_TYPE,
+      ...encodeVector(func.args),
+      ...encodeVector(func.returns)
+    ];
+  });
 
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
   const imports = [
@@ -238,7 +216,7 @@ function compileModule({
   // "Functions are referenced through function indices, starting with the smallest index not referencing a function import."
   // TODO: Get this index from a registry
   const _functions = [...moduleFuncs, ...localFuncs].map(
-    (_, i) => i + functionImports.length
+    (_, i) => functionImports.length + i
   );
 
   const functions = [
@@ -267,8 +245,9 @@ function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
   const codes = [...localFuncs, ...moduleFuncs].map(func => {
+    // TODO: It's a bit odd that every other section is an array of arrays and
+    // this one is an array of vectors already.
     return encodeVector([
-      // vector of locals
       ...encodeVector(func.locals),
       ...func.binary,
       OPS.end
