@@ -69,7 +69,7 @@ let op = {
   f64_convert_s_i64: "f64.convert_s/i64",
   f64_convert_i32_s: "f64.convert_s/i32",
   global_get: "global.get",
-  global_set: "global.set"
+  global_set: "global.set",
 };
 
 if (BINARY) {
@@ -106,12 +106,12 @@ if (BINARY) {
     f64_convert_s_i64: 0xb9,
     f64_convert_i32_s: 0xb7,
     global_get: 0x23,
-    global_set: 0x24
+    global_set: 0x24,
   };
 }
 
 const valueType = {
-  f64: "f64"
+  f64: "f64",
 };
 
 // Having a choke point where all code gets joined will let us make assertions
@@ -172,8 +172,8 @@ const STD_LIBRARY = [
       op.f64_const,
       ...float(0),
       op.f64_ne,
-      op.select
-    ]
+      op.select,
+    ],
   },
   {
     name: "booleanOr",
@@ -191,8 +191,8 @@ const STD_LIBRARY = [
       op.i32_const,
       ...int(0),
       op.i32_ne,
-      op.f64_convert_i32_s
-    ]
+      op.f64_convert_i32_s,
+    ],
   },
   {
     name: "mod",
@@ -207,8 +207,8 @@ const STD_LIBRARY = [
       paramName("$b"),
       op.i64_trunc_s_f64,
       op.i64_rem_s,
-      op.f64_convert_s_i64
-    ]
+      op.f64_convert_s_i64,
+    ],
   },
   {
     name: "bitwiseAnd",
@@ -222,9 +222,9 @@ const STD_LIBRARY = [
       paramName("$b"),
       op.i64_trunc_s_f64,
       op.i64_and,
-      op.f64_convert_s_i64
-    ]
-  }
+      op.f64_convert_s_i64,
+    ],
+  },
 ];
 
 // TODO: These functions could either be lazily added (only appended when used)
@@ -241,7 +241,7 @@ ${STD_LIBRARY.map(joinFunction).join("\n")}
     paramName("$b"),
     op.i64_trunc_s_f64,
     op.i64_or,
-    op.f64_convert_s_i64
+    op.f64_convert_s_i64,
   ])}
 )
 (func $booleanNot (param $x f64) (result f64) 
@@ -250,7 +250,7 @@ ${STD_LIBRARY.map(joinFunction).join("\n")}
     paramName("$x"),
     op.i32_trunc_s_f64,
     op.i32_eqz,
-    op.f64_convert_i32_s
+    op.f64_convert_i32_s,
   ])})
 (func $sqr (param $x f64) (result f64) 
   ${joinCode([
@@ -258,7 +258,7 @@ ${STD_LIBRARY.map(joinFunction).join("\n")}
     paramName("$x"),
     op.get_local,
     paramName("$x"),
-    op.f64_mul
+    op.f64_mul,
   ])}
 )
 (func $sign (param $x f64) (result f64) 
@@ -274,7 +274,7 @@ ${STD_LIBRARY.map(joinFunction).join("\n")}
     ...float(0),
     op.f64_lt,
     op.i32_sub,
-    op.f64_convert_i32_s
+    op.f64_convert_i32_s,
   ])})
 `;
 
@@ -285,7 +285,7 @@ const BINARY_OPERATORS = {
   "/": [op.f64_div],
   "%": [op.call, funcName("$mod")],
   "|": [op.call, funcName("$bitwiseOr")],
-  "&": [op.call, funcName("$bitwiseAnd")]
+  "&": [op.call, funcName("$bitwiseAnd")],
 };
 
 const FUNCTIONS = {
@@ -305,13 +305,13 @@ const FUNCTIONS = {
   equal: { arity: 2, instruction: [op.f64_eq, op.f64_convert_i32_s] },
   bnot: { arity: 1, instruction: [op.call, funcName("$booleanNot")] },
   bor: { arity: 2, instruction: [op.call, funcName("$booleanOr")] },
-  if: { arity: 3, instruction: [op.call, funcName("$if")] }
+  if: { arity: 3, instruction: [op.call, funcName("$if")] },
 };
 
 Object.entries(shims).forEach(([key, value]) => {
   FUNCTIONS[key] = {
     arity: value.length,
-    instruction: [op.call, funcName("$" + key)]
+    instruction: [op.call, funcName("$" + key)],
   };
 });
 
@@ -390,7 +390,7 @@ function emit(ast, context) {
           ...args,
           op.call,
           // funcindex
-          ...int(2)
+          ...int(8),
         ];
       }
       const func = FUNCTIONS[ast.callee.value];
@@ -469,7 +469,7 @@ function emit(ast, context) {
         ...consiquent,
         "else",
         ...alternate,
-        "end"
+        "end",
       ];
     }
     case "LOGICAL_EXPRESSION": {
