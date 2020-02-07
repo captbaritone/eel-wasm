@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-  "prettier": {},
+  "prettier": {
+    "trailingComma": "es5"
+  },
   "scripts": {
     "test": "jest",
     "ci": "npm test && node tools/parseMilk.js",
