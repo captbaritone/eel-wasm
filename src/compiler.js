@@ -180,10 +180,16 @@ function compileModule({
   };
 
   const localFuncs = localFuncResolver
-    // TODO: Error if this is not a known function.
-    .map(name => localFuncMap[name])
+    .map(name => name)
     // TODO: This .slice es muy grosso.
-    .slice(functionImports.length);
+    .slice(functionImports.length)
+    .map(name => {
+      const func = localFuncMap[name];
+      if (func == null) {
+        throw new Error(`Undefined local function "${name}"`);
+      }
+      return func;
+    });
 
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
   // TODO: Theoretically we could merge identiacal type definitions
