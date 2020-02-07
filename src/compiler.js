@@ -76,9 +76,17 @@ const encodeString = str => [
   ...str.split("").map(s => s.charCodeAt(0)),
 ];
 
-function unsignedLEB128(num) {
-  // TODO: Implement this
-  return [num];
+function unsignedLEB128(n) {
+  const buffer = [];
+  do {
+    let byte = n & 0x7f;
+    n >>>= 7;
+    if (n !== 0) {
+      byte |= 0x80;
+    }
+    buffer.push(byte);
+  } while (n !== 0);
+  return buffer;
 }
 
 const flatten = arr => [].concat.apply([], arr);

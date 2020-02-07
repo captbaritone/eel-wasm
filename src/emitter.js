@@ -144,8 +144,17 @@ function float(number) {
   return [number];
 }
 
-function int(number) {
-  return [number];
+function int(n) {
+  const buffer = [];
+  do {
+    let byte = n & 0x7f;
+    n >>>= 7;
+    if (n !== 0) {
+      byte |= 0x80;
+    }
+    buffer.push(byte);
+  } while (n !== 0);
+  return buffer;
 }
 
 function joinFunction({ args, name, result, code }) {
