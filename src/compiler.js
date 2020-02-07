@@ -101,7 +101,7 @@ function encodeSection(type, subSections) {
 }
 
 class NamespaceResolver {
-  constructor(initial = [], hasher = val => val) {
+  constructor(initial = []) {
     this._counter = -1;
     this._map = new Map();
 
@@ -116,7 +116,7 @@ class NamespaceResolver {
   }
 
   map(cb) {
-    return Array.from(this._map.entries()).map(cb);
+    return Array.from(this._map.entries()).map(([value, i]) => cb(value, i));
   }
 }
 
@@ -137,6 +137,9 @@ function compileModule({
 
   const externalVarsResolver = new NamespaceResolver(globalVariables);
   const userVarsResolver = new NamespaceResolver();
+  const localFuncResolver = new NamespaceResolver(
+    functionImports.map(func => func.name)
+  );
 
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
     let ast = parse(code);
@@ -147,6 +150,7 @@ function compileModule({
       globals: globalVariables,
       resolveExternalVar: name => externalVarsResolver.get(name),
       resolveUserVar: name => userVarsResolver.get(name),
+      resolveLocalFunc: name => localFuncResolver.get(name),
       // TODO: Get rid of userVars
       userVars: new Set(),
     });
@@ -160,8 +164,8 @@ function compileModule({
     };
   });
 
-  const localFuncs = [
-    {
+  const localFuncMap = {
+    sqr: {
       args: [VAL_TYPE.f64],
       returns: [VAL_TYPE.f64],
       locals: [],
@@ -172,10 +176,14 @@ function compileModule({
         ...unsignedLEB128(0),
         OPS.f64_mul,
       ],
-      exportName: "sqr",
-      name: "sqr",
     },
-  ];
+  };
+
+  const localFuncs = localFuncResolver
+    // TODO: Error if this is not a known function.
+    .map(name => localFuncMap[name])
+    // TODO: This .slice es muy grosso.
+    .slice(functionImports.length);
 
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
   // TODO: Theoretically we could merge identiacal type definitions

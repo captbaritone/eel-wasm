@@ -386,11 +386,12 @@ function emit(ast, context) {
             return emit(node, context);
           })
         );
+        const offset = context.resolveLocalFunc(ast.callee.value);
         return [
           ...args,
           op.call,
           // funcindex
-          ...int(8),
+          ...int(offset),
         ];
       }
       const func = FUNCTIONS[ast.callee.value];
