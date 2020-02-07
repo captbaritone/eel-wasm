@@ -26,14 +26,14 @@ const SECTION = {
   FUNC: 3,
   GLOBAL: 6,
   EXPORT: 7,
-  CODE: 10
+  CODE: 10,
 };
 
 const EXPORT_TYPE = {
   FUNC: 0x00,
   TABLE: 0x01,
   MEMORY: 0x02,
-  GLOBAL: 0x03
+  GLOBAL: 0x03,
 };
 
 const OPS = {
@@ -44,18 +44,18 @@ const OPS = {
   drop: 0x1a,
   local_get: 0x20,
   global_set: 0x24,
-  global_get: 0x23
+  global_get: 0x23,
 };
 const VAL_TYPE = {
   i32: 0x7f,
   i64: 0x7e,
   f32: 0x7d,
-  f64: 0x7c
+  f64: 0x7c,
 };
 
 const MUTABILITY = {
   const: 0x00,
-  var: 0x01
+  var: 0x01,
 };
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
@@ -73,7 +73,7 @@ function encodeNumber(num) {
 
 const encodeString = str => [
   str.length,
-  ...str.split("").map(s => s.charCodeAt(0))
+  ...str.split("").map(s => s.charCodeAt(0)),
 ];
 
 function unsignedLEB128(num) {
@@ -124,14 +124,14 @@ function compileModule({
   globals: globalVariables,
   functions: functionCode,
   shims,
-  optimize
+  optimize,
 }) {
   const functionImports = Object.entries(shims).map(([name, func]) => {
     return {
       args: new Array(func.length).fill(null).map(_ => VAL_TYPE.f64),
       // Shims implicitly always return a number
       returns: [VAL_TYPE.f64],
-      name
+      name,
     };
   });
 
@@ -148,7 +148,7 @@ function compileModule({
       resolveExternalVar: name => externalVarsResolver.get(name),
       resolveUserVar: name => userVarsResolver.get(name),
       // TODO: Get rid of userVars
-      userVars: new Set()
+      userVars: new Set(),
     });
 
     return {
@@ -156,7 +156,7 @@ function compileModule({
       exportName: name,
       args: [],
       returns: [],
-      locals: []
+      locals: [],
     };
   });
 
@@ -170,27 +170,24 @@ function compileModule({
         ...unsignedLEB128(0),
         OPS.local_get,
         ...unsignedLEB128(0),
-        OPS.f64_mul
+        OPS.f64_mul,
       ],
       exportName: "sqr",
-      name: "sqr"
-    }
+      name: "sqr",
+    },
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
   // TODO: Theoretically we could merge identiacal type definitions
-  const types = [
-    ...functionImports,
-    ...moduleFuncs
-    // This might be omitted from the compiled version because it matches a previous function type
-    // ...localFuncs
-  ].map(func => {
-    return [
-      FUNCTION_TYPE,
-      ...encodeVector(func.args),
-      ...encodeVector(func.returns)
-    ];
-  });
+  const types = [...functionImports, ...localFuncs, ...moduleFuncs].map(
+    func => {
+      return [
+        FUNCTION_TYPE,
+        ...encodeVector(func.args),
+        ...encodeVector(func.returns),
+      ];
+    }
+  );
 
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
   const imports = [
@@ -199,32 +196,24 @@ function compileModule({
       return [
         ...encodeString("js"),
         ...encodeString(name),
-        ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var]
+        ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var],
       ];
     }),
     ...functionImports.map((func, i) => {
       return [
         ...encodeString("imports"),
         ...encodeString(func.name),
-        // TODO: Get i from a registry
-        ...[TYPE_IDX, i]
+        ...[TYPE_IDX, i],
       ];
-    })
+    }),
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
   // "Functions are referenced through function indices, starting with the smallest index not referencing a function import."
-  // TODO: Get this index from a registry
-  const _functions = [...moduleFuncs, ...localFuncs].map(
-    (_, i) => functionImports.length + i
-  );
-
-  const functions = [
-    // run (export)
-    0,
-    // sqr (local)
-    2
-  ];
+  const functions = [...moduleFuncs, ...localFuncs].map((_, i) => {
+    const funcIndex = functionImports.length + i;
+    return funcIndex;
+  });
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
   const globals = userVarsResolver.map(() => {
@@ -233,7 +222,7 @@ function compileModule({
       MUTABILITY.var,
       OPS.f64_const,
       ...encodeNumber(0),
-      OPS.end
+      OPS.end,
     ];
   });
 
@@ -250,7 +239,7 @@ function compileModule({
     return encodeVector([
       ...encodeVector(func.locals),
       ...func.binary,
-      OPS.end
+      OPS.end,
     ]);
   });
 
@@ -264,7 +253,7 @@ function compileModule({
     ...encodeSection(SECTION.FUNC, functions),
     ...encodeSection(SECTION.GLOBAL, globals),
     ...encodeSection(SECTION.EXPORT, xports),
-    ...encodeSection(SECTION.CODE, codes)
+    ...encodeSection(SECTION.CODE, codes),
   ]);
 }
 
@@ -274,7 +263,7 @@ function compileModuleWat({ globals, functions, optimize = false }) {
       return {
         type: "FUNCTION_EXPORT",
         name: functionName,
-        function: parse(expression)
+        function: parse(expression),
       };
     }
   );
