@@ -100,28 +100,24 @@ function encodeSection(type, subSections) {
   return [type, ...encodeVector(encodeVector(subSections))];
 }
 
-// TODO: Make this a class
-function makeNamespaceResolver(initial) {
-  let counter = -1;
-  const map = new Map();
-  const get = name => {
-    if (!map.has(name)) {
-      counter++;
-      map.set(name, counter);
-    }
-    return map.get(name);
-  };
+class NamespaceResolver {
+  constructor(initial = [], hasher = val => val) {
+    this._counter = -1;
+    this._map = new Map();
 
-  Array.from(initial).forEach(get);
-
-  get.map = cb => {
-    const arr = [];
-    for (let i = 0; i < counter; i++) {
-      arr[i] = cb(map.get(i), i);
+    Array.from(initial).forEach(name => this.get(name));
+  }
+  get(name) {
+    if (!this._map.has(name)) {
+      this._counter++;
+      this._map.set(name, this._counter);
     }
-    return arr;
-  };
-  return get;
+    return this._map.get(name);
+  }
+
+  map(cb) {
+    return Array.from(this._map.entries()).map(cb);
+  }
 }
 
 function compileModule({
@@ -138,11 +134,11 @@ function compileModule({
       name
     };
   });
-  // TODO: Merge these
-  // Imported globals must come first, so we pre-seed the namespace with the "globals".
-  const resolveExternalVar = (resolveUserVar = makeNamespaceResolver(
-    globalVariables
-  ));
+
+  const externalVarsResolver = new NamespaceResolver(globalVariables);
+  const resolveExternalVar = name => externalVarsResolver.get(name);
+  const userVarsResolver = new NamespaceResolver();
+  const resolveUserVar = name => userVarsResolver.get(name);
 
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
     let ast = parse(code);
@@ -253,7 +249,7 @@ function compileModule({
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
-  const globals = resolveExternalVar.map(global => {
+  const globals = userVarsResolver.map(() => {
     return [
       VAL_TYPE.f64,
       MUTABILITY.var,
@@ -265,9 +261,7 @@ function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
   const xports = [...moduleFuncs].map((func, i) => {
-    // TODO: Get this index from a registry
-    // TODO: FIXME
-    const funcIndex = i + functionImports.length + 1;
+    const funcIndex = i + functionImports.length + localFuncs.length;
     return [...encodeString(func.exportName), EXPORT_TYPE.FUNC, funcIndex];
   });
 
