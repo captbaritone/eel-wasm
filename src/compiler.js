@@ -39,8 +39,10 @@ const EXPORT_TYPE = {
 const OPS = {
   i32_const: 0x41,
   f64_const: 0x44,
+  f64_mul: 0xa2,
   end: 0x0b,
   drop: 0x1a,
+  local_get: 0x20,
   global_set: 0x24,
   global_get: 0x23
 };
@@ -164,6 +166,23 @@ function compileModule({
     };
   });
 
+  const localFuncs = [
+    {
+      args: [VAL_TYPE.f64],
+      returns: [VAL_TYPE.f64],
+      locals: [],
+      binary: [
+        OPS.local_get,
+        ...unsignedLEB128(0),
+        OPS.local_get,
+        ...unsignedLEB128(0),
+        OPS.f64_mul
+      ],
+      exportName: "sqr",
+      name: "sqr"
+    }
+  ];
+
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
   // TODO: Theoretically we could merge identiacal type definitions
   const types = [
@@ -185,6 +204,18 @@ function compileModule({
         ...encodeVector(func.returns)
       ];
     })
+    /*
+    // This might be omitted from the compiled version because it matches a previous function type
+    ...localFuncs.map(func => {
+      return [
+        FUNCTION_TYPE,
+        // Vector of args
+        ...encodeVector(func.args),
+        // Vector of returns (currently may be at most one)
+        ...encodeVector(func.returns)
+      ];
+    })
+    */
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
@@ -210,7 +241,16 @@ function compileModule({
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
   // "Functions are referenced through function indices, starting with the smallest index not referencing a function import."
   // TODO: Get this index from a registry
-  const functions = moduleFuncs.map((_, i) => i + functionImports.length);
+  const _functions = [...moduleFuncs, ...localFuncs].map(
+    (_, i) => i + functionImports.length
+  );
+
+  const functions = [
+    // run (export)
+    0,
+    // sqr (local)
+    2
+  ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
   const globals = resolveExternalVar.map(global => {
@@ -224,14 +264,15 @@ function compileModule({
   });
 
   // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
-  const xports = moduleFuncs.map((func, i) => {
+  const xports = [...moduleFuncs].map((func, i) => {
     // TODO: Get this index from a registry
-    const funcIndex = i + functionImports.length;
+    // TODO: FIXME
+    const funcIndex = i + functionImports.length + 1;
     return [...encodeString(func.exportName), EXPORT_TYPE.FUNC, funcIndex];
   });
 
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
-  const codes = moduleFuncs.map(func => {
+  const codes = [...localFuncs, ...moduleFuncs].map(func => {
     return encodeVector([
       // vector of locals
       ...encodeVector(func.locals),

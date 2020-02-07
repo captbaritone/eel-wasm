@@ -380,6 +380,19 @@ function emit(ast, context) {
       return [...left, ...right, ...instruction];
     }
     case "CALL_EXPRESSION": {
+      if (BINARY) {
+        const args = flatten(
+          ast.arguments.map(node => {
+            return emit(node, context);
+          })
+        );
+        return [
+          ...args,
+          op.call,
+          // funcindex
+          ...int(2)
+        ];
+      }
       const func = FUNCTIONS[ast.callee.value];
       if (func == null) {
         throw new Error(
@@ -494,4 +507,4 @@ function emit(ast, context) {
   }
 }
 
-module.exports = { emit, BINARY };
+module.exports = { emit, BINARY, float };
