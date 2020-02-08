@@ -405,6 +405,10 @@ function emit(ast, context) {
         case "/=":
           return [...get, ...right, op.f64_div, ...set, ...get];
         case "%=":
+          if (BINARY) {
+            const invocation = context.resolveLocalFunc("mod");
+            return [...get, ...right, ...invocation, ...set, ...get];
+          }
           return [...get, ...right, op.call, funcName("$mod"), ...set, ...get];
         default:
           throw new Error(`Unknown assignment operator "${ast.operator}"`);

@@ -81,6 +81,22 @@ const localFuncMap = {
       op.f64_convert_i32_s,
     ],
   },
+  mod: {
+    args: [VAL_TYPE.f64, VAL_TYPE.f64],
+    returns: [VAL_TYPE.f64],
+    locals: [],
+    // TODO: Simplify all this type coersion
+    binary: [
+      op.local_get,
+      ...unsignedLEB128(0),
+      op.i64_trunc_s_f64,
+      op.get_local,
+      ...unsignedLEB128(1),
+      op.i64_trunc_s_f64,
+      op.i64_rem_s,
+      op.f64_convert_s_i64,
+    ],
+  },
 };
 
 module.exports = { localFuncMap };
