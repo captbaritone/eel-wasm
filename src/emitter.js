@@ -343,21 +343,16 @@ function emit(ast, context) {
       return [...left, ...right, ...instruction];
     }
     case "CALL_EXPRESSION": {
-      /*
+      if (BINARY) {
         const args = flatten(
           ast.arguments.map(node => {
             return emit(node, context);
           })
         );
-        const offset = context.resolveLocalFunc(ast.callee.value);
-        return [
-          ...args,
-          op.call,
-          // funcindex
-          ...int(offset),
-        ];
+        const functionName = ast.callee.value;
+        const invocation = context.resolveLocalFunc(functionName);
+        return [...args, ...invocation];
       }
-      */
       const func = FUNCTIONS[ast.callee.value];
       if (func == null) {
         throw new Error(

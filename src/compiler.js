@@ -8,6 +8,7 @@ const {
   encodeVector,
   encodeSection,
   ops,
+  unsignedLEB128,
   VAL_TYPE,
   FUNCTION_TYPE,
   GLOBAL_TYPE,
@@ -59,6 +60,32 @@ function compileModule({
     functionImports.map(func => func.name)
   );
 
+  // TODO: We could pass in the arity here to get a compile-time check that we
+  // passed the right number of arguments.
+  function resolveLocalFunc(name) {
+    // Inline functions
+    switch (name) {
+      case "abs":
+        return [ops.f64_abs];
+      case "sqrt":
+        return [ops.f64_sqrt];
+      case "int":
+        return [ops.f64_floor];
+      case "min":
+        return [ops.f64_min];
+      case "max":
+        return [ops.f64_max];
+      case "above":
+        return [ops.f64_lt, ops.f64_convert_i32_s];
+      case "below":
+        return [ops.f64_gt, ops.f64_convert_i32_s];
+      case "equal":
+        return [ops.f64_eq, ops.f64_convert_i32_s];
+    }
+    const offset = localFuncResolver.get(name);
+    return [ops.call, ...unsignedLEB128(offset)];
+  }
+
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
     let ast = parse(code);
     if (optimize) {
@@ -68,7 +95,7 @@ function compileModule({
       globals: globalVariables,
       resolveExternalVar: name => externalVarsResolver.get(name),
       resolveUserVar: name => userVarsResolver.get(name),
-      resolveLocalFunc: name => localFuncResolver.get(name),
+      resolveLocalFunc,
       // TODO: Get rid of userVars
       userVars: new Set(),
     });
