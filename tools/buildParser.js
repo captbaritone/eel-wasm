@@ -152,7 +152,7 @@ var parser = new Parser(grammar);
 
 // If called from CLI, we should output source.
 if (require.main === module) {
-  const settings = { moduleType: "amd" };
+  const settings = { moduleType: "commonjs" };
   console.log(parser.generate(settings));
 }
 
