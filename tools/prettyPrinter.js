@@ -1,24 +1,16 @@
 function print(ast) {
   switch (ast.type) {
-    case "MODULE": {
-      throw new Error("MODULE cannot be pretty printed");
-    }
-    case "FUNCTION_EXPORT": {
-      throw new Error("FUNCTION_EXPORT cannot be pretty printed");
-    }
     case "SCRIPT": {
-      return ast.body.map(expression => print(expression)).join("\n");
+      return ast.body.map(print).join("\n");
     }
     case "EXPRESSION_BLOCK": {
-      return ast.body.map(expression => print(expression)).join("\n");
+      return ast.body.map(print).join("\n");
     }
     case "BINARY_EXPRESSION": {
       return `${print(ast.left)} ${ast.operator} ${print(ast.right)}`;
     }
     case "CALL_EXPRESSION": {
-      const args = ast.arguments
-        .map(expression => print(expression))
-        .join(", ");
+      const args = ast.arguments.map(print).join(", ");
       return `${print(ast.callee)}(${args})`;
     }
     case "ASSIGNMENT_EXPRESSION": {
