@@ -92,7 +92,7 @@ yarn test
 And run a prototype of a performance benchmark:
 
 ```
-yarn perf
+yarn benchmark
 ```
 
 ## Prior Art

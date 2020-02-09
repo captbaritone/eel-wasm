@@ -9,7 +9,7 @@
   "scripts": {
     "test": "jest",
     "ci": "yarn test && node tools/parseMilk.js && yarn build",
-    "perf": "node tools/benchmark/performance.js perf",
+    "benchmark": "node tools/benchmark/performance.js perf",
     "consistency": "node tools/benchmark/performance.js consistency",
     "test-parse": "node tools/parseMilk.js ./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
