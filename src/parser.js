@@ -1,5 +1,6 @@
 let parser = null;
-if (process.env.NODE_ENV === "production") {
+// Always use the dynamic one, while we figure out why the built one doens't work.
+if (process.env.NODE_ENV === "production" && false) {
   parser = require("../build/parser");
 } else {
   parser = require("../tools/buildParser");
