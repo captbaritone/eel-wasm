@@ -1,4 +1,4 @@
-const { encodef64, unsignedLEB128, ops: op, VAL_TYPE } = require("./encoding");
+const { encodef64, unsignedLEB128, op, VAL_TYPE } = require("./encoding");
 
 const localFuncMap = {
   sqr: {

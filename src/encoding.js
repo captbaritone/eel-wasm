@@ -32,7 +32,7 @@ const EXPORT_TYPE = {
   GLOBAL: 0x03,
 };
 
-const ops = {
+const op = {
   select: 0x1b,
   call: 0x10,
   drop: 0x1a,
@@ -138,7 +138,7 @@ module.exports = {
   encodeString,
   unsignedLEB128,
   encodef64,
-  ops,
+  op,
   VAL_TYPE,
   GLOBAL_TYPE,
   FUNCTION_TYPE,

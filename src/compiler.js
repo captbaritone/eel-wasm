@@ -6,7 +6,7 @@ const {
   encodeString,
   encodeVector,
   encodeSection,
-  ops,
+  op,
   unsignedLEB128,
   VAL_TYPE,
   FUNCTION_TYPE,
@@ -66,24 +66,24 @@ function compileModule({
     // Inline functions
     switch (name) {
       case "abs":
-        return [ops.f64_abs];
+        return [op.f64_abs];
       case "sqrt":
-        return [ops.f64_sqrt];
+        return [op.f64_sqrt];
       case "int":
-        return [ops.f64_floor];
+        return [op.f64_floor];
       case "min":
-        return [ops.f64_min];
+        return [op.f64_min];
       case "max":
-        return [ops.f64_max];
+        return [op.f64_max];
       case "above":
-        return [ops.f64_lt, ops.f64_convert_i32_s];
+        return [op.f64_lt, op.f64_convert_i32_s];
       case "below":
-        return [ops.f64_gt, ops.f64_convert_i32_s];
+        return [op.f64_gt, op.f64_convert_i32_s];
       case "equal":
-        return [ops.f64_eq, ops.f64_convert_i32_s];
+        return [op.f64_eq, op.f64_convert_i32_s];
     }
     const offset = localFuncResolver.get(name);
-    return [ops.call, ...unsignedLEB128(offset)];
+    return [op.call, ...unsignedLEB128(offset)];
   }
 
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
@@ -164,9 +164,9 @@ function compileModule({
     return [
       VAL_TYPE.f64,
       MUTABILITY.var,
-      ops.f64_const,
+      op.f64_const,
       ...encodef64(0),
-      ops.end,
+      op.end,
     ];
   });
 
@@ -180,11 +180,7 @@ function compileModule({
   const codes = [...localFuncs, ...moduleFuncs].map(func => {
     // TODO: It's a bit odd that every other section is an array of arrays and
     // this one is an array of vectors already.
-    return encodeVector([
-      ...encodeVector(func.locals),
-      ...func.binary,
-      ops.end,
-    ]);
+    return encodeVector([...encodeVector(func.locals), ...func.binary, op.end]);
   });
 
   return new Uint8Array([

@@ -1,4 +1,4 @@
-const { ops: op, encodef64 } = require("./encoding");
+const { op, encodef64 } = require("./encoding");
 
 function arrayJoin(arr, joiner) {
   const newArr = [];
@@ -128,7 +128,7 @@ function emit(ast, context) {
         ...consiquent,
         0x05, // else
         ...alternate,
-        0x0b, // end
+        op.end, // end
       ];
     }
     case "LOGICAL_EXPRESSION": {
