@@ -1,19 +1,4 @@
-const shims = require("./shims");
-const { ops, encodef64, unsignedLEB128 } = require("./encoding");
-
-const BINARY = true;
-
-function makeNamespaceResolver(prefix) {
-  let counter = -1;
-  const map = new Map();
-  return name => {
-    if (!map.has(name)) {
-      counter++;
-      map.set(name, counter);
-    }
-    return `$${prefix}${map.get(name)}`;
-  };
-}
+const { ops: op, encodef64 } = require("./encoding");
 
 function arrayJoin(arr, joiner) {
   const newArr = [];
@@ -35,291 +20,8 @@ function flatten(arr) {
   return newArr;
 }
 
-let op = {
-  select: "select",
-  call: "call",
-  drop: "drop",
-  get_local: "get_local",
-  i32_or: "i32.or",
-  i32_const: "i32.const",
-  i32_ne: "i32.ne",
-  i32_sub: "i32.sub",
-  i32_eqz: "i32.eqz",
-  i32_trunc_s_f64: "i32.trunc_s/f64",
-  i64_and: "i64.and",
-  i64_or: "i64.or",
-  i64_rem_s: "i64.rem_s",
-  i64_trunc_s_f64: "i64.trunc_s/f64",
-  f64_const: "f64.const",
-  f64_ne: "f64.ne",
-  f64_neg: "f64.neg",
-  f64_add: "f64.add",
-  f64_sub: "f64.sub",
-  f64_mul: "f64.mul",
-  f64_div: "f64.div",
-  f64_lt: "f64.lt",
-  f64_abs: "f64.abs",
-  f64_sqrt: "f64.sqrt",
-  f64_floor: "f64.floor",
-  f64_min: "f64.min",
-  f64_max: "f64.max",
-  f64_gt: "f64.gt",
-  f64_eq: "f64.eq",
-  f64_lt: "f64.lt",
-  f64_convert_s_i64: "f64.convert_s/i64",
-  f64_convert_i32_s: "f64.convert_s/i32",
-  global_get: "global.get",
-  global_set: "global.set",
-};
-
-if (BINARY) {
-  op = ops;
-}
-const valueType = {
-  f64: "f64",
-};
-
-// Having a choke point where all code gets joined will let us make assertions
-// about code before it gets stringified. This will help as we migrate to binary
-// output.
-function joinCode(arr) {
-  arr.forEach(val => {
-    if (Array.isArray(val)) {
-      throw new Error(`Array! "${val}"`);
-    }
-  });
-  return arr.join(" ");
-}
-
-function funcName(name) {
-  return name;
-}
-
-function paramName(name) {
-  return name;
-}
-
-// f64
-function float(number) {
-  if (BINARY) {
-    return encodef64(number);
-  }
-  return [number];
-}
-
-function int(n) {
-  return unsignedLEB128(n);
-}
-
-function joinFunction({ args, name, result, code }) {
-  return `(func $${name} ${args.map(name => `(param ${name} f64)`).join(" ")} ${
-    result ? "(result f64)" : ""
-  }
-    ${joinCode(code)}
-  )`;
-}
-
-const STD_LIBRARY = [
-  {
-    name: "if",
-    args: ["$test", "$consiquent", "$alternate"],
-    result: 1,
-    // TODO: We should double check that this does not short circut
-    code: [
-      op.get_local,
-      paramName("$consiquent"),
-      op.get_local,
-      paramName("$alternate"),
-      op.get_local,
-      paramName("$test"),
-      op.f64_const,
-      ...float(0),
-      op.f64_ne,
-      op.select,
-    ],
-  },
-  {
-    name: "booleanOr",
-    args: ["$a", "$b"],
-    result: 1,
-    // TODO: Simplify all this type coersion
-    code: [
-      op.get_local,
-      paramName("$a"),
-      op.i32_trunc_s_f64,
-      op.get_local,
-      paramName("$b"),
-      op.i32_trunc_s_f64,
-      op.i32_or,
-      op.i32_const,
-      ...int(0),
-      op.i32_ne,
-      op.f64_convert_i32_s,
-    ],
-  },
-  {
-    name: "mod",
-    args: ["$a", "$b"],
-    result: 1,
-    // TODO: Simplify all this type coersion
-    code: [
-      op.get_local,
-      paramName("$a"),
-      op.i64_trunc_s_f64,
-      op.get_local,
-      paramName("$b"),
-      op.i64_trunc_s_f64,
-      op.i64_rem_s,
-      op.f64_convert_s_i64,
-    ],
-  },
-  {
-    name: "bitwiseAnd",
-    args: ["$a", "$b"],
-    result: 1,
-    code: [
-      op.get_local,
-      paramName("$a"),
-      op.i64_trunc_s_f64,
-      op.get_local,
-      paramName("$b"),
-      op.i64_trunc_s_f64,
-      op.i64_and,
-      op.f64_convert_s_i64,
-    ],
-  },
-];
-
-// TODO: These functions could either be lazily added (only appended when used)
-// or inlined.
-const STANDARD_LIBRARY = `
-${STD_LIBRARY.map(joinFunction).join("\n")}
-
-(func $bitwiseOr (param $a f64) (param $b f64) (result f64) 
-  ${joinCode([
-    op.get_local,
-    paramName("$a"),
-    op.i64_trunc_s_f64,
-    op.get_local,
-    paramName("$b"),
-    op.i64_trunc_s_f64,
-    op.i64_or,
-    op.f64_convert_s_i64,
-  ])}
-)
-(func $booleanNot (param $x f64) (result f64) 
-  ${joinCode([
-    op.get_local,
-    paramName("$x"),
-    op.i32_trunc_s_f64,
-    op.i32_eqz,
-    op.f64_convert_i32_s,
-  ])})
-(func $sqr (param $x f64) (result f64) 
-  ${joinCode([
-    op.get_local,
-    paramName("$x"),
-    op.get_local,
-    paramName("$x"),
-    op.f64_mul,
-  ])}
-)
-(func $sign (param $x f64) (result f64) 
-  ${joinCode([
-    op.f64_const,
-    ...float(0),
-    op.get_local,
-    paramName("$x"),
-    op.f64_lt,
-    op.get_local,
-    paramName("$x"),
-    op.f64_const,
-    ...float(0),
-    op.f64_lt,
-    op.i32_sub,
-    op.f64_convert_i32_s,
-  ])})
-`;
-
-const BINARY_OPERATORS = {
-  "+": [op.f64_add],
-  "-": [op.f64_sub],
-  "*": [op.f64_mul],
-  "/": [op.f64_div],
-  "%": [op.call, funcName("$mod")],
-  "|": [op.call, funcName("$bitwiseOr")],
-  "&": [op.call, funcName("$bitwiseAnd")],
-};
-
-const FUNCTIONS = {
-  abs: { arity: 1, instruction: [op.f64_abs] },
-  sqrt: { arity: 1, instruction: [op.f64_sqrt] },
-  sqr: { arity: 1, instruction: [op.call, funcName("$sqr")] },
-  sign: { arity: 1, instruction: [op.call, funcName("$sign")] },
-  // TODO: What's the difference between trunc and floor?
-  // TODO: Is a rounded float the right thing here, or do we want an int?
-  int: { arity: 1, instruction: [op.f64_floor] },
-  min: { arity: 2, instruction: [op.f64_min] },
-  max: { arity: 2, instruction: [op.f64_max] },
-  // We use `lt` here rather than `gt` because the stack is backwards.
-  above: { arity: 2, instruction: [op.f64_lt, op.f64_convert_i32_s] },
-  // We use `gt` here rather than `lt` because the stack is backwards.
-  below: { arity: 2, instruction: [op.f64_gt, op.f64_convert_i32_s] },
-  equal: { arity: 2, instruction: [op.f64_eq, op.f64_convert_i32_s] },
-  bnot: { arity: 1, instruction: [op.call, funcName("$booleanNot")] },
-  bor: { arity: 2, instruction: [op.call, funcName("$booleanOr")] },
-  if: { arity: 3, instruction: [op.call, funcName("$if")] },
-};
-
-Object.entries(shims).forEach(([key, value]) => {
-  FUNCTIONS[key] = {
-    arity: value.length,
-    instruction: [op.call, funcName("$" + key)],
-  };
-});
-
 function emit(ast, context) {
   switch (ast.type) {
-    case "MODULE": {
-      // Intialize a new module context. External variables are called
-      // `context.globals` for legacy reasonse.
-      context.resolveExternalVar = makeNamespaceResolver("E");
-      context.resolveImport = makeNamespaceResolver("F");
-      context.resolveUserVar = makeNamespaceResolver("U");
-      context.userVars = new Set();
-
-      const externals = Array.from(context.globals).map(name => {
-        return `(global ${context.resolveExternalVar(
-          name
-        )} (import "js" "${name}") (mut f64))`;
-      });
-      const exportedFunctions = ast.exportedFunctions.map(func => {
-        return emit(func, context);
-      });
-      const importedFunctions = Object.entries(shims).map(([key, value]) => {
-        const arity = value.length;
-        const params = new Array(arity).fill("(param f64)").join(" ");
-        return `(func $${key} (import "imports" "${key}") ${params} (result f64))`;
-      });
-      const userVars = Array.from(context.userVars).map(name => {
-        return `(global ${context.resolveUserVar(name)} (mut f64) f64.const 0)`;
-      });
-      return `(module
-        ${externals.join("\n")}
-        ${importedFunctions.join("\n")}
-        ${STANDARD_LIBRARY}
-        ${userVars.join(" ")}
-        ${exportedFunctions.join("\n")}
-      )`;
-    }
-    case "FUNCTION_EXPORT": {
-      // We do a real join here since from here on out we must have strings
-      const body = joinCode(emit(ast.function, context));
-      // TODO: Should functions have implicit return?
-      // This could be complex, since programs can be empty (I think).
-      return `(func ${context.resolveImport(ast.name)}  ${body})
-        (export "${ast.name}" (func ${context.resolveImport(ast.name)}))`;
-    }
     case "SCRIPT": {
       const body = ast.body.map((statement, i) => {
         return [...emit(statement, context), op.drop];
@@ -336,69 +38,40 @@ function emit(ast, context) {
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
-      if (BINARY) {
-        switch (ast.operator) {
-          case "+":
-            return [...left, ...right, op.f64_add];
-          case "-":
-            return [...left, ...right, op.f64_sub];
-          case "*":
-            return [...left, ...right, op.f64_mul];
-          case "/":
-            return [...left, ...right, op.f64_div];
-          case "%": {
-            const invocation = context.resolveLocalFunc("mod");
-            return [...left, ...right, ...invocation];
-          }
-          case "|": {
-            const invocation = context.resolveLocalFunc("bitwiseOr");
-            return [...left, ...right, ...invocation];
-          }
-          case "&": {
-            const invocation = context.resolveLocalFunc("bitwiseAnd");
-            return [...left, ...right, ...invocation];
-          }
-          default:
-            throw new Error(
-              `Unknown binary expression operator ${ast.operator}`
-            );
+      switch (ast.operator) {
+        case "+":
+          return [...left, ...right, op.f64_add];
+        case "-":
+          return [...left, ...right, op.f64_sub];
+        case "*":
+          return [...left, ...right, op.f64_mul];
+        case "/":
+          return [...left, ...right, op.f64_div];
+        case "%": {
+          const invocation = context.resolveLocalFunc("mod");
+          return [...left, ...right, ...invocation];
         }
+        case "|": {
+          const invocation = context.resolveLocalFunc("bitwiseOr");
+          return [...left, ...right, ...invocation];
+        }
+        case "&": {
+          const invocation = context.resolveLocalFunc("bitwiseAnd");
+          return [...left, ...right, ...invocation];
+        }
+        default:
+          throw new Error(`Unknown binary expression operator ${ast.operator}`);
       }
-      const instruction = BINARY_OPERATORS[ast.operator];
-      if (instruction == null) {
-        throw new Error(`Unknown binary operator ${ast.operator}`);
-      }
-      return [...left, ...right, ...instruction];
     }
     case "CALL_EXPRESSION": {
-      if (BINARY) {
-        const args = flatten(
-          ast.arguments.map(node => {
-            return emit(node, context);
-          })
-        );
-        const functionName = ast.callee.value;
-        const invocation = context.resolveLocalFunc(functionName);
-        return [...args, ...invocation];
-      }
-      const func = FUNCTIONS[ast.callee.value];
-      if (func == null) {
-        throw new Error(
-          `Unknown call callee \`${JSON.stringify(ast.callee)}\``
-        );
-      }
-      const { instruction, arity } = func;
-      if (ast.arguments.length !== arity) {
-        throw new Error(
-          `Incorrect number of arguments passed to ${ast.callee.value}. Got ${ast.arguments.length}, expected ${arity}`
-        );
-      }
       const args = flatten(
         ast.arguments.map(node => {
           return emit(node, context);
         })
       );
-      return [...args, ...instruction];
+      const functionName = ast.callee.value;
+      const invocation = context.resolveLocalFunc(functionName);
+      return [...args, ...invocation];
     }
     case "ASSIGNMENT_EXPRESSION": {
       const right = emit(ast.right, context);
@@ -433,11 +106,8 @@ function emit(ast, context) {
         case "/=":
           return [...get, ...right, op.f64_div, ...set, ...get];
         case "%=":
-          if (BINARY) {
-            const invocation = context.resolveLocalFunc("mod");
-            return [...get, ...right, ...invocation, ...set, ...get];
-          }
-          return [...get, ...right, op.call, funcName("$mod"), ...set, ...get];
+          const invocation = context.resolveLocalFunc("mod");
+          return [...get, ...right, ...invocation, ...set, ...get];
         default:
           throw new Error(`Unknown assignment operator "${ast.operator}"`);
       }
@@ -448,33 +118,17 @@ function emit(ast, context) {
       const test = emit(ast.test, context);
       const consiquent = emit(ast.consiquent, context);
       const alternate = emit(ast.alternate, context);
-      if (BINARY) {
-        return [
-          ...test,
-          op.f64_const,
-          ...float(0),
-          op.f64_ne,
-          0x04, // if
-          0x7c, // Return type (f64)
-          ...consiquent,
-          0x05, // else
-          ...alternate,
-          0x0b, // end
-        ];
-      }
       return [
         ...test,
         op.f64_const,
-        ...float(0),
+        ...encodef64(0),
         op.f64_ne,
-        "if",
-        "(result",
-        valueType.f64,
-        ")",
+        0x04, // if
+        0x7c, // Return type (f64)
         ...consiquent,
-        "else",
+        0x05, // else
         ...alternate,
-        "end",
+        0x0b, // end
       ];
     }
     case "LOGICAL_EXPRESSION": {
@@ -506,10 +160,10 @@ function emit(ast, context) {
       }
       return [op.global_get, context.resolveUserVar(variableName)];
     case "NUMBER_LITERAL":
-      return [op.f64_const, ...float(ast.value)];
+      return [op.f64_const, ...encodef64(ast.value)];
     default:
       throw new Error(`Unknown AST node type ${ast.type}`);
   }
 }
 
-module.exports = { emit, BINARY, float };
+module.exports = { emit };

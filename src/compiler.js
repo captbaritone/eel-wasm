@@ -1,7 +1,6 @@
 const { parse } = require("./parser");
-const { emit, BINARY } = require("./emitter");
+const { emit } = require("./emitter");
 const optimizeAst = require("./optimizers/optimize");
-const wabt = require("wabt")();
 const {
   encodef64,
   encodeString,
@@ -201,25 +200,4 @@ function compileModule({
   ]);
 }
 
-function compileModuleWat({ globals, functions, optimize = false }) {
-  const exportedFunctions = Object.entries(functions).map(
-    ([functionName, expression]) => {
-      return {
-        type: "FUNCTION_EXPORT",
-        name: functionName,
-        function: parse(expression),
-      };
-    }
-  );
-
-  let ast = { type: "MODULE", exportedFunctions };
-  if (optimize) {
-    ast = optimizeAst(ast);
-  }
-  const wat = emit(ast, { globals });
-  const wasmModule = wabt.parseWat("somefile.wat", wat);
-  const { buffer } = wasmModule.toBinary({});
-  return buffer;
-}
-
-module.exports = { compileModule: BINARY ? compileModule : compileModuleWat };
+module.exports = { compileModule };
