@@ -7,13 +7,13 @@ test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).
   const globals = {
     x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-    y: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+    y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
   };
 
   // Define the EEL scripts that your module will include
   const functions = {
     ten: "x = 10;",
-    setXToY: "x = y;"
+    setXToY: "x = y;",
   };
 
   // Build (compile/initialize) the Wasm module
@@ -94,8 +94,8 @@ const testCases = [
   ["Multiple statements expression implcit return", "g = (0; 20 + 5;);", 25],
   ["if", "g = if(0, 20, 10);", 10],
   ["if", "g = if(0, 20, 10);", 10],
-  ["if does not short-circit (consiquent)", "if(0, (g = 10;), 10);", 10],
-  ["if does not short-circit (alternate)", "if(1, (10), (g = 10;));", 10],
+  ["if does short-circit (consiquent)", "if(0, (g = 10;), 10);", 0],
+  ["if does short-circit (alternate)", "if(1, (10), (g = 10;));", 0],
   ["above (true)", "g = above(10, 4);", 0],
   ["above (false)", "g = above(4, 10);", 1],
   ["below (true)", "g = below(4, 10);", 0],
@@ -128,7 +128,7 @@ const testCases = [
   ["Divide equals (local var)", "a = 5; a /= 2; g = a;", 2.5],
   ["Mod equals", "g = 5; g %= 2;", 1],
   ["Mod equals (local var)", "a = 5; a %= 2; g = a;", 1],
-  ["Statement block as argument", "g = int(g = 5; g + 10.5;);", 15]
+  ["Statement block as argument", "g = int(g = 5; g + 10.5;);", 15],
   // ["Boolean and", "g = 1 && 2;", 2],
   // ["Boolean and", "g = 1 || 2;", 1],
 ];
@@ -143,7 +143,7 @@ describe("Small test cases", () => {
 
         const mod = await loadModule({
           globals: { g, x },
-          functions: { run: expression }
+          functions: { run: expression },
         });
 
         mod.exports.run();
@@ -156,7 +156,7 @@ describe("Small test cases", () => {
         const mod = await loadModule({
           globals: { g, x },
           functions: { run: expression },
-          optimize: true
+          optimize: true,
         });
 
         mod.exports.run();
@@ -185,8 +185,8 @@ test("Some actual equations", async () => {
     globals,
     functions: {
       perFrame,
-      perPixel
-    }
+      perPixel,
+    },
   });
 
   expect(() => {

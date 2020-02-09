@@ -13,24 +13,6 @@ const localFuncMap = {
       op.f64_mul,
     ],
   },
-  if: {
-    args: [VAL_TYPE.f64, VAL_TYPE.f64, VAL_TYPE.f64],
-    returns: [VAL_TYPE.f64],
-    locals: [],
-    // TODO: We should double check that this does not short circut
-    binary: [
-      op.local_get,
-      ...unsignedLEB128(1),
-      op.local_get,
-      ...unsignedLEB128(2),
-      op.local_get,
-      ...unsignedLEB128(0),
-      op.f64_const,
-      ...encodef64(0),
-      op.f64_ne,
-      op.select,
-    ],
-  },
   bnot: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],

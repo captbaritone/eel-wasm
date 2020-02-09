@@ -14,6 +14,7 @@ const grammar = {
       ["[0-9]+", "return 'DIGITS_TOKEN'"],
       ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
       ["(\\&\\&)|\\|\\|", "return 'LOGICAL_OPERATOR_TOKEN'"],
+      ["if", "return 'IF'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
       ["[a-zA-Z_][a-zA-Z0-9._]*", "return 'IDENTIFIER_TOKEN'"],
       ["$", "return 'EOF'"],
@@ -89,7 +90,11 @@ const grammar = {
     CONDITIONAL_EXPRESSION: [
       [
         "expression ? expression : expression",
-        "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5, column: @1.first_column, line: @1.first_line}",
+        "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5, syntax: 'ternary', column: @1.first_column, line: @1.first_line}",
+      ],
+      [
+        "IF ( argument , argument , argument )",
+        "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $3, consiquent: $5, alternate: $7, syntax: 'function', column: @1.first_column, line: @1.first_line}",
       ],
     ],
     LOGICAL_EXPRESSION: [
