@@ -420,13 +420,26 @@ function emit(ast, context) {
       const test = emit(ast.test, context);
       const consiquent = emit(ast.consiquent, context);
       const alternate = emit(ast.alternate, context);
+      if (BINARY) {
+        return [
+          ...test,
+          op.f64_const,
+          ...float(0),
+          op.f64_ne,
+          0x04, // if
+          0x7c, // Return type (f64)
+          ...consiquent,
+          0x05, // else
+          ...alternate,
+          0x0b, // end
+        ];
+      }
       return [
         ...test,
         op.f64_const,
         ...float(0),
         op.f64_ne,
         "if",
-        // TODO: This will have to be cleaned up when we switch to binary
         "(result",
         valueType.f64,
         ")",
