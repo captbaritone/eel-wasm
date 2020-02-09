@@ -1,7 +1,7 @@
 const shims = require("./shims");
 const { ops, encodef64, unsignedLEB128 } = require("./encoding");
 
-const BINARY = false;
+const BINARY = true;
 
 function makeNamespaceResolver(prefix) {
   let counter = -1;
@@ -336,6 +336,34 @@ function emit(ast, context) {
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
+      if (BINARY) {
+        switch (ast.operator) {
+          case "+":
+            return [...left, ...right, op.f64_add];
+          case "-":
+            return [...left, ...right, op.f64_sub];
+          case "*":
+            return [...left, ...right, op.f64_mul];
+          case "/":
+            return [...left, ...right, op.f64_div];
+          case "%": {
+            const invocation = context.resolveLocalFunc("mod");
+            return [...left, ...right, ...invocation];
+          }
+          case "|": {
+            const invocation = context.resolveLocalFunc("bitwiseOr");
+            return [...left, ...right, ...invocation];
+          }
+          case "&": {
+            const invocation = context.resolveLocalFunc("bitwiseAnd");
+            return [...left, ...right, ...invocation];
+          }
+          default:
+            throw new Error(
+              `Unknown binary expression operator ${ast.operator}`
+            );
+        }
+      }
       const instruction = BINARY_OPERATORS[ast.operator];
       if (instruction == null) {
         throw new Error(`Unknown binary operator ${ast.operator}`);
