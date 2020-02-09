@@ -93,8 +93,12 @@ function compileModule({
     }
     const binary = emit(ast, {
       globals: globalVariables,
-      resolveExternalVar: name => externalVarsResolver.get(name),
-      resolveUserVar: name => userVarsResolver.get(name),
+      resolveExternalVar: name => {
+        return unsignedLEB128(externalVarsResolver.get(name));
+      },
+      resolveUserVar: name => {
+        return unsignedLEB128(userVarsResolver.get(name));
+      },
       resolveLocalFunc,
       // TODO: Get rid of userVars
       userVars: new Set(),

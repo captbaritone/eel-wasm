@@ -91,8 +91,8 @@ function emit(ast, context) {
       // cases we should try to find a way to omit the `get/drop` combo.
       // Peephole optimization seems to be the conventional way to do this.
       // https://en.wikipedia.org/wiki/Peephole_optimization
-      const get = [op.global_get, resolvedName];
-      const set = [op.global_set, resolvedName];
+      const get = [op.global_get, ...resolvedName];
+      const set = [op.global_set, ...resolvedName];
 
       switch (ast.operator) {
         case "=":
