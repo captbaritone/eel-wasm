@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { parse } from "src/parser";
-import { emit } from "src/emitter";
+import { compileModule } from "src/compiler";
 import shims from "src/shims";
 import { print } from "tools/prettyPrinter";
 import _wabt from "wabt";
@@ -39,18 +39,16 @@ export function useForceUpdate() {
   }, []);
 }
 
-async function modFromWat(wat, globals) {
-  if (wat == null || globals == null) {
+async function modFromWasm(wasm, globals) {
+  if (wasm == null || globals == null) {
     return null;
   }
 
-  const wasmModule = wabt.parseWat("somefile.wat", wat);
-  const { buffer } = wasmModule.toBinary({});
-  const mod = await WebAssembly.compile(buffer);
+  const mod = await WebAssembly.compile(wasm);
 
   var importObject = {
     js: { ...globals },
-    imports: shims
+    imports: shims,
   };
 
   return await WebAssembly.instantiate(mod, importObject);
@@ -102,16 +100,16 @@ export function useWasm(ast, globals) {
       return;
     }
     try {
-      const exportedFunctions = [
-        {
-          type: "FUNCTION_EXPORT",
-          name: "main",
-          function: ast
-        }
-      ];
-
-      const moduleAst = { type: "MODULE", exportedFunctions };
-      setWasm(emit(moduleAst, { globals: new Set(Object.keys(globals)) }));
+      const wasm = compileModule({
+        functions: {
+          main: ast,
+        },
+        shims,
+        globals: new Set(Object.keys(globals)),
+        optimize: false,
+        preParsed: true,
+      });
+      setWasm(wasm);
       setWasmError(null);
     } catch (e) {
       setWasmError(e.message);
@@ -119,6 +117,17 @@ export function useWasm(ast, globals) {
   }, [ast, globals]);
 
   return [wasm, wasmError];
+}
+
+export function useWat(wasm) {
+  return useMemo(() => {
+    if (wasm == null) {
+      return [null];
+    }
+    const myModule = wabt.readWasm(wasm, { readDebugNames: true });
+    const wat = myModule.toText({ foldExprs: false, inlineExport: false });
+    return [wat];
+  }, [wasm]);
 }
 
 export function useMod(wasm, globals) {
@@ -131,7 +140,7 @@ export function useMod(wasm, globals) {
     }
     let unmounted = false;
 
-    modFromWat(wasm, globals).then(mod => {
+    modFromWasm(wasm, globals).then(mod => {
       if (unmounted) {
         return;
       }
@@ -190,7 +199,7 @@ export function useGlobals() {
       setGlobals(globals => {
         return {
           ...globals,
-          [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+          [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
         };
       });
     },

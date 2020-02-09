@@ -43,6 +43,7 @@ function compileModule({
   functions: functionCode,
   shims,
   optimize,
+  preParsed = false,
 }) {
   const functionImports = Object.entries(shims).map(([name, func]) => {
     return {
@@ -86,7 +87,7 @@ function compileModule({
   }
 
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
-    let ast = parse(code);
+    let ast = preParsed ? code : parse(code);
     if (optimize) {
       ast = optimizeAst(ast);
     }

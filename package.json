@@ -8,22 +8,25 @@
   },
   "scripts": {
     "test": "jest",
-    "ci": "npm test && node tools/parseMilk.js",
+    "ci": "yarn test && node tools/parseMilk.js && yarn build",
     "perf": "node tools/benchmark/performance.js perf",
     "consistency": "node tools/benchmark/performance.js consistency",
-    "test-parse": "node tools/parseMilk.js ./fixtures/mega"
+    "test-parse": "node tools/parseMilk.js ./fixtures/mega",
+    "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
+    "build": "yarn build-parser && parcel build src/compiler.js --experimental-scope-hoisting"
   },
   "dependencies": {
-    "ieee754": "^1.1.13",
-    "jison": "^0.4.18",
-    "wabt": "^1.0.12"
+    "ieee754": "^1.1.13"
   },
   "devDependencies": {
     "jest": "^24.9.0",
+    "jison": "^0.4.18",
     "milkdrop-eel-parser": "^0.0.4",
     "milkdrop-preset-utils": "^0.1.0",
+    "parcel": "^1.12.4",
     "prettier": "^1.19.1",
-    "print-diff": "^1.0.0"
+    "print-diff": "^1.0.0",
+    "wabt": "^1.0.12"
   },
   "jest": {
     "moduleFileExtensions": [

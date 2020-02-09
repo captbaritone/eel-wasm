@@ -7,9 +7,10 @@ import {
   useGlobals,
   useAst,
   useWasm,
+  useWat,
   useMod,
   useOptimizedAst,
-  usePrettyPrintedEel
+  usePrettyPrintedEel,
 } from "./hooks";
 
 function Column({ children }) {
@@ -19,7 +20,7 @@ function Column({ children }) {
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,
-        flexBasis: 0
+        flexBasis: 0,
       }}
     >
       {children}
@@ -33,13 +34,13 @@ function ErrorBlock({ children }) {
 
 const EDITOR_OPTIONS = {
   minimap: { enabled: false },
-  lineNumbers: "off"
+  lineNumbers: "off",
 };
 
 function App() {
   const [optimize, setOptimize] = useUrlState("optimize", false, {
     serialize: bool => (bool ? 1 : 0),
-    deserialize: val => Boolean(Number(val))
+    deserialize: val => Boolean(Number(val)),
   });
   const { globals, addGlobal, removeGlobal } = useGlobals();
   const [eel, setEel] = useUrlState("eel", "foo = 1;");
@@ -48,7 +49,8 @@ function App() {
   const optimizedAst = useOptimizedAst(ast, optimize);
   const prettyEel = usePrettyPrintedEel(ast);
   const optimizedEel = usePrettyPrintedEel(optimizedAst);
-  const [wasm, wasmError] = useWasm(ast, globals);
+  const [wasm, wasmError] = useWasm(optimizedAst, globals);
+  const [wat] = useWat(wasm);
   const anyErrors = astError != null || wasmError != null;
   const mod = useMod(anyErrors ? null : wasm, globals);
   const forceUpdate = useForceUpdate();
@@ -75,7 +77,7 @@ function App() {
           top: "0",
           right: "0",
           marginTop: "10px",
-          marginRight: "10px"
+          marginRight: "10px",
         }}
       >
         <a href="https://github.com/captbaritone/eel-wasm">GitHub</a>
@@ -151,7 +153,7 @@ function App() {
               options={{
                 ...EDITOR_OPTIONS,
                 lineNumbers: "on",
-                readOnly: true
+                readOnly: true,
               }}
             />
           </>
@@ -164,7 +166,7 @@ function App() {
           height="90vh"
           width="100%"
           language="wasm"
-          value={wasm}
+          value={wat}
           options={{ ...EDITOR_OPTIONS, readOnly: true }}
         />
       </Column>
