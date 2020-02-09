@@ -129,8 +129,12 @@ const testCases = [
   ["Mod equals", "g = 5; g %= 2;", 1],
   ["Mod equals (local var)", "a = 5; a %= 2; g = a;", 1],
   ["Statement block as argument", "g = int(g = 5; g + 10.5;);", 15],
-  // ["Boolean and", "g = 1 && 2;", 2],
-  // ["Boolean and", "g = 1 || 2;", 1],
+  ["Logical and (first value ture)", "g = 1 && 2;", 2],
+  ["Logical and (first value false)", "g = 0 && 2;", 0],
+  ["Logical or (first value true)", "g = 1 || 2;", 1],
+  ["Logical or (first value false)", "g = 0 || 2;", 2],
+  ["Logical and shortcircuts", "0 && g = 10;", 0],
+  ["Logical or shortcircuts", "1 || g = 10;", 0],
 ];
 
 describe("Small test cases", () => {

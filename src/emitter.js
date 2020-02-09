@@ -132,7 +132,39 @@ function emit(ast, context) {
       ];
     }
     case "LOGICAL_EXPRESSION": {
-      throw new Error("Logical expressions are not implemented yet.");
+      const left = emit(ast.left, context);
+      const right = emit(ast.right, context);
+      // TODO: Use `br_if` here to avoid duplicating the output of `left` and to
+      // provide shortcircuting.
+      switch (ast.operator) {
+        case "&&":
+          return [
+            ...left,
+            op.f64_const,
+            ...encodef64(0),
+            op.f64_eq,
+            op.if,
+            VAL_TYPE.f64,
+            ...left,
+            op.else,
+            ...right,
+            op.end,
+          ];
+        case "||":
+          return [
+            ...left,
+            op.f64_const,
+            ...encodef64(0),
+            op.f64_ne,
+            op.if,
+            VAL_TYPE.f64,
+            ...left,
+            op.else,
+            ...right,
+            op.end,
+          ];
+      }
+      throw new Error(`Unknonw logical expression operator ${ast.operator}`);
     }
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value, context);
