@@ -64,6 +64,8 @@ const op = {
   i64_trunc_s_f64: 0xb0,
   f64_convert_s_i64: 0xb9,
   f64_convert_i32_s: 0xb7,
+  if: 0x04,
+  else: 0x05,
   end: 0x0b,
   local_get: 0x20,
   global_get: 0x23,
