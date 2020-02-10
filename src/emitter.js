@@ -134,45 +134,35 @@ function emit(ast, context) {
     case "LOGICAL_EXPRESSION": {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
+      const localIndex = context.resolveLocalF64();
+      let equalityOp = null;
       switch (ast.operator) {
-        case "&&": {
-          const localIndex = context.resolveLocalF64();
-          return [
-            ...left,
-            op.local_tee,
-            ...unsignedLEB128(localIndex),
-            op.f64_const,
-            ...encodef64(0),
-            op.f64_eq,
-            op.if,
-            VAL_TYPE.f64,
-            op.local_get,
-            ...unsignedLEB128(localIndex),
-            op.else,
-            ...right,
-            op.end,
-          ];
-        }
-        case "||": {
-          const localIndex = context.resolveLocalF64();
-          return [
-            ...left,
-            op.local_tee,
-            ...unsignedLEB128(localIndex),
-            op.f64_const,
-            ...encodef64(0),
-            op.f64_ne,
-            op.if,
-            VAL_TYPE.f64,
-            op.local_get,
-            ...unsignedLEB128(localIndex),
-            op.else,
-            ...right,
-            op.end,
-          ];
-        }
+        case "&&":
+          equalityOp = op.f64_eq;
+          break;
+        case "||":
+          equalityOp = op.f64_ne;
+          break;
+        default:
+          throw new Error(
+            `Unknown logical expression operator ${ast.operator}`
+          );
       }
-      throw new Error(`Unknonw logical expression operator ${ast.operator}`);
+      return [
+        ...left,
+        op.local_tee,
+        ...unsignedLEB128(localIndex),
+        op.f64_const,
+        ...encodef64(0),
+        equalityOp,
+        op.if,
+        VAL_TYPE.f64,
+        op.local_get,
+        ...unsignedLEB128(localIndex),
+        op.else,
+        ...right,
+        op.end,
+      ];
     }
     /*
     case "WHILE_STATEMENT": {
