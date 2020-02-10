@@ -33,10 +33,13 @@ const EXPORT_TYPE = {
 };
 
 const op = {
+  block: 0x02,
+  loop: 0x03,
+  br: 0x0c,
+  br_if: 0x0d,
   select: 0x1b,
   call: 0x10,
   drop: 0x1a,
-  get_local: 0x20,
   i32_or: 0x72,
   i32_const: 0x41,
   i32_ne: 0x47,
@@ -68,6 +71,7 @@ const op = {
   else: 0x05,
   end: 0x0b,
   local_get: 0x20,
+  local_set: 0x21,
   global_get: 0x23,
   global_set: 0x24,
 };
@@ -83,6 +87,15 @@ const MUTABILITY = {
   const: 0x00,
   var: 0x01,
 };
+
+function assertNumbers(nums) {
+  nums.forEach((num, i) => {
+    if (typeof num != "number") {
+      throw new Error(`Found non-number at index ${i}. Got ${typeof num}`);
+    }
+  });
+  return nums;
+}
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 const FUNCTION_TYPE = 0x60;
@@ -131,7 +144,8 @@ function encodeSection(type, subSections) {
 
   // The size of this vector is not needed for decoding, but can be
   // used to skip sections when navigating through a binary.
-  return [type, ...encodeVector(encodeVector(subSections))];
+  // TODO: Remove this assertion once we are more confident in our output.
+  return [type, ...assertNumbers(encodeVector(encodeVector(subSections)))];
 }
 
 module.exports = {
@@ -141,6 +155,7 @@ module.exports = {
   unsignedLEB128,
   encodef64,
   op,
+  assertNumbers,
   VAL_TYPE,
   GLOBAL_TYPE,
   FUNCTION_TYPE,
