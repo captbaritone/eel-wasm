@@ -87,6 +87,7 @@ function compileModule({
   }
 
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
+    let localF64Count = 0;
     let ast = preParsed ? code : parse(code);
     if (optimize) {
       ast = optimizeAst(ast);
@@ -99,6 +100,9 @@ function compileModule({
       resolveUserVar: name => {
         return unsignedLEB128(userVarsResolver.get(name));
       },
+      resolveLocalF64: () => {
+        return localF64Count++;
+      },
       resolveLocalFunc,
       // TODO: Get rid of userVars
       userVars: new Set(),
@@ -109,7 +113,7 @@ function compileModule({
       exportName: name,
       args: [],
       returns: [],
-      locals: [],
+      localF64Count,
     };
   });
 
@@ -182,9 +186,14 @@ function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
   const codes = [...localFuncs, ...moduleFuncs].map(func => {
+    const localTypes = [];
+    // TODO: If we want to support other types of locals, things might get complicated.
+    if (func.localF64Count) {
+      localTypes.push([...unsignedLEB128(func.localF64Count), VAL_TYPE.f64]);
+    }
     // TODO: It's a bit odd that every other section is an array of arrays and
     // this one is an array of vectors already.
-    return encodeVector([...encodeVector(func.locals), ...func.binary, op.end]);
+    return encodeVector([...encodeVector(localTypes), ...func.binary, op.end]);
   });
 
   return new Uint8Array([

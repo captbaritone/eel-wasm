@@ -4,7 +4,6 @@ const localFuncMap = {
   sqr: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    locals: [],
     binary: [
       op.local_get,
       ...unsignedLEB128(0),
@@ -16,7 +15,6 @@ const localFuncMap = {
   bnot: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    locals: [],
     binary: [
       op.local_get,
       ...unsignedLEB128(0),
@@ -28,7 +26,6 @@ const localFuncMap = {
   bor: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    locals: [],
     binary: [
       op.local_get,
       ...unsignedLEB128(0),
@@ -47,7 +44,6 @@ const localFuncMap = {
   sign: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    locals: [],
     binary: [
       op.f64_const,
       ...encodef64(0),
@@ -66,7 +62,6 @@ const localFuncMap = {
   mod: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    locals: [],
     // TODO: Simplify all this type coersion
     binary: [
       op.local_get,
@@ -82,7 +77,6 @@ const localFuncMap = {
   bitwiseOr: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    locals: [],
     binary: [
       op.local_get,
       ...unsignedLEB128(0),
@@ -97,7 +91,6 @@ const localFuncMap = {
   bitwiseAnd: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    locals: [],
     binary: [
       op.local_get,
       ...unsignedLEB128(0),

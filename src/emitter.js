@@ -1,4 +1,4 @@
-const { op, encodef64, VAL_TYPE } = require("./encoding");
+const { op, encodef64, unsignedLEB128, VAL_TYPE } = require("./encoding");
 
 function arrayJoin(arr, joiner) {
   const newArr = [];
@@ -134,38 +134,73 @@ function emit(ast, context) {
     case "LOGICAL_EXPRESSION": {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
-      // TODO: Use `br_if` here to avoid duplicating the output of `left` and to
-      // provide shortcircuting.
       switch (ast.operator) {
-        case "&&":
+        case "&&": {
+          const localIndex = context.resolveLocalF64();
           return [
             ...left,
+            op.local_tee,
+            ...unsignedLEB128(localIndex),
             op.f64_const,
             ...encodef64(0),
             op.f64_eq,
             op.if,
             VAL_TYPE.f64,
-            ...left,
+            op.local_get,
+            ...unsignedLEB128(localIndex),
             op.else,
             ...right,
             op.end,
           ];
-        case "||":
+        }
+        case "||": {
+          const localIndex = context.resolveLocalF64();
           return [
             ...left,
+            op.local_tee,
+            ...unsignedLEB128(localIndex),
             op.f64_const,
             ...encodef64(0),
             op.f64_ne,
             op.if,
             VAL_TYPE.f64,
-            ...left,
+            op.local_get,
+            ...unsignedLEB128(localIndex),
             op.else,
             ...right,
             op.end,
           ];
+        }
       }
       throw new Error(`Unknonw logical expression operator ${ast.operator}`);
     }
+    /*
+    case "WHILE_STATEMENT": {
+      const test = emit(ast.test, context);
+      const body = emit(ast.body, context);
+      return [
+        op.block,
+        0x40, // void block type
+        op.loop,
+        0x40, // void block type
+        ...test,
+        op.f64_const,
+        ...encodef64(0),
+        op.f64_eq,
+        op.br_if,
+        // TODO: Chasm has these as _signedLEB128_.
+        // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
+        ...unsignedLEB128(1), // Break out of the loop
+        ...body,
+        op.br,
+        ...unsignedLEB128(0), // Return to the top of the loop
+        op.end,
+        op.end,
+        op.f64_const,
+        ...encodef64(0), // Implicitly return zero
+      ];
+    }
+    */
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value, context);
       switch (ast.operator) {
