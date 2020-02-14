@@ -6,7 +6,7 @@ function transform(code) {
 }
 
 function joinLines(str) {
-  return str.replace("\n", " ")
+  return str.replace("\n", " ");
 }
 
 const expressions = [
@@ -17,6 +17,9 @@ const expressions = [
   "x = if(1, a = 10; y = 11;, 2);",
   "x = 1 ? 2 : 3;",
   "x = -1;",
+  "x = if(5, 6, 7);",
+  "x = exec2(5, 6);",
+  "x = exec3(5, 6, 7);",
 ];
 expressions.forEach(expression => {
   test(`"${expression}" can be pretty printed`, () => {

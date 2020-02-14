@@ -4,7 +4,11 @@ function print(ast) {
       return ast.body.map(print).join("\n");
     }
     case "EXPRESSION_BLOCK": {
-      return ast.body.map(print).join("\n");
+      const expressions = ast.body.map(print);
+      if (ast.syntax === "function") {
+        return `exec${ast.body.length}(${expressions.join(", ")})`;
+      }
+      return expressions.join("\n");
     }
     case "BINARY_EXPRESSION": {
       return `${print(ast.left)} ${ast.operator} ${print(ast.right)}`;
