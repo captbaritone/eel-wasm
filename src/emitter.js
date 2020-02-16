@@ -52,6 +52,42 @@ function emitWhile(expression, context) {
   ];
 }
 
+function emitLoop(count, expression, context) {
+  const body = emit(expression, context);
+  const localIndex = context.resolveLocalF64();
+  // TODO: This could probably be simplified
+  return [
+    // Assign the count to a variable
+    ...emit(count, context),
+    op.local_set,
+    ...unsignedLEB128(localIndex),
+    op.loop,
+    BLOCK.void, // void block type
+    // Run the body
+    ...body,
+    op.drop,
+    // Decrement the count
+    op.local_get,
+    ...unsignedLEB128(localIndex),
+    op.f64_const,
+    ...encodef64(1),
+    op.f64_sub,
+    op.local_tee,
+    ...unsignedLEB128(localIndex),
+    // Test if we've reached the end
+    op.f64_const,
+    ...encodef64(0),
+    op.f64_ne,
+    op.br_if,
+    // TODO: Chasm has these as _signedLEB128_.
+    // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
+    ...unsignedLEB128(0), // Return to the top of the loop
+    op.end,
+    op.f64_const,
+    ...encodef64(0), // Implicitly return zero
+  ];
+}
+
 function emitConditional(test, consiquent, alternate, context) {
   // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
   // Is that an optimization that we might want as well?
@@ -122,6 +158,8 @@ function emit(ast, context) {
           return emitConditional(test, consiquent, alternate, context);
         case "while":
           return emitWhile(ast.arguments[0], context);
+        case "loop":
+          return emitLoop(ast.arguments[0], ast.arguments[1], context);
       }
       const args = flatten(ast.arguments.map(node => emit(node, context)));
 
