@@ -5,9 +5,6 @@ function print(ast) {
     }
     case "EXPRESSION_BLOCK": {
       const expressions = ast.body.map(print);
-      if (ast.syntax === "function") {
-        return `exec${ast.body.length}(${expressions.join(", ")})`;
-      }
       return expressions.join("\n");
     }
     case "BINARY_EXPRESSION": {
@@ -24,9 +21,6 @@ function print(ast) {
       const test = print(ast.test);
       const consiquent = print(ast.consiquent);
       const alternate = print(ast.alternate);
-      if (ast.syntax === "function") {
-        return `if(${test}, ${consiquent}, ${alternate})`;
-      }
       return `${test} ? ${consiquent} : ${alternate}`;
     }
     case "UNARY_EXPRESSION": {
