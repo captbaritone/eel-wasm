@@ -1,4 +1,10 @@
-const { op, encodef64, unsignedLEB128, VAL_TYPE } = require("./encoding");
+const {
+  op,
+  encodef64,
+  unsignedLEB128,
+  VAL_TYPE,
+  BLOCK,
+} = require("./encoding");
 
 function arrayJoin(arr, joiner) {
   const newArr = [];
@@ -25,6 +31,25 @@ function emitExpressionBlock(body, context) {
     return emit(statement, context);
   });
   return flatten(arrayJoin(statements, [op.drop]));
+}
+
+function emitWhile(expression, context) {
+  const body = emit(expression, context);
+  return [
+    op.loop,
+    BLOCK.void, // void block type
+    ...body,
+    op.f64_const,
+    ...encodef64(0),
+    op.f64_ne,
+    op.br_if,
+    // TODO: Chasm has these as _signedLEB128_.
+    // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
+    ...unsignedLEB128(0), // Return to the top of the loop
+    op.end,
+    op.f64_const,
+    ...encodef64(0), // Implicitly return zero
+  ];
 }
 
 function emitConditional(test, consiquent, alternate, context) {
@@ -87,6 +112,7 @@ function emit(ast, context) {
     case "CALL_EXPRESSION": {
       const functionName = ast.callee.value;
       // Some functions have special behavior
+      // TODO: Assert arity of these functions
       switch (functionName) {
         case "exec2":
         case "exec3":
@@ -94,6 +120,8 @@ function emit(ast, context) {
         case "if":
           const [test, consiquent, alternate] = ast.arguments;
           return emitConditional(test, consiquent, alternate, context);
+        case "while":
+          return emitWhile(ast.arguments[0], context);
       }
       const args = flatten(ast.arguments.map(node => emit(node, context)));
 
@@ -175,33 +203,7 @@ function emit(ast, context) {
         op.end,
       ];
     }
-    /*
-    case "WHILE_STATEMENT": {
-      const test = emit(ast.test, context);
-      const body = emit(ast.body, context);
-      return [
-        op.block,
-        0x40, // void block type
-        op.loop,
-        0x40, // void block type
-        ...test,
-        op.f64_const,
-        ...encodef64(0),
-        op.f64_eq,
-        op.br_if,
-        // TODO: Chasm has these as _signedLEB128_.
-        // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
-        ...unsignedLEB128(1), // Break out of the loop
-        ...body,
-        op.br,
-        ...unsignedLEB128(0), // Return to the top of the loop
-        op.end,
-        op.end,
-        op.f64_const,
-        ...encodef64(0), // Implicitly return zero
-      ];
-    }
-    */
+
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value, context);
       switch (ast.operator) {

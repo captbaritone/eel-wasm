@@ -89,6 +89,10 @@ const MUTABILITY = {
   var: 0x01,
 };
 
+const BLOCK = {
+  void: 0x40,
+};
+
 function assertNumbers(nums) {
   nums.forEach((num, i) => {
     if (typeof num != "number") {
@@ -164,4 +168,5 @@ module.exports = {
   TYPE_IDX,
   EXPORT_TYPE,
   SECTION,
+  BLOCK,
 };

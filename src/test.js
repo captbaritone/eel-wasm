@@ -138,6 +138,7 @@ const testCases = [
   ["Logical or shortcircuts", "1 || g = 10;", 0],
   ["Exec2", "g = exec2(x = 5, x * 3);", 15],
   ["Exec3", "g = exec3(x = 5, x = x * 3, x + 1);", 16],
+  ["While", "while(exec2(g = g + 1, g - 10));", 10],
 ];
 
 describe("Small test cases", () => {
