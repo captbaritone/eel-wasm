@@ -150,6 +150,7 @@ const testCases = [
   ["Less than or equal (false)", "g = 2 <= 1;", 0],
   ["Greater than or equal (true)", "g = 2 >= 1;", 1],
   ["Greater than or equal (false)", "g = 1 >= 2;", 0],
+  ["Script without trailing semi", "g = 1", 1],
 ];
 
 describe("Small test cases", () => {

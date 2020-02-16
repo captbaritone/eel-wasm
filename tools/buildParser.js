@@ -42,6 +42,10 @@ const grammar = {
     // TODO: Are empty programs valid?
     SCRIPT: [
       [
+        "expression EOF",
+        "return {type: 'SCRIPT', body: [$1], column: @1.first_column, line: @1.first_line}",
+      ],
+      [
         "expressionsOptionalTrailingSemi EOF",
         "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}",
       ],
