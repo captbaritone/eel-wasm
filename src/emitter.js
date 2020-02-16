@@ -20,6 +20,30 @@ function flatten(arr) {
   return newArr;
 }
 
+function emitExpressionBlock(body, context) {
+  const statements = body.map((statement, i) => {
+    return emit(statement, context);
+  });
+  return flatten(arrayJoin(statements, [op.drop]));
+}
+
+function emitConditional(test, consiquent, alternate, context) {
+  // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
+  // Is that an optimization that we might want as well?
+  return [
+    ...emit(test, context),
+    op.f64_const,
+    ...encodef64(0),
+    op.f64_ne,
+    op.if,
+    VAL_TYPE.f64, // Return type (f64)
+    ...emit(consiquent, context),
+    op.else,
+    ...emit(alternate, context),
+    op.end,
+  ];
+}
+
 function emit(ast, context) {
   switch (ast.type) {
     case "SCRIPT": {
@@ -30,10 +54,7 @@ function emit(ast, context) {
       return flatten(body);
     }
     case "EXPRESSION_BLOCK": {
-      const body = ast.body.map((statement, i) => {
-        return emit(statement, context);
-      });
-      return flatten(arrayJoin(body, [op.drop]));
+      return emitExpressionBlock(ast.body, context);
     }
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
@@ -64,12 +85,18 @@ function emit(ast, context) {
       }
     }
     case "CALL_EXPRESSION": {
-      const args = flatten(
-        ast.arguments.map(node => {
-          return emit(node, context);
-        })
-      );
       const functionName = ast.callee.value;
+      // Some functions have special behavior
+      switch (functionName) {
+        case "exec2":
+        case "exec3":
+          return emitExpressionBlock(ast.arguments, context);
+        case "if":
+          const [test, consiquent, alternate] = ast.arguments;
+          return emitConditional(test, consiquent, alternate, context);
+      }
+      const args = flatten(ast.arguments.map(node => emit(node, context)));
+
       const invocation = context.resolveLocalFunc(functionName);
       return [...args, ...invocation];
     }
@@ -113,23 +140,7 @@ function emit(ast, context) {
       }
     }
     case "CONDITIONAL_EXPRESSION": {
-      // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
-      // Is that an optimization that we might want as well?
-      const test = emit(ast.test, context);
-      const consiquent = emit(ast.consiquent, context);
-      const alternate = emit(ast.alternate, context);
-      return [
-        ...test,
-        op.f64_const,
-        ...encodef64(0),
-        op.f64_ne,
-        op.if,
-        VAL_TYPE.f64, // Return type (f64)
-        ...consiquent,
-        op.else,
-        ...alternate,
-        op.end,
-      ];
+      return emitConditional(ast.test, ast.consiquent, ast.alternate, context);
     }
     case "LOGICAL_EXPRESSION": {
       const left = emit(ast.left, context);

@@ -136,6 +136,8 @@ const testCases = [
   ["Logical or (first value false)", "g = 0 || 2;", 2],
   ["Logical and shortcircuts", "0 && g = 10;", 0],
   ["Logical or shortcircuts", "1 || g = 10;", 0],
+  ["Exec2", "g = exec2(x = 5, x * 3);", 15],
+  ["Exec3", "g = exec3(x = 5, x = x * 3, x + 1);", 16],
 ];
 
 describe("Small test cases", () => {
