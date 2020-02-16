@@ -12,6 +12,7 @@ const grammar = {
       ["\\s+", "/* skip whitespace */"],
       ["//[^\n]*", "/* skip inline comments */"],
       ["[0-9]+", "return 'DIGITS_TOKEN'"],
+      ["==", "return 'COMPARISON_TOKEN'"],
       ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
       ["(\\&\\&)|\\|\\|", "return 'LOGICAL_OPERATOR_TOKEN'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93
@@ -29,6 +30,7 @@ const grammar = {
     // TODO: Confirm these orders
     ["right", "ASSIGNMENT_OPERATOR_TOKEN"],
     ["right", "?"],
+    ["right", "COMPARISON_TOKEN"],
     ["left", "+", "-"],
     ["left", "*", "/", "%"],
     ["left", "&", "|" /* "~"" will go here as well */],
@@ -127,6 +129,7 @@ const grammar = {
       ["expression % expression", binaryExpression],
       ["expression & expression", binaryExpression],
       ["expression | expression", binaryExpression],
+      ["expression COMPARISON_TOKEN expression", binaryExpression],
     ],
     expression: [
       "BINARY_EXPRESSION",

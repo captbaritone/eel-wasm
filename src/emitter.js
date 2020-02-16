@@ -141,6 +141,9 @@ function emit(ast, context) {
           const invocation = context.resolveLocalFunc("bitwiseAnd");
           return [...left, ...right, ...invocation];
         }
+        case "==": {
+          return [...left, ...right, op.f64_eq, op.f64_convert_i32_s];
+        }
         default:
           throw new Error(`Unknown binary expression operator ${ast.operator}`);
       }
