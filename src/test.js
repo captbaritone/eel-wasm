@@ -140,8 +140,16 @@ const testCases = [
   ["Exec3", "g = exec3(x = 5, x = x * 3, x + 1);", 16],
   ["While", "while(exec2(g = g + 1, g - 10));", 10],
   ["Loop", "loop(10, g = g + 1);", 10],
-  ["Equality true", "g = 1 == 1;", 1],
-  ["Equality false", "g = 1 == 0;", 0],
+  ["Equality (true)", "g = 1 == 1;", 1],
+  ["Equality (false)", "g = 1 == 0;", 0],
+  ["Less than (true)", "g = 1 < 2;", 1],
+  ["Less than (false)", "g = 2 < 1;", 0],
+  ["Greater than (true)", "g = 2 > 1;", 1],
+  ["Greater than (false)", "g = 1 > 2;", 0],
+  ["Less than or equal (true)", "g = 1 <= 2;", 1],
+  ["Less than or equal (false)", "g = 2 <= 1;", 0],
+  ["Greater than or equal (true)", "g = 2 >= 1;", 1],
+  ["Greater than or equal (false)", "g = 1 >= 2;", 0],
 ];
 
 describe("Small test cases", () => {

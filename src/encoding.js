@@ -64,6 +64,8 @@ const op = {
   f64_gt: 0x64,
   f64_eq: 0x61,
   f64_lt: 0x63,
+  f64_le: 0x65,
+  f64_ge: 0x66,
   i64_trunc_s_f64: 0xb0,
   f64_convert_s_i64: 0xb9,
   f64_convert_i32_s: 0xb7,
