@@ -110,40 +110,41 @@ function emitConditional(test, consiquent, alternate, context) {
 // before the value in `right`. For `set` calls that don't (for example global
 // variables), simply pass an empty `index` array.
 function emitAssignment({ index, right, set, get, operator }, context) {
-  switch (operator) {
-    case "=":
-      return [...index, ...right, ...set, ...get];
-    case "+=":
-      return [...index, ...get, ...right, op.f64_add, ...set, ...get];
-    case "-=":
-      return [...index, ...get, ...right, op.f64_sub, ...set, ...get];
-    case "*=":
-      return [...index, ...get, ...right, op.f64_mul, ...set, ...get];
-    case "/=":
-      return [...index, ...get, ...right, op.f64_div, ...set, ...get];
-    case "%=":
-      const invocation = context.resolveLocalFunc("mod");
-      return [...index, ...get, ...right, ...invocation, ...set, ...get];
-    default:
-      throw new Error(`Unknown assignment operator "${ast.operator}"`);
+  // `=` is a special case in that it does not need the original value.
+  if (operator === "=") {
+    return [...index, ...right, ...set, ...get];
   }
+  const operatorToCode = {
+    "+=": [op.f64_add],
+    "-=": [op.f64_sub],
+    "*=": [op.f64_mul],
+    "/=": [op.f64_div],
+    "%=": context.resolveLocalFunc("mod"),
+  };
+  const code = operatorToCode[operator];
+  if (code == null) {
+    throw new Error(`Unknown assignment operator "${operator}"`);
+  }
+  return [...index, ...get, ...right, ...code, ...set, ...get];
 }
 
 // There are two sections of memory. This function emits code to add the correct
 // offset to an i32 index already on the stack.
 function emitAddMemoryOffset(name) {
-  switch (name) {
-    case "gmegabuf":
-      return [
-        op.i32_const,
-        // TODO: Is this the right encoding for an int32?
-        ...unsignedLEB128(1000000),
-        op.i32_add,
-      ];
-    case "megabuf":
-      return [];
+  const nameToCode = {
+    gmegabuf: [
+      op.i32_const,
+      // TODO: Is this the right encoding for an int32?
+      ...unsignedLEB128(1000000),
+      op.i32_add,
+    ],
+    megabuf: [],
+  };
+  const code = nameToCode[name];
+  if (code == null) {
+    throw new Error(`Invalid memory name ${name}`);
   }
-  throw new Error(`Invalid memory name ${name}`);
+  return code;
 }
 
 function emit(ast, context) {
@@ -161,46 +162,26 @@ function emit(ast, context) {
     case "BINARY_EXPRESSION": {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
-      switch (ast.operator) {
-        case "+":
-          return [...left, ...right, op.f64_add];
-        case "-":
-          return [...left, ...right, op.f64_sub];
-        case "*":
-          return [...left, ...right, op.f64_mul];
-        case "/":
-          return [...left, ...right, op.f64_div];
-        case "%": {
-          const invocation = context.resolveLocalFunc("mod");
-          return [...left, ...right, ...invocation];
-        }
-        case "|": {
-          const invocation = context.resolveLocalFunc("bitwiseOr");
-          return [...left, ...right, ...invocation];
-        }
-        case "&": {
-          const invocation = context.resolveLocalFunc("bitwiseAnd");
-          return [...left, ...right, ...invocation];
-        }
+      const operatorToOps = {
+        "+": [op.f64_add],
+        "-": [op.f64_sub],
+        "*": [op.f64_mul],
+        "/": [op.f64_div],
+        "%": context.resolveLocalFunc("mod"),
+        "|": context.resolveLocalFunc("bitwiseOr"),
+        "&": context.resolveLocalFunc("bitwiseAnd"),
         // Comparison operators
-        case "==": {
-          return [...left, ...right, op.f64_eq, op.f64_convert_i32_s];
-        }
-        case "<": {
-          return [...left, ...right, op.f64_lt, op.f64_convert_i32_s];
-        }
-        case ">": {
-          return [...left, ...right, op.f64_gt, op.f64_convert_i32_s];
-        }
-        case "<=": {
-          return [...left, ...right, op.f64_le, op.f64_convert_i32_s];
-        }
-        case ">=": {
-          return [...left, ...right, op.f64_ge, op.f64_convert_i32_s];
-        }
-        default:
-          throw new Error(`Unknown binary expression operator ${ast.operator}`);
+        "==": [op.f64_eq, op.f64_convert_i32_s],
+        "<": [op.f64_lt, op.f64_convert_i32_s],
+        ">": [op.f64_gt, op.f64_convert_i32_s],
+        "<=": [op.f64_le, op.f64_convert_i32_s],
+        ">=": [op.f64_ge, op.f64_convert_i32_s],
+      };
+      const code = operatorToOps[ast.operator];
+      if (code == null) {
+        throw new Error(`Unknown binary expression operator ${ast.operator}`);
       }
+      return [...left, ...right, ...code];
     }
     case "CALL_EXPRESSION": {
       const functionName = ast.callee.value;
@@ -297,18 +278,13 @@ function emit(ast, context) {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
       const localIndex = context.resolveLocalF64();
-      let equalityOp = null;
-      switch (ast.operator) {
-        case "&&":
-          equalityOp = op.f64_eq;
-          break;
-        case "||":
-          equalityOp = op.f64_ne;
-          break;
-        default:
-          throw new Error(
-            `Unknown logical expression operator ${ast.operator}`
-          );
+      const operatorToEqualityOp = {
+        "&&": op.f64_eq,
+        "||": op.f64_ne,
+      };
+      let equalityOp = operatorToEqualityOp[ast.operator];
+      if (equalityOp == null) {
+        throw new Error(`Unknown logical expression operator ${ast.operator}`);
       }
       return [
         ...left,
@@ -329,14 +305,15 @@ function emit(ast, context) {
 
     case "UNARY_EXPRESSION": {
       const value = emit(ast.value, context);
-      switch (ast.operator) {
-        case "-":
-          return [...value, op.f64_neg];
-        case "+":
-          return [...value];
-        default:
-          throw new Error(`Unknown unary operator ${ast.operator}`);
+      const operatorToCode = {
+        "-": [op.f64_neg],
+        "+": [],
+      };
+      const code = operatorToCode[ast.operator];
+      if (code == null) {
+        throw new Error(`Unknown unary operator ${ast.operator}`);
       }
+      return [...value, ...code];
     }
     case "IDENTIFIER":
       const variableName = ast.value;
