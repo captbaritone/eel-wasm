@@ -167,6 +167,12 @@ function compileModule({
     return funcIndex;
   });
 
+  const memories = [
+    // Only one memory
+    // TODO: What size should this be?
+    [...unsignedLEB128(0), ...unsignedLEB128(1000)],
+  ];
+
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
   const globals = userVarsResolver.map(() => {
     return [
@@ -204,6 +210,7 @@ function compileModule({
     ...encodeSection(SECTION.TYPE, types),
     ...encodeSection(SECTION.IMPORT, imports),
     ...encodeSection(SECTION.FUNC, functions),
+    ...encodeSection(SECTION.MEMORY, memories),
     ...encodeSection(SECTION.GLOBAL, globals),
     ...encodeSection(SECTION.EXPORT, xports),
     ...encodeSection(SECTION.CODE, codes),

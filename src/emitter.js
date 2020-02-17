@@ -105,6 +105,47 @@ function emitConditional(test, consiquent, alternate, context) {
   ];
 }
 
+// If `set` requires an index (for example for memory stores) then you can pass
+// a non-empty `index` which will array which will leave the index on the stack
+// before the value in `right`. For `set` calls that don't (for example global
+// variables), simply pass an empty `index` array.
+function emitAssignment({ index, right, set, get, operator }, context) {
+  switch (operator) {
+    case "=":
+      return [...index, ...right, ...set, ...get];
+    case "+=":
+      return [...index, ...get, ...right, op.f64_add, ...set, ...get];
+    case "-=":
+      return [...index, ...get, ...right, op.f64_sub, ...set, ...get];
+    case "*=":
+      return [...index, ...get, ...right, op.f64_mul, ...set, ...get];
+    case "/=":
+      return [...index, ...get, ...right, op.f64_div, ...set, ...get];
+    case "%=":
+      const invocation = context.resolveLocalFunc("mod");
+      return [...index, ...get, ...right, ...invocation, ...set, ...get];
+    default:
+      throw new Error(`Unknown assignment operator "${ast.operator}"`);
+  }
+}
+
+// There are two sections of memory. This function emits code to add the correct
+// offset to an i32 index already on the stack.
+function emitAddMemoryOffset(name) {
+  switch (name) {
+    case "gmegabuf":
+      return [
+        op.i32_const,
+        // TODO: Is this the right encoding for an int32?
+        ...unsignedLEB128(1000000),
+        op.i32_add,
+      ];
+    case "megabuf":
+      return [];
+  }
+  throw new Error(`Invalid memory name ${name}`);
+}
+
 function emit(ast, context) {
   switch (ast.type) {
     case "SCRIPT": {
@@ -176,6 +217,16 @@ function emit(ast, context) {
           return emitWhile(ast.arguments[0], context);
         case "loop":
           return emitLoop(ast.arguments[0], ast.arguments[1], context);
+        case "megabuf":
+        case "gmegabuf":
+          return [
+            ...emit(ast.arguments[0], context),
+            op.i32_trunc_s_f64,
+            ...emitAddMemoryOffset(functionName),
+            op.f64_load,
+            0x03, // Align
+            0x00, // Offset
+          ];
       }
       const args = flatten(ast.arguments.map(node => emit(node, context)));
 
@@ -183,6 +234,38 @@ function emit(ast, context) {
       return [...args, ...invocation];
     }
     case "ASSIGNMENT_EXPRESSION": {
+      // There's a special assignment case for `megabuf(n) = e` and `gmegabuf(n) = e`.
+      if (ast.left.type == "CALL_EXPRESSION") {
+        const localIndex = context.resolveLocalF64();
+        const { operator, left } = ast;
+        if (ast.left.arguments.length !== 1) {
+          throw new Error(`Expected 1 argument when assinging to a buffer`);
+        }
+
+        const addOffset = emitAddMemoryOffset(left.callee.value);
+
+        const index = [
+          ...emit(ast.left.arguments[0], context),
+          op.local_tee,
+          ...unsignedLEB128(localIndex),
+          op.i32_trunc_s_f64,
+          ...addOffset,
+        ];
+        const right = emit(ast.right, context);
+        const set = [op.f64_store, 0x03, 0x00];
+        const get = [
+          op.local_get,
+          ...unsignedLEB128(localIndex),
+          // TODO: We could avoid this casting and applying the offset twice if
+          // we supported local ints
+          op.i32_trunc_s_f64,
+          ...addOffset,
+          op.f64_load,
+          0x03,
+          0x00,
+        ];
+        return emitAssignment({ index, right, set, get, operator }, context);
+      }
       const right = emit(ast.right, context);
       const variableName = ast.left.value;
       const global = context.globals.has(variableName);
@@ -202,24 +285,10 @@ function emit(ast, context) {
       // https://en.wikipedia.org/wiki/Peephole_optimization
       const get = [op.global_get, ...resolvedName];
       const set = [op.global_set, ...resolvedName];
+      const { operator } = ast;
+      const index = [];
 
-      switch (ast.operator) {
-        case "=":
-          return [...right, ...set, ...get];
-        case "+=":
-          return [...get, ...right, op.f64_add, ...set, ...get];
-        case "-=":
-          return [...get, ...right, op.f64_sub, ...set, ...get];
-        case "*=":
-          return [...get, ...right, op.f64_mul, ...set, ...get];
-        case "/=":
-          return [...get, ...right, op.f64_div, ...set, ...get];
-        case "%=":
-          const invocation = context.resolveLocalFunc("mod");
-          return [...get, ...right, ...invocation, ...set, ...get];
-        default:
-          throw new Error(`Unknown assignment operator "${ast.operator}"`);
-      }
+      return emitAssignment({ index, right, set, get, operator }, context);
     }
     case "CONDITIONAL_EXPRESSION": {
       return emitConditional(ast.test, ast.consiquent, ast.alternate, context);
