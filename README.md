@@ -25,6 +25,7 @@ Result of running the parser on [a set of 50,026 Milkdrop Presets](http://forums
 | cfeed6b | (Initial run)  | 15,455  |   31%   |
 | ab89a8a | Bitwise and/or | 13,759  |   28%   |
 | 76fc37e | Optional ;s    |  8,237  |   16%   |
+| 2e24bef | Memory + more  |  4,558  |   9%    |
 
 ## TODO
 
