@@ -109,6 +109,10 @@ const grammar = {
         "IDENTIFIER ASSIGNMENT_OPERATOR_TOKEN expression",
         "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, column: @1.first_column, line: @1.first_line}",
       ],
+      [
+        "FUNCTION_CALL ASSIGNMENT_OPERATOR_TOKEN expression",
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, column: @1.first_column, line: @1.first_line}",
+      ],
     ],
     number: [
       ["DIGITS_TOKEN", "$$ = Number($1)"],

@@ -20,6 +20,7 @@ const SECTION = {
   TYPE: 1,
   IMPORT: 2,
   FUNC: 3,
+  MEMORY: 5,
   GLOBAL: 6,
   EXPORT: 7,
   CODE: 10,
@@ -40,9 +41,12 @@ const op = {
   select: 0x1b,
   call: 0x10,
   drop: 0x1a,
+  f64_load: 0x2b,
+  f64_store: 0x39,
   i32_or: 0x72,
   i32_const: 0x41,
   i32_ne: 0x47,
+  i32_add: 0x6a,
   i32_sub: 0x6b,
   i32_eqz: 0x45,
   i32_trunc_s_f64: 0xaa,
@@ -98,7 +102,9 @@ const BLOCK = {
 function assertNumbers(nums) {
   nums.forEach((num, i) => {
     if (typeof num != "number") {
-      throw new Error(`Found non-number at index ${i}. Got ${typeof num}`);
+      throw new Error(
+        `Found non-numeric value in program binary at index ${i}. Got ${typeof num}`
+      );
     }
   });
   return nums;
