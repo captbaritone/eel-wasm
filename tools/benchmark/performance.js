@@ -91,7 +91,10 @@ const baseValsDefaults = {
 
 class JsHarness {
   constructor(json) {
-    this.a = {};
+    this.a = {
+      megabuf: new Array(1048576).fill(0),
+      gmegabuf: new Array(1048576).fill(0),
+    };
     const initEqs = new Function("a", `${json.init_eqs_str} return a;`);
     const frameEqs = new Function("a", `${json.frame_eqs_str} return a;`);
     const pixelEqs = new Function("a", `${json.pixel_eqs_str} return a;`);
@@ -306,7 +309,8 @@ const milkFiles = [
   "./fixtures/youtube_broadcast_yourself.milk",
   "./fixtures/Cope - Cartune (extrusion machine) [fixed].milk",
   "./fixtures/27_super_goats - neon country frequent flier program.milk",
-  "./fixtures/bdrv_flexi_va_ultramix_148_oblivion_notifier.milk"
+  "./fixtures/bdrv_flexi_va_ultramix_148_oblivion_notifier.milk",
+  "./fixtures/Flexi - piercing - pastel - 3d.milk"
 ];
 
 async function perf() {

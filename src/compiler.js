@@ -8,6 +8,7 @@ const {
   encodeSection,
   op,
   unsignedLEB128,
+  assertNumbers,
   VAL_TYPE,
   FUNCTION_TYPE,
   GLOBAL_TYPE,
@@ -107,6 +108,8 @@ function compileModule({
       // TODO: Get rid of userVars
       userVars: new Set(),
     });
+
+    assertNumbers(binary);
 
     return {
       binary,
