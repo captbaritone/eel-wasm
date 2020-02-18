@@ -91,7 +91,10 @@ const baseValsDefaults = {
 
 class JsHarness {
   constructor(json) {
-    this.a = {};
+    this.a = {
+      megabuf: new Array(1048576).fill(0),
+      gmegabuf: new Array(1048576).fill(0),
+    };
     const initEqs = new Function("a", `${json.init_eqs_str} return a;`);
     const frameEqs = new Function("a", `${json.frame_eqs_str} return a;`);
     const pixelEqs = new Function("a", `${json.pixel_eqs_str} return a;`);
