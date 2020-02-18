@@ -306,7 +306,8 @@ const milkFiles = [
   "./fixtures/youtube_broadcast_yourself.milk",
   "./fixtures/Cope - Cartune (extrusion machine) [fixed].milk",
   "./fixtures/27_super_goats - neon country frequent flier program.milk",
-  "./fixtures/bdrv_flexi_va_ultramix_148_oblivion_notifier.milk"
+  "./fixtures/bdrv_flexi_va_ultramix_148_oblivion_notifier.milk",
+  "./fixtures/Flexi - piercing - pastel - 3d.milk"
 ];
 
 async function perf() {
