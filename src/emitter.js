@@ -6,6 +6,16 @@ const {
   BLOCK,
 } = require("./encoding");
 
+// Takes an f64 on the stack and leaves an int32 boolean representing if it's
+// within epsilon of zero.
+const IS_ZEROISH = [op.f64_abs, op.f64_const, ...encodef64(0.0001), op.f64_lt];
+const IS_NOT_ZEROISH = [
+  op.f64_abs,
+  op.f64_const,
+  ...encodef64(0.0001),
+  op.f64_gt,
+];
+
 function arrayJoin(arr, joiner) {
   const newArr = [];
   for (let i = 0; i < arr.length; i++) {
@@ -39,9 +49,7 @@ function emitWhile(expression, context) {
     op.loop,
     BLOCK.void, // void block type
     ...body,
-    op.f64_const,
-    ...encodef64(0),
-    op.f64_ne,
+    ...IS_NOT_ZEROISH,
     op.br_if,
     // TODO: Chasm has these as _signedLEB128_.
     // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
@@ -75,9 +83,7 @@ function emitLoop(count, expression, context) {
     op.local_tee,
     ...unsignedLEB128(localIndex),
     // Test if we've reached the end
-    op.f64_const,
-    ...encodef64(0),
-    op.f64_ne,
+    ...IS_NOT_ZEROISH,
     op.br_if,
     // TODO: Chasm has these as _signedLEB128_.
     // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
@@ -93,9 +99,7 @@ function emitConditional(test, consiquent, alternate, context) {
   // Is that an optimization that we might want as well?
   return [
     ...emit(test, context),
-    op.f64_const,
-    ...encodef64(0),
-    op.f64_ne,
+    ...IS_NOT_ZEROISH,
     op.if,
     VAL_TYPE.f64, // Return type (f64)
     ...emit(consiquent, context),
@@ -171,7 +175,7 @@ function emit(ast, context) {
         "|": context.resolveLocalFunc("bitwiseOr"),
         "&": context.resolveLocalFunc("bitwiseAnd"),
         // Comparison operators
-        "==": [op.f64_eq, op.f64_convert_i32_s],
+        "==": [op.f64_sub, ...IS_ZEROISH, op.f64_convert_i32_s],
         "<": [op.f64_lt, op.f64_convert_i32_s],
         ">": [op.f64_gt, op.f64_convert_i32_s],
         "<=": [op.f64_le, op.f64_convert_i32_s],
@@ -185,6 +189,7 @@ function emit(ast, context) {
     }
     case "CALL_EXPRESSION": {
       const functionName = ast.callee.value;
+      const args = flatten(ast.arguments.map(node => emit(node, context)));
       // Some functions have special behavior
       // TODO: Assert arity of these functions
       switch (functionName) {
@@ -208,8 +213,24 @@ function emit(ast, context) {
             0x03, // Align
             0x00, // Offset
           ];
+        // Function calls which can be linlined
+        case "abs":
+          return [...args, op.f64_abs];
+        case "sqrt":
+          return [...args, op.f64_sqrt];
+        case "int":
+          return [...args, op.f64_floor];
+        case "min":
+          return [...args, op.f64_min];
+        case "max":
+          return [...args, op.f64_max];
+        case "above":
+          return [...args, op.f64_lt, op.f64_convert_i32_s];
+        case "below":
+          return [...args, op.f64_gt, op.f64_convert_i32_s];
+        case "equal":
+          return [...args, op.f64_sub, ...IS_ZEROISH, op.f64_convert_i32_s];
       }
-      const args = flatten(ast.arguments.map(node => emit(node, context)));
 
       const invocation = context.resolveLocalFunc(functionName);
       return [...args, ...invocation];
@@ -275,21 +296,19 @@ function emit(ast, context) {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
       const localIndex = context.resolveLocalF64();
-      const operatorToEqualityOp = {
-        "&&": op.f64_eq,
-        "||": op.f64_ne,
+      const operatorToEqualityCheck = {
+        "&&": IS_ZEROISH,
+        "||": IS_NOT_ZEROISH,
       };
-      let equalityOp = operatorToEqualityOp[ast.operator];
-      if (equalityOp == null) {
+      let equalityCheck = operatorToEqualityCheck[ast.operator];
+      if (equalityCheck == null) {
         throw new Error(`Unknown logical expression operator ${ast.operator}`);
       }
       return [
         ...left,
         op.local_tee,
         ...unsignedLEB128(localIndex),
-        op.f64_const,
-        ...encodef64(0),
-        equalityOp,
+        ...equalityCheck,
         op.if,
         VAL_TYPE.f64,
         op.local_get,

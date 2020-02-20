@@ -64,25 +64,6 @@ function compileModule({
   // TODO: We could pass in the arity here to get a compile-time check that we
   // passed the right number of arguments.
   function resolveLocalFunc(name) {
-    // Inline functions
-    switch (name) {
-      case "abs":
-        return [op.f64_abs];
-      case "sqrt":
-        return [op.f64_sqrt];
-      case "int":
-        return [op.f64_floor];
-      case "min":
-        return [op.f64_min];
-      case "max":
-        return [op.f64_max];
-      case "above":
-        return [op.f64_lt, op.f64_convert_i32_s];
-      case "below":
-        return [op.f64_gt, op.f64_convert_i32_s];
-      case "equal":
-        return [op.f64_eq, op.f64_convert_i32_s];
-    }
     const offset = localFuncResolver.get(name);
     return [op.call, ...unsignedLEB128(offset)];
   }
