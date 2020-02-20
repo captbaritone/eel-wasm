@@ -39,7 +39,6 @@ const grammar = {
   ],
 
   bnf: {
-    // TODO: Are empty programs valid?
     SCRIPT: [
       [
         "expression EOF",
