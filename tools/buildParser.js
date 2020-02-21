@@ -52,9 +52,10 @@ const grammar = {
         "return {type: 'SCRIPT', body: [], column: @1.first_column, line: @1.first_line}",
       ],
     ],
+    separator: [";", "separator ;"],
     expressions: [
-      ["expression ;", "$$ = [$1]"],
-      ["expressions expression ;", "$$ = $1.concat([$2])"],
+      ["expression separator", "$$ = [$1]"],
+      ["expressions expression separator", "$$ = $1.concat([$2])"],
     ],
     // This feels like a hack, but I haven't managed to find another way to
     // express optional semicolons while still keeping the grammar unambiguous.
