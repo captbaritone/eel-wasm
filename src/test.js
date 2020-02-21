@@ -165,6 +165,8 @@ const testCases = [
   ["Gmegabuf", "gmegabuf(0) = 1.2; g = gmegabuf(0);", 1.2],
   ["Megabuf != Gmegabuf", "gmegabuf(0) = 1.2; g = megabuf(0);", 0],
   ["Gmegabuf != Megabuf", "megabuf(0) = 1.2; g = gmegabuf(0);", 0],
+  ["Case insensitive vars", "G = 10;", 10],
+  ["Case insensitive funcs", "g = InT(10);", 10],
 ];
 
 describe("Small test cases", () => {
