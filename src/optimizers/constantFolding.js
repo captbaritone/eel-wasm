@@ -31,14 +31,8 @@ function foldConstants(rootNode) {
         if (isLiteral(left) && isLiteral(right) && func != null) {
           return {
             type: "NUMBER_LITERAL",
-            value: func(left.value, right.value)
+            value: func(left.value, right.value),
           };
-        }
-        return ast;
-      case "CONDITIONAL_EXPRESSION":
-        const { test, consiquent, alternate } = ast;
-        if (isLiteral(test)) {
-          return test.value ? consiquent : alternate;
         }
         return ast;
     }

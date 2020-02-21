@@ -22,11 +22,6 @@ const CHILDREN = {
     { type: "NODE", key: "left" },
     { type: "NODE", key: "right" },
   ],
-  CONDITIONAL_EXPRESSION: [
-    { type: "NODE", key: "test" },
-    { type: "NODE", key: "consiquent" },
-    { type: "NODE", key: "alternate" },
-  ],
   LOGICAL_EXPRESSION: [
     { type: "NODE", key: "left" },
     { type: "NODE", key: "right" },

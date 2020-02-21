@@ -271,9 +271,6 @@ function emit(ast, context) {
 
       return emitAssignment({ index, right, set, get, operator }, context);
     }
-    case "CONDITIONAL_EXPRESSION": {
-      return emitConditional(ast.test, ast.consiquent, ast.alternate, context);
-    }
     case "LOGICAL_EXPRESSION": {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);

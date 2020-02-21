@@ -29,7 +29,6 @@ const grammar = {
     // https://www.gnu.org/software/bison/manual/bison.html#Precedence
     // TODO: Confirm these orders
     ["right", "ASSIGNMENT_OPERATOR_TOKEN"],
-    ["right", "?"],
     ["right", "COMPARISON_TOKEN"],
     ["left", "+", "-"],
     ["left", "*", "/", "%"],
@@ -91,12 +90,6 @@ const grammar = {
         "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, column: @1.first_column, line: @1.first_line}",
       ],
     ],
-    CONDITIONAL_EXPRESSION: [
-      [
-        "expression ? expression : expression",
-        "$$ = {type: 'CONDITIONAL_EXPRESSION', test: $1, consiquent: $3, alternate: $5, column: @1.first_column, line: @1.first_line}",
-      ],
-    ],
     LOGICAL_EXPRESSION: [
       [
         "expression LOGICAL_OPERATOR_TOKEN expression",
@@ -146,7 +139,6 @@ const grammar = {
       "ASSIGNMENT",
       "FUNCTION_CALL",
       "IDENTIFIER",
-      "CONDITIONAL_EXPRESSION",
       "LOGICAL_EXPRESSION",
       ["( EXPRESSION_BLOCK )", "$$ = $2"],
     ],

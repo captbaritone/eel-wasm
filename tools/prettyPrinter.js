@@ -17,12 +17,6 @@ function print(ast) {
     case "ASSIGNMENT_EXPRESSION": {
       return `${print(ast.left)} ${ast.operator} ${print(ast.right)};`;
     }
-    case "CONDITIONAL_EXPRESSION": {
-      const test = print(ast.test);
-      const consiquent = print(ast.consiquent);
-      const alternate = print(ast.alternate);
-      return `${test} ? ${consiquent} : ${alternate}`;
-    }
     case "UNARY_EXPRESSION": {
       return `${ast.operator}${print(ast.value)}`;
     }
