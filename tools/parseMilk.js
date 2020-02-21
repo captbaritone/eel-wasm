@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const { parse } = require("../src/parser");
 const { splitPreset } = require("milkdrop-preset-utils");
+const countUssages = require("./countUssages");
 
 // Turn this on to get a specific error report, not just an aggregate.
 const FIND_ERROR = false;
@@ -42,13 +43,14 @@ function getEels(milk) {
   return eels;
 }
 
-function validate(milkPath) {
+function validate(milkPath, context) {
   const presetIni = fs.readFileSync(milkPath, { encoding: "utf8" });
   const eels = getEels(presetIni);
 
   Object.entries(eels).forEach(([name, eel]) => {
     try {
-      parse(eel);
+      const root = parse(eel);
+      countUssages(root, context);
     } catch (e) {
       if (FIND_ERROR) {
         console.log(eel);
@@ -68,16 +70,43 @@ const milkFiles = files
     return path.join(milkDir, fileName);
   });
 
+class Counter {
+  constructor() {
+    this._map = {};
+  }
+
+  add(name) {
+    if (this._map[name] == null) {
+      this._map[name] = 0;
+    }
+
+    this._map[name]++;
+  }
+
+  asObj() {
+    return this._map;
+  }
+}
+
+const context = {
+  functions: new Counter(),
+  binaryOperators: new Counter(),
+  unaryOperators: new Counter(),
+  assignmentOperators: new Counter(),
+  logicalOperators: new Counter(),
+  nodeTypes: new Counter(),
+};
+
 const errors = {};
 let good = 0;
 let bad = 0;
 milkFiles.forEach(milk => {
   // console.log(`Validating eel in "${milk}"...`);
   try {
-    validate(milk);
+    validate(milk, context);
     good++;
   } catch (e) {
-    if(FIND_ERROR) {
+    if (FIND_ERROR) {
       throw new Error(e);
     }
     // console.error(e);
@@ -95,5 +124,13 @@ if (bad === 0) {
   console.log("No errors found!");
 } else {
   console.log({ errors, good, bad });
+  console.log({
+    functions: context.functions.asObj(),
+    binaryOperators: context.binaryOperators.asObj(),
+    unaryOperators: context.unaryOperators.asObj(),
+    logicalOperators: context.logicalOperators.asObj(),
+    assignmentOperators: context.assignmentOperators.asObj(),
+    nodeTypes: context.nodeTypes.asObj(),
+  });
   throw new Error("Errors found");
 }
