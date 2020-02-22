@@ -6,13 +6,14 @@ const {
   BLOCK,
 } = require("./encoding");
 
+const EPSILON = 0.00001;
 // Takes an f64 on the stack and leaves an int32 boolean representing if it's
 // within epsilon of zero.
-const IS_ZEROISH = [op.f64_abs, op.f64_const, ...encodef64(0.0001), op.f64_lt];
+const IS_ZEROISH = [op.f64_abs, op.f64_const, ...encodef64(EPSILON), op.f64_lt];
 const IS_NOT_ZEROISH = [
   op.f64_abs,
   op.f64_const,
-  ...encodef64(0.0001),
+  ...encodef64(EPSILON),
   op.f64_gt,
 ];
 
