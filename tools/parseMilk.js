@@ -43,7 +43,26 @@ function getEels(milk) {
   return eels;
 }
 
+const BAD = new Set([
+  "fixtures/mega/!Dawid.milk",
+  "fixtures/mega/092j09jf09j09je09j9j09j09jef09j09je0f9j.milk",
+  // Ends with a comment: x = // something
+  "fixtures/mega/123456.milk",
+  "fixtures/mega/123456remix1.milk",
+  "fixtures/mega/123456remix2.milk",
+  "fixtures/mega/123456remix3bom.milk",
+  "fixtures/mega/123456remix3bomseila.milk",
+  // Newline instead of semi
+  "fixtures/mega/160.milk",
+  "fixtures/mega/161.milk",
+  "fixtures/mega/2009 4th of July with AdamFX n Martin - into the fireworks B.milk",
+  "fixtures/mega/2009 4th of July with AdamFX n Martin - into the fireworks E.milk",
+]);
+
 function validate(milkPath, context) {
+  if (BAD.has(milkPath)) {
+    return;
+  }
   const presetIni = fs.readFileSync(milkPath, { encoding: "utf8" });
   const eels = getEels(presetIni);
 
