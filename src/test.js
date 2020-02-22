@@ -55,6 +55,7 @@ const testCases = [
   ["Number", "g = 5;", 5],
   ["Number with decimal", "g = 5.5;", 5.5],
   ["Number with decimal and no leading whole", "g = .5;", 0.5],
+  ["Number with decimal and no trailing dec", "g = 5.;", 5],
   ["Optional final semi", "g = 5; g = 10", 10],
   ["Unary negeation", "g = -10;", -10],
   ["Unary plus", "g = +10;", 10],
