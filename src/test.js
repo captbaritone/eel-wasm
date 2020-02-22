@@ -166,6 +166,8 @@ const testCases = [
   ["Case insensitive vars", "G = 10;", 10],
   ["Case insensitive funcs", "g = InT(10);", 10],
   ["Consecutive semis", "g = 10;;; ;g = 20;;", 20],
+  ["Equality (< epsilon)", "g = 0.000009 == 0;", 1],
+  ["Equality (< -epsilon)", "g = -0.000009 == 0;", 1],
 ];
 
 describe("Small test cases", () => {
