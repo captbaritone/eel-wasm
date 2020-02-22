@@ -109,6 +109,7 @@ const grammar = {
     ],
     number: [
       ["DIGITS_TOKEN", "$$ = Number($1)"],
+      ["DIGITS_TOKEN .", "$$ = Number($1)"],
       ["DIGITS_TOKEN . DIGITS_TOKEN", "$$ = Number($1 + $2 + $3)"],
       [". DIGITS_TOKEN", "$$ = Number('0' + $1 + $2)"],
     ],
