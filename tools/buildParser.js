@@ -11,6 +11,7 @@ const grammar = {
     rules: [
       ["\\s+", "/* skip whitespace */"],
       ["//[^\n]*", "/* skip inline comments */"],
+      ["\\\\[^\n]*", "/* skip inline comments */"],
       ["[0-9]+", "return 'DIGITS_TOKEN'"],
       ["(==|<=|>=|<|>)", "return 'COMPARISON_TOKEN'"],
       ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
