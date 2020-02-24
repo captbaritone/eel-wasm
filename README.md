@@ -28,6 +28,7 @@ Result of running the parser on [a set of 50,026 Milkdrop Presets](http://forums
 | 2e24bef | Memory + more         |  4,558  |   9%    |
 | 7115049 | Consecutive ;s        |  1,662  |   3%    |
 | 4ee8c5a | Optional decimal nums |   626   |   1%    |
+| 0e73e0f | Backward comments     |   623   |   1%    |
 
 ## TODO
 
