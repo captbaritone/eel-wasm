@@ -143,6 +143,8 @@ const testCases = [
   ["While", "while(exec2(g = g + 1, g - 10));", 10],
   ["Loop", "loop(10, g = g + 1);", 10],
   ["Equality (true)", "g = 1 == 1;", 1],
+  ["!Equality (true)", "g = 1 != 0;", 1],
+  ["!Equality (false)", "g = 1 != 1;", 0],
   ["Equality (false)", "g = 1 == 0;", 0],
   ["Less than (true)", "g = 1 < 2;", 1],
   ["Less than (false)", "g = 2 < 1;", 0],

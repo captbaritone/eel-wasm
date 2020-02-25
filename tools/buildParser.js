@@ -11,7 +11,7 @@ const grammar = {
     rules: [
       ["\\s+", "/* skip whitespace */"],
       ["[0-9]+", "return 'DIGITS_TOKEN'"],
-      ["(==|<=|>=|<|>)", "return 'COMPARISON_TOKEN'"],
+      ["(==|!=|<=|>=|<|>)", "return 'COMPARISON_TOKEN'"],
       ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
       ["(\\&\\&)|\\|\\|", "return 'LOGICAL_OPERATOR_TOKEN'"],
       // https://github.com/justinfrankel/WDL/blob/63943fbac273b847b733aceecdb16703679967b9/WDL/eel2/eel2.l#L93

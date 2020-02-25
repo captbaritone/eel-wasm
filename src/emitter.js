@@ -178,6 +178,7 @@ function emit(ast, context) {
         "^": context.resolveLocalFunc("pow"),
         // Comparison operators
         "==": [op.f64_sub, ...IS_ZEROISH, op.f64_convert_i32_s],
+        "!=": [op.f64_sub, ...IS_NOT_ZEROISH, op.f64_convert_i32_s],
         "<": [op.f64_lt, op.f64_convert_i32_s],
         ">": [op.f64_gt, op.f64_convert_i32_s],
         "<=": [op.f64_le, op.f64_convert_i32_s],
