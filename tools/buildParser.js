@@ -105,6 +105,7 @@ const grammar = {
       ["DIGITS_TOKEN .", "$$ = Number($1)"],
       ["DIGITS_TOKEN . DIGITS_TOKEN", "$$ = Number($1 + $2 + $3)"],
       [". DIGITS_TOKEN", "$$ = Number('0' + $1 + $2)"],
+      [".", "$$ = 0"],
     ],
     NUMBER_LITERAL: [["number", "$$ = {type: 'NUMBER_LITERAL', value: $1}"]],
     UNARY_EXPRESSION: [
