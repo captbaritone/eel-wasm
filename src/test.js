@@ -60,6 +60,7 @@ const testCases = [
   ["Mod", "g = 5 % 2;", 1],
   ["Bitwise and", "g = 3 & 5;", 1],
   ["Bitwise or", "g = 3 | 5;", 7],
+  ["To the power", "g = 5 ^ 2;", 25],
   ["Order of operations (+ and *)", "g = 1 + 1 * 10;", 11],
   ["Order of operations (+ and /)", "g = 1 + 1 / 10;", 1.1],
   ["Order of operations (unary - and +)", "g = -1 + 1;", 0],

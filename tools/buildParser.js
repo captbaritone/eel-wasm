@@ -30,7 +30,7 @@ const grammar = {
     ["right", "ASSIGNMENT_OPERATOR_TOKEN"],
     ["right", "COMPARISON_TOKEN"],
     ["left", "+", "-"],
-    ["left", "*", "/", "%"],
+    ["left", "*", "/", "%", "^"],
     ["left", "&", "|" /* "~"" will go here as well */],
     ["left", "LOGICAL_OPERATOR_TOKEN"],
     // TODO: Theoretically it should be possible to make `--1` a parse error.
@@ -119,6 +119,7 @@ const grammar = {
       ["expression % expression", binaryExpression],
       ["expression & expression", binaryExpression],
       ["expression | expression", binaryExpression],
+      ["expression ^ expression", binaryExpression],
       ["expression COMPARISON_TOKEN expression", binaryExpression],
     ],
     expression: [
