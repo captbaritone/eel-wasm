@@ -30,6 +30,10 @@ const { argv } = yargs
     type: "string",
     description: "The file to parse",
   })
+  .option("find-error", {
+    type: "string",
+    description: "Run until hitting a preset with this parse error",
+  })
   .option("dir", {
     type: "string",
     description: "The directory to parse",
@@ -85,6 +89,7 @@ function getEels(milk) {
   return eels;
 }
 
+// Many of these could probably be turned back on now that we have the preProcessor
 const BAD = new Set([
   "fixtures/mega/!Dawid.milk",
   "fixtures/mega/092j09jf09j09je09j9j09j09jef09j09je0f9j.milk",
@@ -99,6 +104,10 @@ const BAD = new Set([
   "fixtures/mega/161.milk",
   "fixtures/mega/2009 4th of July with AdamFX n Martin - into the fireworks B.milk",
   "fixtures/mega/2009 4th of July with AdamFX n Martin - into the fireworks E.milk",
+
+  // Trailing spaces in .ini combined with number spread across newlines.
+  // Confirmed crashes in Milkdrop
+  "fixtures/mega/Closure Space.milk",
 ]);
 
 function validate(milkPath, context) {
@@ -157,11 +166,14 @@ milkFiles.forEach(milk => {
     validate(milk, context);
     good++;
   } catch (e) {
-    if (!argv.summary) {
+    const error = e.message.split("\n")[3];
+    if (argv["find-error"]) {
+      if (error === argv["find-error"]) {
+        throw new Error(e);
+      }
+    } else if (!argv.summary) {
       throw new Error(e);
     }
-    // console.error(e);
-    const error = e.message.split("\n")[3];
     if (error in errors) {
       errors[error]++;
     } else {
