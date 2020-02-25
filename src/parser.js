@@ -1,9 +1,15 @@
-let parser = null;
+const { preProcess } = require("./preProcessor");
+let parserImpl = null;
 // Always use the dynamic one, while we figure out why the built one doens't work.
 if (process.env.NODE_ENV === "production") {
-  parser = require("../build/parser");
+  parserImpl = require("../build/parser");
 } else {
-  parser = require("../tools/buildParser");
+  parserImpl = require("../tools/buildParser");
 }
 
-module.exports = parser;
+function parse(code) {
+  const processedCode = preProcess(code);
+  return parserImpl.parse(processedCode);
+}
+
+module.exports = { parse };

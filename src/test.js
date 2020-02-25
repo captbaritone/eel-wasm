@@ -37,14 +37,10 @@ test("parse", () => {
     Object {
       "body": Array [
         Object {
-          "column": 0,
-          "line": 1,
           "type": "NUMBER_LITERAL",
           "value": 1,
         },
       ],
-      "column": 0,
-      "line": 1,
       "type": "SCRIPT",
     }
   `);

@@ -1,17 +1,15 @@
 const { Parser } = require("jison");
 
 const binaryExpression =
-  "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2, column: @1.first_column, line: @1.first_line}";
+  "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2}";
 const unaryExpression =
-  "$$ = {type: 'UNARY_EXPRESSION', value: $2, operator: $1, column: @1.first_column, line: @1.first_line}";
+  "$$ = {type: 'UNARY_EXPRESSION', value: $2, operator: $1}";
 
 const grammar = {
   comment: "EEL Parser",
   lex: {
     rules: [
       ["\\s+", "/* skip whitespace */"],
-      ["//[^\n]*", "/* skip inline comments */"],
-      ["\\\\[^\n]*", "/* skip inline comments */"],
       ["[0-9]+", "return 'DIGITS_TOKEN'"],
       ["(==|<=|>=|<|>)", "return 'COMPARISON_TOKEN'"],
       ["[+\\-*/%]?=", "return 'ASSIGNMENT_OPERATOR_TOKEN'"],
@@ -40,18 +38,12 @@ const grammar = {
 
   bnf: {
     SCRIPT: [
-      [
-        "expression EOF",
-        "return {type: 'SCRIPT', body: [$1], column: @1.first_column, line: @1.first_line}",
-      ],
+      ["expression EOF", "return {type: 'SCRIPT', body: [$1]}"],
       [
         "expressionsOptionalTrailingSemi EOF",
-        "return {type: 'SCRIPT', body: $1, column: @1.first_column, line: @1.first_line}",
+        "return {type: 'SCRIPT', body: $1}",
       ],
-      [
-        "EOF",
-        "return {type: 'SCRIPT', body: [], column: @1.first_column, line: @1.first_line}",
-      ],
+      ["EOF", "return {type: 'SCRIPT', body: []}"],
     ],
     separator: [";", "separator ;"],
     expressions: [
@@ -68,13 +60,13 @@ const grammar = {
     EXPRESSION_BLOCK: [
       [
         "expressionsOptionalTrailingSemi",
-        "$$ = {type: 'EXPRESSION_BLOCK', body: $1, column: @1.first_column, line: @1.first_line}",
+        "$$ = {type: 'EXPRESSION_BLOCK', body: $1}",
       ],
     ],
     IDENTIFIER: [
       [
         "IDENTIFIER_TOKEN",
-        "$$ = {type: 'IDENTIFIER', value: $1.toLowerCase(), column: @1.first_column, line: @1.first_line};",
+        "$$ = {type: 'IDENTIFIER', value: $1.toLowerCase()};",
       ],
     ],
     argument: ["expression", "EXPRESSION_BLOCK"],
@@ -85,27 +77,27 @@ const grammar = {
     FUNCTION_CALL: [
       [
         "IDENTIFIER ( )",
-        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: [], column: @1.first_column, line: @1.first_line}",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: []}",
       ],
       [
         "IDENTIFIER ( arguments )",
-        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, column: @1.first_column, line: @1.first_line}",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3}",
       ],
     ],
     LOGICAL_EXPRESSION: [
       [
         "expression LOGICAL_OPERATOR_TOKEN expression",
-        "$$ = {type: 'LOGICAL_EXPRESSION', left: $1, right: $3, operator: $2, column: @1.first_column, line: @1.first_line}",
+        "$$ = {type: 'LOGICAL_EXPRESSION', left: $1, right: $3, operator: $2}",
       ],
     ],
     ASSIGNMENT: [
       [
         "IDENTIFIER ASSIGNMENT_OPERATOR_TOKEN expression",
-        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, column: @1.first_column, line: @1.first_line}",
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3}",
       ],
       [
         "FUNCTION_CALL ASSIGNMENT_OPERATOR_TOKEN expression",
-        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, column: @1.first_column, line: @1.first_line}",
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3}",
       ],
     ],
     number: [
@@ -114,12 +106,7 @@ const grammar = {
       ["DIGITS_TOKEN . DIGITS_TOKEN", "$$ = Number($1 + $2 + $3)"],
       [". DIGITS_TOKEN", "$$ = Number('0' + $1 + $2)"],
     ],
-    NUMBER_LITERAL: [
-      [
-        "number",
-        "$$ = {type: 'NUMBER_LITERAL', value: $1, column: @1.first_column, line: @1.first_line}",
-      ],
-    ],
+    NUMBER_LITERAL: [["number", "$$ = {type: 'NUMBER_LITERAL', value: $1}"]],
     UNARY_EXPRESSION: [
       ["- expression", unaryExpression],
       ["+ expression", unaryExpression],
