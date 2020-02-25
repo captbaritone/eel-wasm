@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*
  * Utility script for trying the parser against EEL code extracted from
  * a collection of `.milk` files. Useful for validating that the parser
@@ -8,9 +10,49 @@ const path = require("path");
 const { parse } = require("../src/parser");
 const { splitPreset } = require("milkdrop-preset-utils");
 const countUssages = require("./countUssages");
+const yargs = require("yargs");
 
-// Turn this on to get a specific error report, not just an aggregate.
-const FIND_ERROR = false;
+const { argv } = yargs
+  .option("summary", {
+    type: "boolean",
+    default: false,
+    description: "Output a summary of all failures",
+  })
+  .option("first", {
+    type: "number",
+    description: "Number of presets to analyze",
+  })
+  .option("stats", {
+    type: "boolean",
+    description: "Output stats showing ussage of different syntax",
+  })
+  .option("file", {
+    type: "string",
+    description: "The file to parse",
+  })
+  .option("dir", {
+    type: "string",
+    description: "The directory to parse",
+  })
+  .help();
+
+class Counter {
+  constructor() {
+    this._map = {};
+  }
+
+  add(name) {
+    if (this._map[name] == null) {
+      this._map[name] = 0;
+    }
+
+    this._map[name]++;
+  }
+
+  asObj() {
+    return this._map;
+  }
+}
 
 const EEL_KEYS = ["presetInit", "perFrame", "perVertex"];
 const SUB_EEL_KEYS = ["init_eqs_str", "frame_eqs_str", "point_eqs_str"];
@@ -69,42 +111,32 @@ function validate(milkPath, context) {
   Object.entries(eels).forEach(([name, eel]) => {
     try {
       const root = parse(eel);
-      countUssages(root, context);
+      if (argv.stats) {
+        countUssages(root, context);
+      }
     } catch (e) {
-      if (FIND_ERROR) {
+      if (!argv.summary) {
+        console.error(`\nError in ${name} in "${milkPath}"\n`);
+        console.log(`\nnode tools/parseMilk.js --file="${milkPath}"\n`);
         console.log(eel);
-        console.error(`Error in ${name} in "${milkPath}"`);
       }
       throw e;
     }
   });
 }
 
-const pathArg = process.argv[2];
-const milkDir = pathArg || path.join(__dirname, "../fixtures");
-const files = fs.readdirSync(milkDir);
-const milkFiles = files
-  .filter(fileName => fileName.endsWith(".milk"))
-  .map(fileName => {
-    return path.join(milkDir, fileName);
-  });
-
-class Counter {
-  constructor() {
-    this._map = {};
-  }
-
-  add(name) {
-    if (this._map[name] == null) {
-      this._map[name] = 0;
-    }
-
-    this._map[name]++;
-  }
-
-  asObj() {
-    return this._map;
-  }
+let milkFiles;
+if (argv.dir) {
+  const milkDir = argv.dir || path.join(__dirname, "../fixtures");
+  files = fs.readdirSync(milkDir);
+  milkFiles = files
+    .filter(fileName => fileName.endsWith(".milk"))
+    .map(fileName => {
+      return path.join(milkDir, fileName);
+    })
+    .slice(0, argv.first);
+} else if (argv.file) {
+  milkFiles = [path.join(process.cwd(), argv.file)];
 }
 
 const context = {
@@ -125,7 +157,7 @@ milkFiles.forEach(milk => {
     validate(milk, context);
     good++;
   } catch (e) {
-    if (FIND_ERROR) {
+    if (!argv.summary) {
       throw new Error(e);
     }
     // console.error(e);
@@ -143,13 +175,15 @@ if (bad === 0) {
   console.log("No errors found!");
 } else {
   console.log({ errors, good, bad });
-  console.log({
-    functions: context.functions.asObj(),
-    binaryOperators: context.binaryOperators.asObj(),
-    unaryOperators: context.unaryOperators.asObj(),
-    logicalOperators: context.logicalOperators.asObj(),
-    assignmentOperators: context.assignmentOperators.asObj(),
-    nodeTypes: context.nodeTypes.asObj(),
-  });
+  if (argv.stats) {
+    console.log({
+      functions: context.functions.asObj(),
+      binaryOperators: context.binaryOperators.asObj(),
+      unaryOperators: context.unaryOperators.asObj(),
+      logicalOperators: context.logicalOperators.asObj(),
+      assignmentOperators: context.assignmentOperators.asObj(),
+      nodeTypes: context.nodeTypes.asObj(),
+    });
+  }
   throw new Error("Errors found");
 }

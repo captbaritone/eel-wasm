@@ -11,7 +11,7 @@
     "ci": "yarn test && node tools/parseMilk.js && yarn build",
     "benchmark": "node tools/benchmark/performance.js perf",
     "consistency": "node tools/benchmark/performance.js consistency",
-    "test-parse": "node tools/parseMilk.js ./fixtures/mega",
+    "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
     "build": "yarn build-parser && parcel build src/compiler.js --experimental-scope-hoisting"
   },
@@ -26,7 +26,8 @@
     "parcel": "^1.12.4",
     "prettier": "^1.19.1",
     "print-diff": "^1.0.0",
-    "wabt": "^1.0.12"
+    "wabt": "^1.0.12",
+    "yargs": "^15.1.0"
   },
   "jest": {
     "moduleFileExtensions": [
