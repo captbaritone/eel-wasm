@@ -7,6 +7,7 @@ function print(ast) {
       const expressions = ast.body.map(print);
       return expressions.join("\n");
     }
+    case "LOGICAL_EXPRESSION":
     case "BINARY_EXPRESSION": {
       return `${print(ast.left)} ${ast.operator} ${print(ast.right)}`;
     }
