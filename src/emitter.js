@@ -246,6 +246,9 @@ function emit(ast, context) {
         if (ast.left.arguments.length !== 1) {
           throw new Error(`Expected 1 argument when assinging to a buffer`);
         }
+        // TODO: Assert that the one of the known buffer access functions are being called:
+        // * megabuf
+        // * gmegabuf
 
         const addOffset = emitAddMemoryOffset(left.callee.value);
 
@@ -274,11 +277,6 @@ function emit(ast, context) {
       const right = emit(ast.right, context);
       const variableName = ast.left.value;
       const global = context.globals.has(variableName);
-
-      // Ensure we have registed this as a local variable.
-      if (!global && !context.userVars.has(variableName)) {
-        context.userVars.add(variableName);
-      }
 
       const resolvedName = global
         ? context.resolveExternalVar(variableName)
@@ -342,11 +340,6 @@ function emit(ast, context) {
         // function calls and assignments we just peek at the name and never emit
         // it.
         return [op.global_get, ...context.resolveExternalVar(variableName)];
-      }
-      if (!context.userVars.has(variableName)) {
-        // EEL lets you access variables before you define them, so we register
-        // each access that we encounter.
-        context.userVars.add(variableName);
       }
       return [op.global_get, ...context.resolveUserVar(variableName)];
     case "NUMBER_LITERAL":

@@ -88,8 +88,6 @@ function compileModule({
         return localF64Count++;
       },
       resolveLocalFunc,
-      // TODO: Get rid of userVars
-      userVars: new Set(),
     });
 
     assertNumbers(binary);
