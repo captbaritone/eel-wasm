@@ -31,6 +31,7 @@ Result of running the parser on [a set of 50,026 Milkdrop Presets](http://forums
 | 0e73e0f | Backward comments     |   623   |   1%    |
 | cf7648d | Pre-processor         |   265   |  0.5%   |
 | 25ea0b1 | Bare `.`              |   162   |  0.3%   |
+| 6d4e0e2 | !=                    |   137   |  0.3%   |
 
 ## TODO
 
