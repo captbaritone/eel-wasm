@@ -20,11 +20,11 @@ const {
 const { localFuncMap } = require("./wasmFunctions");
 
 class NamespaceResolver {
-  constructor(initial = []) {
-    this._counter = -1;
+  constructor(initial = [], offset = 0) {
+    this._counter = -1 + offset;
     this._map = new Map();
 
-    Array.from(initial).forEach(name => this.get(name));
+    initial.forEach(name => this.get(name));
   }
   get(name) {
     if (!this._map.has(name)) {
@@ -55,8 +55,10 @@ function compileModule({
     };
   });
 
-  const externalVarsResolver = new NamespaceResolver(globalVariables);
-  const userVarsResolver = new NamespaceResolver();
+  const externalVarsResolver = new NamespaceResolver(
+    Array.from(globalVariables)
+  );
+  const userVarsResolver = new NamespaceResolver([], globalVariables.size);
   const localFuncResolver = new NamespaceResolver(
     functionImports.map(func => func.name)
   );

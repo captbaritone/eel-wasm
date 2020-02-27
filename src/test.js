@@ -53,7 +53,7 @@ const testCases = [
   ["Number with decimal and no leading whole", "g = .5;", 0.5],
   ["Number with decimal and no trailing dec", "g = 5.;", 5],
   ["Number with no digits", "g = .;", 0],
-  ["Optional final semi", "g = 5; g = 10", 10],
+  ["Optional final semi", "(g = 5; g = 10);", 10],
   ["Unary negeation", "g = -10;", -10],
   ["Unary plus", "g = +10;", 10],
   ["Multiply", "g = 10 * 10;", 100],
@@ -170,6 +170,7 @@ const testCases = [
   ["Consecutive semis", "g = 10;;; ;g = 20;;", 20],
   ["Equality (< epsilon)", "g = 0.000009 == 0;", 1],
   ["Equality (< -epsilon)", "g = -0.000009 == 0;", 1],
+  ["Variables don't collide", "g = 1; not_g = 2;", 1],
 ];
 
 describe("Small test cases", () => {
