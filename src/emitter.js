@@ -298,26 +298,27 @@ function emit(ast, context) {
     case "LOGICAL_EXPRESSION": {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
-      const localIndex = context.resolveLocalF64();
-      const operatorToEqualityCheck = {
-        "&&": IS_ZEROISH,
-        "||": IS_NOT_ZEROISH,
+      const behaviorMap = {
+        "&&": [IS_ZEROISH, 0],
+        "||": [IS_NOT_ZEROISH, 1],
       };
-      let equalityCheck = operatorToEqualityCheck[ast.operator];
-      if (equalityCheck == null) {
+      const behavior = behaviorMap[ast.operator];
+
+      if (behavior == null) {
         throw new Error(`Unknown logical expression operator ${ast.operator}`);
       }
+      const [comparison, shortCircutValue] = behavior;
       return [
         ...left,
-        op.local_tee,
-        ...unsignedLEB128(localIndex),
-        ...equalityCheck,
+        ...comparison,
         op.if,
         VAL_TYPE.f64,
-        op.local_get,
-        ...unsignedLEB128(localIndex),
+        op.f64_const,
+        ...encodef64(shortCircutValue),
         op.else,
         ...right,
+        ...IS_NOT_ZEROISH,
+        op.f64_convert_i32_s,
         op.end,
       ];
     }
