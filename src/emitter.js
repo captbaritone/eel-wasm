@@ -228,9 +228,9 @@ function emit(ast, context) {
         case "max":
           return [...args, op.f64_max];
         case "above":
-          return [...args, op.f64_lt, op.f64_convert_i32_s];
-        case "below":
           return [...args, op.f64_gt, op.f64_convert_i32_s];
+        case "below":
+          return [...args, op.f64_lt, op.f64_convert_i32_s];
         case "equal":
           return [...args, op.f64_sub, ...IS_ZEROISH, op.f64_convert_i32_s];
       }

@@ -108,6 +108,17 @@ const BAD = new Set([
   // Trailing spaces in .ini combined with number spread across newlines.
   // Confirmed crashes in Milkdrop
   "fixtures/mega/Closure Space.milk",
+  "fixtures/mega/All Lines Of Force.milk",
+
+  // Assingning to `;` Confirmed minimal example crashes in Milkdrop
+  "fixtures/mega/Esotic and KrashBC - Energy Fields Forever.milk", // ob_b = ;
+  "fixtures/mega/Esotic - Flowz.milk", // wave_r=;
+  "fixtures/mega/Esotic - Morphology.milk", // wave_r=;
+  "fixtures/mega/EvilJim - #40 Irregular Zoom.milk", // wave_r=;
+  "fixtures/mega/EvilJim - Irregular Zoom.milk", // wave_r=;
+  "fixtures/mega/Eviljim-irregularzoom.milk", // wave_r=;
+  "fixtures/mega/Telek & EMPR - Aztec Pool (Flicker @xis Mix).milk", // wave_x = ;
+  "fixtures/mega/Telek & EMPR - Hell Cave (Fiddle A Bit (Flicker @xis) Mix).milk", // vnum_increment = ;
 ]);
 
 function validate(milkPath, context) {
