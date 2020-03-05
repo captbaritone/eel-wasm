@@ -124,6 +124,7 @@ const testCases = [
   ["Equality (< epsilon)", "g = 0.000009 == 0;", 1],
   ["Equality (< -epsilon)", "g = -0.000009 == 0;", 1],
   ["Variables don't collide", "g = 1; not_g = 2;", 1],
+  ["Block comment", "g = 1; /* g = 10 */ g = g * 2;", 2],
 ];
 
 module.exports = testCases;

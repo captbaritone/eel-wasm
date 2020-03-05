@@ -30,4 +30,9 @@ describe("Comments", () => {
     const expected = "No way.";
     expect(actual).toBe(expected);
   });
+  test("multiline", () => {
+    const actual = preProcess("No /* freaking\r\n fracking\r\n */way.");
+    const expected = "No way.";
+    expect(actual).toBe(expected);
+  });
 });
