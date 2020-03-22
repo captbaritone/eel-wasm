@@ -1,6 +1,4 @@
 const CHILDREN = {
-  MODULE: [{ type: "ARRAY", key: "exportedFunctions" }],
-  FUNCTION_EXPORT: [{ type: "NODE", key: "function" }],
   ASSIGNMENT_EXPRESSION: [
     { type: "NODE", key: "right" },
     // `left` is a child node, but IDENTIFER is not emitted in the same way, so
