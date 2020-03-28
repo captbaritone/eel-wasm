@@ -3,6 +3,8 @@ const fs = require("fs");
 const MILKDROP_GLOBALS = require("../tools/milkdropGlobals");
 const { parse } = require("./parser");
 const testCases = require("../tools/testCases");
+const { compileModule } = require("../src/compiler");
+const shims = require("../src/shims");
 
 test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).
@@ -76,6 +78,27 @@ describe("Small test cases", () => {
         mod.exports.run();
         expect(g.value).toBe(expectedResult);
       });
+    });
+  });
+});
+
+const compilerErrors = [
+  ["bitwiseOr(1, 2);", 'Undefined local function "bitwiseor"'],
+];
+
+describe("Compiler errors", () => {
+  compilerErrors.forEach(testCase => {
+    const [expression, expectedErrorMessage] = testCase;
+    const compileExpression = () => {
+      compileModule({
+        globals: new Set(),
+        functions: { run: expression },
+        optimize: false,
+        shims,
+      });
+    };
+    test(expression, () => {
+      expect(compileExpression).toThrowError(expectedErrorMessage);
     });
   });
 });
