@@ -133,6 +133,10 @@ const testCases = [
   ["Equality (< -epsilon)", "g = -0.000009 == 0;", 1],
   ["Variables don't collide", "g = 1; not_g = 2;", 1],
   ["Block comment", "g = 1; /* g = 10 */ g = g * 2;", 2],
+  ["Sigmoid 1, 2", "g = sigmoid(1, 2);", 0.8807970779778823],
+  ["Sigmoid 2, 1", "g = sigmoid(2, 1);", 0.8807970779778823],
+  ["Sigmoid 0, 0", "g = sigmoid(0, 0);", 0.5],
+  ["Sigmoid 10, 10", "g = sigmoid(10, 10);", 1],
 ];
 
 module.exports = testCases;
