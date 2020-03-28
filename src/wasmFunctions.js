@@ -1,4 +1,11 @@
-const { encodef64, unsignedLEB128, op, VAL_TYPE } = require("./encoding");
+const {
+  encodef64,
+  unsignedLEB128,
+  op,
+  VAL_TYPE,
+  IS_ZEROISH,
+  IS_NOT_ZEROISH,
+} = require("./encoding");
 
 const localFuncMap = {
   sqr: {
@@ -29,11 +36,29 @@ const localFuncMap = {
     binary: [
       op.local_get,
       ...unsignedLEB128(0),
-      op.i32_trunc_s_f64,
+      ...IS_NOT_ZEROISH,
       op.local_get,
       ...unsignedLEB128(1),
-      op.i32_trunc_s_f64,
+      ...IS_NOT_ZEROISH,
       op.i32_or,
+      op.i32_const,
+      // TODO: Is this the right encoding for an int32?
+      ...unsignedLEB128(0),
+      op.i32_ne,
+      op.f64_convert_i32_s,
+    ],
+  },
+  band: {
+    args: [VAL_TYPE.f64, VAL_TYPE.f64],
+    returns: [VAL_TYPE.f64],
+    binary: [
+      op.local_get,
+      ...unsignedLEB128(0),
+      ...IS_NOT_ZEROISH,
+      op.local_get,
+      ...unsignedLEB128(1),
+      ...IS_NOT_ZEROISH,
+      op.i32_and,
       op.i32_const,
       // TODO: Is this the right encoding for an int32?
       ...unsignedLEB128(0),

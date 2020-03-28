@@ -1,5 +1,7 @@
 const ieee754 = require("ieee754");
 
+const EPSILON = 0.00001;
+
 // An intial attempt to construct a Wasm binary by hand.
 /*
 0	custom section
@@ -43,6 +45,7 @@ const op = {
   drop: 0x1a,
   f64_load: 0x2b,
   f64_store: 0x39,
+  i32_and: 0x71,
   i32_or: 0x72,
   i32_const: 0x41,
   i32_ne: 0x47,
@@ -116,6 +119,16 @@ const FUNCTION_TYPE = 0x60;
 const GLOBAL_TYPE = 0x03;
 const TYPE_IDX = 0x00;
 
+// Takes an f64 on the stack and leaves an int32 boolean representing if it's
+// within epsilon of zero.
+const IS_ZEROISH = [op.f64_abs, op.f64_const, ...encodef64(EPSILON), op.f64_lt];
+const IS_NOT_ZEROISH = [
+  op.f64_abs,
+  op.f64_const,
+  ...encodef64(EPSILON),
+  op.f64_gt,
+];
+
 // f64
 function encodef64(num) {
   const arr = new Uint8Array(8);
@@ -177,4 +190,6 @@ module.exports = {
   EXPORT_TYPE,
   SECTION,
   BLOCK,
+  IS_ZEROISH,
+  IS_NOT_ZEROISH,
 };
