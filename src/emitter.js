@@ -224,6 +224,8 @@ function emit(ast, context) {
           return [...args, op.f64_lt, op.f64_convert_i32_s];
         case "equal":
           return [...args, op.f64_sub, ...IS_ZEROISH, op.f64_convert_i32_s];
+        case "bnot":
+          return [...args, ...IS_ZEROISH, op.f64_convert_i32_s];
       }
 
       const invocation = context.resolveLocalFunc(functionName);

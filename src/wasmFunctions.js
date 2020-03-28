@@ -19,17 +19,6 @@ const localFuncMap = {
       op.f64_mul,
     ],
   },
-  bnot: {
-    args: [VAL_TYPE.f64],
-    returns: [VAL_TYPE.f64],
-    binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
-      op.i32_trunc_s_f64,
-      op.i32_eqz,
-      op.f64_convert_i32_s,
-    ],
-  },
   bor: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
