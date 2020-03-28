@@ -317,6 +317,7 @@ function emit(ast, context) {
       const operatorToCode = {
         "-": [op.f64_neg],
         "+": [],
+        "!": [...IS_ZEROISH, op.f64_convert_i32_s],
       };
       const code = operatorToCode[ast.operator];
       if (code == null) {

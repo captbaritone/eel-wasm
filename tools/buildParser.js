@@ -29,7 +29,7 @@ const grammar = {
     // TODO: Confirm these orders
     ["right", "ASSIGNMENT_OPERATOR_TOKEN"],
     ["right", "COMPARISON_TOKEN"],
-    ["left", "+", "-"],
+    ["left", "+", "-", "!"],
     ["left", "*", "/", "%", "^"],
     ["left", "&", "|" /* "~"" will go here as well */],
     ["left", "LOGICAL_OPERATOR_TOKEN"],
@@ -111,6 +111,7 @@ const grammar = {
     UNARY_EXPRESSION: [
       ["- expression", unaryExpression],
       ["+ expression", unaryExpression],
+      ["! expression", unaryExpression],
     ],
     BINARY_EXPRESSION: [
       ["expression + expression", binaryExpression],
