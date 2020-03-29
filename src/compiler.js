@@ -63,31 +63,28 @@ function compileModule({
     functionImports.map(func => func.name)
   );
 
-  // TODO: We could pass in the arity here to get a compile-time check that we
-  // passed the right number of arguments.
-  function resolveLocalFunc(name) {
-    const offset = localFuncResolver.get(name);
-    return [op.call, ...unsignedLEB128(offset)];
-  }
-
+  let localF64Count = 0;
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
-    let localF64Count = 0;
     let ast = preParsed ? code : parse(code);
     if (optimize) {
       ast = optimizeAst(ast);
     }
     const binary = emit(ast, {
-      globals: globalVariables,
-      resolveExternalVar: name => {
-        return unsignedLEB128(externalVarsResolver.get(name));
-      },
-      resolveUserVar: name => {
+      resolveVar: name => {
+        if (globalVariables.has(name)) {
+          return unsignedLEB128(externalVarsResolver.get(name));
+        }
         return unsignedLEB128(userVarsResolver.get(name));
       },
       resolveLocalF64: () => {
         return localF64Count++;
       },
-      resolveLocalFunc,
+      // TODO: We could pass in the arity here to get a compile-time check that we
+      // passed the right number of arguments.
+      resolveLocalFunc: name => {
+        const offset = localFuncResolver.get(name);
+        return [op.call, ...unsignedLEB128(offset)];
+      },
     });
 
     assertNumbers(binary);

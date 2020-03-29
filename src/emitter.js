@@ -207,6 +207,15 @@ function emit(ast, context) {
             0x03, // Align
             0x00, // Offset
           ];
+        case "assign":
+          const resolvedName = context.resolveVar(ast.arguments[0].value);
+          return [
+            ...emit(ast.arguments[1], context),
+            op.global_set,
+            ...resolvedName,
+            op.global_get,
+            ...resolvedName,
+          ];
         // Function calls which can be linlined
         case "abs":
           return [...args, op.f64_abs];
@@ -269,11 +278,8 @@ function emit(ast, context) {
       }
       const right = emit(ast.right, context);
       const variableName = ast.left.value;
-      const global = context.globals.has(variableName);
 
-      const resolvedName = global
-        ? context.resolveExternalVar(variableName)
-        : context.resolveUserVar(variableName);
+      const resolvedName = context.resolveVar(variableName);
 
       // TODO: In lots of cases we don't care about the return value. In those
       // cases we should try to find a way to omit the `get/drop` combo.
@@ -329,13 +335,10 @@ function emit(ast, context) {
     }
     case "IDENTIFIER":
       const variableName = ast.value;
-      if (context.globals.has(variableName)) {
-        // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
-        // function calls and assignments we just peek at the name and never emit
-        // it.
-        return [op.global_get, ...context.resolveExternalVar(variableName)];
-      }
-      return [op.global_get, ...context.resolveUserVar(variableName)];
+      // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
+      // function calls and assignments we just peek at the name and never emit
+      // it.
+      return [op.global_get, ...context.resolveVar(variableName)];
     case "NUMBER_LITERAL":
       return [op.f64_const, ...encodef64(ast.value)];
     default:
