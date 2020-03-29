@@ -13,8 +13,11 @@ module.exports = {
   pow: Math.pow,
   log: Math.log,
   log10: Math.log10,
+  exp: Math.exp,
   sigmoid: (x, y) => {
     const t = 1 + Math.exp(-x * y);
     return Math.abs(t) > EPSILON ? 1.0 / t : 0;
   },
+  floor: Math.floor,
+  ceil: Math.ceil,
 };

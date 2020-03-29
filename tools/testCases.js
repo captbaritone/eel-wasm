@@ -145,6 +145,11 @@ const testCases = [
   ["Sigmoid 2, 1", "g = sigmoid(2, 1);", 0.8807970779778823],
   ["Sigmoid 0, 0", "g = sigmoid(0, 0);", 0.5],
   ["Sigmoid 10, 10", "g = sigmoid(10, 10);", 1],
+  ["Exp", "g = exp(10);", Math.exp(10)],
+  ["Floor", "g = floor(10.9);", 10],
+  ["Floor", "g = floor(-10.9);", -11],
+  ["Ceil", "g = ceil(9.1);", 10],
+  ["Ceil", "g = ceil(-9.9);", -9],
 ];
 
 module.exports = testCases;
