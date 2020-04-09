@@ -1,0 +1,50 @@
+{
+  "name": "eel-wasm",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "prettier": {
+    "trailingComma": "es5"
+  },
+  "scripts": {
+    "test": "jest",
+    "ci": "yarn test && node tools/parseMilk.js --dir=./fixtures/ && yarn build",
+    "benchmark": "node tools/benchmark/performance.js perf",
+    "consistency": "node tools/benchmark/performance.js consistency",
+    "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
+    "test-compile": "node tools/parseMilk.js --stats --summary --compile --dir=./fixtures/mega",
+    "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
+    "build": "yarn build-parser && parcel build src/index.ts --experimental-scope-hoisting"
+  },
+  "dependencies": {
+    "ieee754": "^1.1.13"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
+    "@babel/preset-typescript": "^7.9.0",
+    "@types/jest": "^25.2.1",
+    "babel-jest": "^25.3.0",
+    "jest": "^24.9.0",
+    "jison": "^0.4.18",
+    "milkdrop-eel-parser": "^0.0.4",
+    "milkdrop-preset-utils": "^0.1.0",
+    "parcel": "^1.12.4",
+    "prettier": "^1.19.1",
+    "print-diff": "^1.0.0",
+    "typescript": "^3.8.3",
+    "wabt": "^1.0.12",
+    "yargs": "^15.1.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "ts",
+      "eel"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "playground"
+    ]
+  }
+}

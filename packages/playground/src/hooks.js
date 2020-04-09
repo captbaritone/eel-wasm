@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { parse } from "src/parser";
-import { compileModule } from "src/compiler";
-import shims from "src/shims";
-import { print } from "tools/prettyPrinter";
+import { parse, compileModule, shims, print, optimizeAst } from "eel-wasm";
 import _wabt from "wabt";
-import optimizeAst from "src/optimizers/optimize";
 
 const wabt = _wabt();
 
