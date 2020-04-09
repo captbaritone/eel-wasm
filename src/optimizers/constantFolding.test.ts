@@ -1,8 +1,8 @@
-const foldConstants = require("./constantFolding");
-const { parse } = require("../parser");
-const { print } = require("../../tools/prettyPrinter");
+import foldConstants from "./constantFolding";
+import { parse } from "../parser";
+import { print } from "../../tools/prettyPrinter";
 
-const TESTS = [
+const TESTS: [string, string, number][] = [
   ["Unary negetion", "-1;", -1],
   ["Unary Addition", "+1;", 1],
   ["Addition", "1 + 1;", 2],

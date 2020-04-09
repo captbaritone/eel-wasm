@@ -1,4 +1,4 @@
-const { preProcess } = require("./preProcessor");
+import { preProcess } from "./preProcessor";
 
 describe("Newlines", () => {
   test("basic", () => {

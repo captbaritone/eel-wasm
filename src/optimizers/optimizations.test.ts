@@ -1,9 +1,10 @@
-const foldConstants = require("./constantFolding");
-const propagateConstants = require("./constantPropagation");
-const { parse } = require("../parser");
-const { print } = require("../../tools/prettyPrinter");
+import foldConstants from "./constantFolding";
+import propagateConstants from "./constantPropagation";
+import { parse } from "../parser";
+import { print } from "../../tools/prettyPrinter";
+import { Ast } from "../types";
 
-function runPass(ast) {
+function runPass(ast: Ast) {
   return propagateConstants(foldConstants(ast));
 }
 

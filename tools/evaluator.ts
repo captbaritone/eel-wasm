@@ -1,7 +1,15 @@
-const shims = require("../src/shims");
-const { compileModule } = require("../src/compiler");
+import shims from "../src/shims";
+import { compileModule } from "../src/compiler";
 
-async function loadModule({ globals, functions, optimize }) {
+export async function loadModule({
+  globals,
+  functions,
+  optimize,
+}: {
+  globals: { [name: string]: WebAssembly.Global };
+  functions: { [name: string]: string };
+  optimize: boolean;
+}) {
   const buffer = compileModule({
     globals: new Set(Object.keys(globals)),
     functions,
@@ -17,5 +25,3 @@ async function loadModule({ globals, functions, optimize }) {
 
   return await WebAssembly.instantiate(mod, importObject);
 }
-
-module.exports = { loadModule };

@@ -26,7 +26,7 @@ const CHILDREN = {
   ],
 };
 
-function mapAst(ast, cb) {
+export function mapAst(ast, cb) {
   const children = CHILDREN[ast.type];
   let newAst = ast;
   if (children == null) {
@@ -55,5 +55,3 @@ function mapAst(ast, cb) {
 
   return cb(newAst);
 }
-
-module.exports = { mapAst };

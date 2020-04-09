@@ -1,5 +1,5 @@
 // Started with this function: https://github.com/WACUP/vis_milk2/blob/cc2e85aed44373d0b6b2115c0806ec035856860a/vis_milk2/state.cpp#L1532-L1557
-function preProcess(src) {
+export function preProcess(src: string): string {
   let dest = "";
   let inlineComment = false;
   let blockComment = false;
@@ -29,5 +29,3 @@ function preProcess(src) {
 
   return dest;
 }
-
-module.exports = { preProcess };

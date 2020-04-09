@@ -1,4 +1,4 @@
-const {
+import {
   op,
   encodef64,
   unsignedLEB128,
@@ -6,10 +6,11 @@ const {
   BLOCK,
   IS_ZEROISH,
   IS_NOT_ZEROISH,
-} = require("./encoding");
-const { createUserError } = require("./errorUtils");
+} from "./encoding";
+import { createUserError } from "./errorUtils";
+import { Ast, CompilerContext, AssignmentOperator } from "./types";
 
-function arrayJoin(arr, joiner) {
+function arrayJoin<T1, T2>(arr: T1[], joiner: T2): Array<T1 | T2> {
   const newArr = [];
   for (let i = 0; i < arr.length; i++) {
     newArr.push(arr[i]);
@@ -21,22 +22,22 @@ function arrayJoin(arr, joiner) {
   return newArr;
 }
 
-function flatten(arr) {
-  const newArr = [];
+function flatten<T>(arr: Array<T[]>): T[] {
+  const newArr: T[] = [];
   arr.forEach(subArr => {
     newArr.push(...subArr);
   });
   return newArr;
 }
 
-function emitExpressionBlock(body, context) {
+function emitExpressionBlock(body: Ast[], context: CompilerContext) {
   const statements = body.map((statement, i) => {
     return emit(statement, context);
   });
   return flatten(arrayJoin(statements, [op.drop]));
 }
 
-function emitWhile(expression, context) {
+function emitWhile(expression: Ast, context: CompilerContext) {
   const body = emit(expression, context);
   return [
     op.loop,
@@ -53,7 +54,7 @@ function emitWhile(expression, context) {
   ];
 }
 
-function emitLoop(count, expression, context) {
+function emitLoop(count: Ast, expression: Ast, context: CompilerContext) {
   const body = emit(expression, context);
   const localIndex = context.resolveLocalF64();
   // TODO: This could probably be simplified
@@ -87,7 +88,12 @@ function emitLoop(count, expression, context) {
   ];
 }
 
-function emitConditional(test, consiquent, alternate, context) {
+function emitConditional(
+  test: Ast,
+  consiquent: Ast,
+  alternate: Ast,
+  context: CompilerContext
+) {
   // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
   // Is that an optimization that we might want as well?
   return [
@@ -106,7 +112,22 @@ function emitConditional(test, consiquent, alternate, context) {
 // a non-empty `index` which will array which will leave the index on the stack
 // before the value in `right`. For `set` calls that don't (for example global
 // variables), simply pass an empty `index` array.
-function emitAssignment({ index, right, set, get, operator }, context) {
+function emitAssignment(
+  {
+    index,
+    right,
+    set,
+    get,
+    operator,
+  }: {
+    index: number[];
+    right: number[];
+    set: number[];
+    get: number[];
+    operator: AssignmentOperator;
+  },
+  context: CompilerContext
+) {
   // `=` is a special case in that it does not need the original value.
   if (operator === "=") {
     return [...index, ...right, ...set, ...get];
@@ -127,7 +148,7 @@ function emitAssignment({ index, right, set, get, operator }, context) {
 
 // There are two sections of memory. This function emits code to add the correct
 // offset to an i32 index already on the stack.
-function emitAddMemoryOffset(name) {
+function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
   const nameToCode = {
     gmegabuf: [
       op.i32_const,
@@ -135,7 +156,7 @@ function emitAddMemoryOffset(name) {
       ...unsignedLEB128(1000000),
       op.i32_add,
     ],
-    megabuf: [],
+    megabuf: [] as number[],
   };
   const code = nameToCode[name];
   if (code == null) {
@@ -144,7 +165,7 @@ function emitAddMemoryOffset(name) {
   return code;
 }
 
-function emit(ast, context) {
+export function emit(ast: Ast, context: CompilerContext): number[] {
   switch (ast.type) {
     case "SCRIPT": {
       const body = ast.body.map((statement, i) => {
@@ -183,8 +204,11 @@ function emit(ast, context) {
       return [...left, ...right, ...code];
     }
     case "CALL_EXPRESSION": {
+      const foo = ast;
       const functionName = ast.callee.value;
-      const args = flatten(ast.arguments.map(node => emit(node, context)));
+      const args: number[] = flatten(
+        ast.arguments.map(node => emit(node, context))
+      );
       // Some functions have special behavior
       // TODO: Assert arity of these functions
       switch (functionName) {
@@ -209,7 +233,13 @@ function emit(ast, context) {
             0x00, // Offset
           ];
         case "assign":
-          const resolvedName = context.resolveVar(ast.arguments[0].value);
+          const variableIdentifier = ast.arguments[0];
+          if (variableIdentifier.type != "IDENTIFIER") {
+            throw createUserError(
+              "Expected the first argument of `assign()` to be an identifier."
+            );
+          }
+          const resolvedName = context.resolveVar(variableIdentifier.value);
           return [
             ...emit(ast.arguments[1], context),
             op.global_set,
@@ -253,13 +283,20 @@ function emit(ast, context) {
         const localIndex = context.resolveLocalF64();
         const { operator, left } = ast;
         if (ast.left.arguments.length !== 1) {
-          throw new Error(`Expected 1 argument when assinging to a buffer`);
+          throw createUserError(
+            `Expected 1 argument when assinging to a buffer`
+          );
         }
-        // TODO: Assert that the one of the known buffer access functions are being called:
-        // * megabuf
-        // * gmegabuf
 
-        const addOffset = emitAddMemoryOffset(left.callee.value);
+        const bufferName = left.callee.value;
+        if (bufferName !== "gmegabuf" && bufferName !== "megabuf") {
+          throw createUserError(
+            "The only function calls which may be assigned to are `gmegabuf()` and `megabuf()`.",
+            left.callee.loc
+          );
+        }
+
+        const addOffset = emitAddMemoryOffset(bufferName);
 
         const index = [
           ...emit(ast.left.arguments[0], context),
@@ -295,7 +332,7 @@ function emit(ast, context) {
       const get = [op.global_get, ...resolvedName];
       const set = [op.global_set, ...resolvedName];
       const { operator } = ast;
-      const index = [];
+      const index: number[] = [];
 
       return emitAssignment({ index, right, set, get, operator }, context);
     }
@@ -303,15 +340,21 @@ function emit(ast, context) {
       const left = emit(ast.left, context);
       const right = emit(ast.right, context);
       const behaviorMap = {
-        "&&": [IS_ZEROISH, 0],
-        "||": [IS_NOT_ZEROISH, 1],
+        "&&": {
+          comparison: IS_ZEROISH,
+          shortCircutValue: 0,
+        },
+        "||": {
+          comparison: IS_NOT_ZEROISH,
+          shortCircutValue: 1,
+        },
       };
       const behavior = behaviorMap[ast.operator];
 
       if (behavior == null) {
         throw new Error(`Unknown logical expression operator ${ast.operator}`);
       }
-      const [comparison, shortCircutValue] = behavior;
+      const { comparison, shortCircutValue } = behavior;
       return [
         ...left,
         ...comparison,
@@ -331,7 +374,7 @@ function emit(ast, context) {
       const value = emit(ast.value, context);
       const operatorToCode = {
         "-": [op.f64_neg],
-        "+": [],
+        "+": [] as number[],
         "!": [...IS_ZEROISH, op.f64_convert_i32_s],
       };
       const code = operatorToCode[ast.operator];
@@ -349,8 +392,7 @@ function emit(ast, context) {
     case "NUMBER_LITERAL":
       return [op.f64_const, ...encodef64(ast.value)];
     default:
+      // @ts-ignore This runtime check is here because the caller may not be type-checked
       throw new Error(`Unknown AST node type ${ast.type}`);
   }
 }
-
-module.exports = { emit };

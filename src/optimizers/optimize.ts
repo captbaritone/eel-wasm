@@ -1,12 +1,14 @@
-const foldConstants = require("./constantFolding");
-const propagateConstants = require("./constantPropagation");
+import foldConstants from "./constantFolding";
+import propagateConstants from "./constantPropagation";
+import { Ast } from "../types";
+
 // const hoistConstants = require("./constantHoisting");
 
-function runPass(ast) {
+function runPass(ast: Ast): Ast {
   return propagateConstants(foldConstants(ast));
 }
 
-function optimize(ast) {
+function optimize(ast: Ast): Ast {
   let newAst = runPass(ast);
   while (ast !== newAst) {
     ast = newAst;
@@ -16,4 +18,4 @@ function optimize(ast) {
   return newAst;
 }
 
-module.exports = optimize;
+export default optimize;

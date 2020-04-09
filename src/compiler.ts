@@ -1,7 +1,7 @@
-const { parse } = require("./parser");
-const { emit } = require("./emitter");
-const optimizeAst = require("./optimizers/optimize");
-const {
+import { parse } from "./parser";
+import { emit } from "./emitter";
+import optimizeAst from "./optimizers/optimize";
+import {
   encodef64,
   encodeString,
   encodeVector,
@@ -16,17 +16,20 @@ const {
   TYPE_IDX,
   EXPORT_TYPE,
   SECTION,
-} = require("./encoding");
-const { localFuncMap } = require("./wasmFunctions");
+} from "./encoding";
+import { localFuncMap } from "./wasmFunctions";
+import { Shims, CompilerContext } from "./types";
 
 class NamespaceResolver {
+  _counter: number;
+  _map: Map<string, number>;
   constructor(initial = [], offset = 0) {
     this._counter = -1 + offset;
     this._map = new Map();
 
     initial.forEach(name => this.get(name));
   }
-  get(name) {
+  get(name: string) {
     if (!this._map.has(name)) {
       this._counter++;
       this._map.set(name, this._counter);
@@ -34,18 +37,26 @@ class NamespaceResolver {
     return this._map.get(name);
   }
 
-  map(cb) {
+  map<T>(cb: (value: string, i: number) => T): T[] {
     return Array.from(this._map.entries()).map(([value, i]) => cb(value, i));
   }
 }
 
-function compileModule({
+type CompilerOptions = {
+  globals: Set<string>;
+  functions: { [name: string]: string };
+  shims: Shims;
+  optimize: boolean;
+  preParsed?: boolean;
+};
+
+export function compileModule({
   globals: globalVariables,
   functions: functionCode,
   shims,
   optimize,
   preParsed = false,
-}) {
+}: CompilerOptions) {
   const functionImports = Object.entries(shims).map(([name, func]) => {
     return {
       args: new Array(func.length).fill(null).map(_ => VAL_TYPE.f64),
@@ -66,10 +77,17 @@ function compileModule({
   let localF64Count = 0;
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
     let ast = preParsed ? code : parse(code);
+    if (typeof ast === "string") {
+      // TODO: Change the API so this can be enforced by types
+      throw new Error(
+        "Got passed unparsed code without setting the preParsed flag"
+      );
+    }
     if (optimize) {
       ast = optimizeAst(ast);
     }
-    const binary = emit(ast, {
+
+    const context: CompilerContext = {
       resolveVar: name => {
         if (globalVariables.has(name)) {
           return unsignedLEB128(externalVarsResolver.get(name));
@@ -82,13 +100,14 @@ function compileModule({
       // TODO: We could pass in the arity here to get a compile-time check that we
       // passed the right number of arguments.
       resolveLocalFunc: name => {
-        if (localFuncMap[name] == null && shims[name] == null) {
+        if (shims[name] == null && localFuncMap[name] == null) {
           return null;
         }
         const offset = localFuncResolver.get(name);
         return [op.call, ...unsignedLEB128(offset)];
       },
-    });
+    };
+    const binary = emit(ast, context);
 
     assertNumbers(binary);
 
@@ -200,5 +219,3 @@ function compileModule({
     ...encodeSection(SECTION.CODE, codes),
   ]);
 }
-
-module.exports = { compileModule };

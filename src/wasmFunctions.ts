@@ -1,13 +1,12 @@
-const {
+import {
   encodef64,
   unsignedLEB128,
   op,
   VAL_TYPE,
-  IS_ZEROISH,
   IS_NOT_ZEROISH,
-} = require("./encoding");
+} from "./encoding";
 
-const localFuncMap = {
+export const localFuncMap = {
   sqr: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
@@ -117,5 +116,3 @@ const localFuncMap = {
     ],
   },
 };
-
-module.exports = { localFuncMap };

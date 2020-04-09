@@ -1,14 +1,14 @@
-const propagateConstants = require("./constantPropagation");
-const { parse } = require("../parser");
-const { print } = require("../../tools/prettyPrinter");
+import propagateConstants from "./constantPropagation";
+import { parse } from "../parser";
+import { print } from "../../tools/prettyPrinter";
 
 const BEFORE_AFTER = [
   ["a = 10; g = a;", "a = 10; g = 10;"],
-  ["g = 10; g = 20;", "g = 10; g = 20;"]
+  ["g = 10; g = 20;", "g = 10; g = 20;"],
 ];
 
-function joinLines(str) {
-  return str.replace("\n", " ")
+function joinLines(str: string): string {
+  return str.replace("\n", " ");
 }
 
 BEFORE_AFTER.forEach(([before, after]) => {

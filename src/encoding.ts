@@ -1,4 +1,4 @@
-const ieee754 = require("ieee754");
+import ieee754 from "ieee754";
 
 const EPSILON = 0.00001;
 
@@ -18,7 +18,7 @@ const EPSILON = 0.00001;
 11	data section
 */
 // https://webassembly.github.io/spec/core/binary/modules.html#sections
-const SECTION = {
+export const SECTION = {
   TYPE: 1,
   IMPORT: 2,
   FUNC: 3,
@@ -28,14 +28,14 @@ const SECTION = {
   CODE: 10,
 };
 
-const EXPORT_TYPE = {
+export const EXPORT_TYPE = {
   FUNC: 0x00,
   TABLE: 0x01,
   MEMORY: 0x02,
   GLOBAL: 0x03,
 };
 
-const op = {
+export const op = {
   block: 0x02,
   loop: 0x03,
   br: 0x0c,
@@ -86,23 +86,23 @@ const op = {
   global_set: 0x24,
 };
 
-const VAL_TYPE = {
+export const VAL_TYPE = {
   i32: 0x7f,
   i64: 0x7e,
   f32: 0x7d,
   f64: 0x7c,
 };
 
-const MUTABILITY = {
+export const MUTABILITY = {
   const: 0x00,
   var: 0x01,
 };
 
-const BLOCK = {
+export const BLOCK = {
   void: 0x40,
 };
 
-function assertNumbers(nums) {
+export function assertNumbers(nums: number[]): number[] {
   nums.forEach((num, i) => {
     if (typeof num != "number") {
       throw new Error(
@@ -114,15 +114,20 @@ function assertNumbers(nums) {
 }
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
-const FUNCTION_TYPE = 0x60;
+export const FUNCTION_TYPE = 0x60;
 // I think these might actually be specific to importdesc
-const GLOBAL_TYPE = 0x03;
-const TYPE_IDX = 0x00;
+export const GLOBAL_TYPE = 0x03;
+export const TYPE_IDX = 0x00;
 
 // Takes an f64 on the stack and leaves an int32 boolean representing if it's
 // within epsilon of zero.
-const IS_ZEROISH = [op.f64_abs, op.f64_const, ...encodef64(EPSILON), op.f64_lt];
-const IS_NOT_ZEROISH = [
+export const IS_ZEROISH = [
+  op.f64_abs,
+  op.f64_const,
+  ...encodef64(EPSILON),
+  op.f64_lt,
+];
+export const IS_NOT_ZEROISH = [
   op.f64_abs,
   op.f64_const,
   ...encodef64(EPSILON),
@@ -130,18 +135,18 @@ const IS_NOT_ZEROISH = [
 ];
 
 // f64
-function encodef64(num) {
+export function encodef64(num: number): Uint8Array {
   const arr = new Uint8Array(8);
   ieee754.write(arr, num, 0, true, 52, 8);
   return arr;
 }
 
-const encodeString = str => [
+export const encodeString = (str: string): number[] => [
   str.length,
   ...str.split("").map(s => s.charCodeAt(0)),
 ];
 
-function unsignedLEB128(n) {
+export function unsignedLEB128(n: number): number[] {
   const buffer = [];
   do {
     let byte = n & 0x7f;
@@ -154,14 +159,18 @@ function unsignedLEB128(n) {
   return buffer;
 }
 
-const flatten = arr => [].concat.apply([], arr);
+const flatten = (arr: Array<number[] | number>): number[] =>
+  [].concat.apply([], arr);
 
 // https://webassembly.github.io/spec/core/binary/conventions.html#binary-vec
 // Vectors are encoded with their length followed by their element sequence
-const encodeVector = data => [...unsignedLEB128(data.length), ...flatten(data)];
+export const encodeVector = (data: Array<number[] | number>): number[] => [
+  ...unsignedLEB128(data.length),
+  ...flatten(data),
+];
 
 // subSections is an array of arrays
-function encodeSection(type, subSections) {
+export function encodeSection(type: number, subSections: Array<number[]>) {
   // Sections are all optional, so if we get an empty vector of subSections, we
   // can omit the whole section.
   if (subSections.length === 0) {
@@ -173,23 +182,3 @@ function encodeSection(type, subSections) {
   // TODO: Remove this assertion once we are more confident in our output.
   return [type, ...assertNumbers(encodeVector(encodeVector(subSections)))];
 }
-
-module.exports = {
-  encodeVector,
-  encodeSection,
-  encodeString,
-  unsignedLEB128,
-  encodef64,
-  op,
-  assertNumbers,
-  VAL_TYPE,
-  GLOBAL_TYPE,
-  FUNCTION_TYPE,
-  MUTABILITY,
-  TYPE_IDX,
-  EXPORT_TYPE,
-  SECTION,
-  BLOCK,
-  IS_ZEROISH,
-  IS_NOT_ZEROISH,
-};

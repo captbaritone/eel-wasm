@@ -108,7 +108,7 @@ case 10:
 this.$ = {type: 'EXPRESSION_BLOCK', body: $$[$0]}
 break;
 case 11:
-this.$ = {type: 'IDENTIFIER', value: $$[$0].toLowerCase()};
+this.$ = {type: 'IDENTIFIER', value: $$[$0].toLowerCase(), loc: _$[$0]};
 break;
 case 14:
 this.$ = [$$[$0]]
