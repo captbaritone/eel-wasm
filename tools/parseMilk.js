@@ -11,6 +11,8 @@ const { parse } = require("../src/parser");
 const { splitPreset } = require("milkdrop-preset-utils");
 const countUssages = require("./countUssages");
 const yargs = require("yargs");
+const { compileModule } = require("../src/compiler");
+const shims = require("../src/shims");
 
 const { argv } = yargs
   .option("summary", {
@@ -25,6 +27,11 @@ const { argv } = yargs
   .option("stats", {
     type: "boolean",
     description: "Output stats showing ussage of different syntax",
+  })
+  .option("compile", {
+    type: "boolean",
+    description: "Attempt to run the compiler",
+    default: false,
   })
   .option("file", {
     type: "string",
@@ -131,6 +138,13 @@ function validate(milkPath, context) {
   Object.entries(eels).forEach(([name, eel]) => {
     try {
       const root = parse(eel);
+      compileModule({
+        globals: new Set(),
+        functions: { run: root },
+        optimize: false,
+        shims,
+        preParsed: true,
+      });
       if (argv.stats) {
         countUssages(root, context);
       }
@@ -177,7 +191,11 @@ milkFiles.forEach(milk => {
     validate(milk, context);
     good++;
   } catch (e) {
-    const error = e.message.split("\n")[3];
+    const messageLines = e.message.split("\n");
+    // When the parser errors, we care about line 4, otherwise it's likely the
+    // compiler, so we want the first line.
+    // TODO: Move this decision to `validate()`
+    const error = messageLines[3] || messageLines[0];
     if (argv["find-error"]) {
       if (error === argv["find-error"]) {
         throw new Error(e);

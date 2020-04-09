@@ -150,6 +150,8 @@ const testCases = [
   ["Floor", "g = floor(-10.9);", -11],
   ["Ceil", "g = ceil(9.1);", 10],
   ["Ceil", "g = ceil(-9.9);", -9],
+  ["Assign", "assign(g, 10);", 10],
+  ["Assign return value", "g = assign(x, 10);", 10],
 ];
 
 module.exports = testCases;

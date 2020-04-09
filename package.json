@@ -12,6 +12,7 @@
     "benchmark": "node tools/benchmark/performance.js perf",
     "consistency": "node tools/benchmark/performance.js consistency",
     "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
+    "test-compile": "node tools/parseMilk.js --stats --summary --compile --dir=./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
     "build": "yarn build-parser && parcel build src/compiler.js --experimental-scope-hoisting"
   },
