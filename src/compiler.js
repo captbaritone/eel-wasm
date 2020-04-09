@@ -82,6 +82,9 @@ function compileModule({
       // TODO: We could pass in the arity here to get a compile-time check that we
       // passed the right number of arguments.
       resolveLocalFunc: name => {
+        if (localFuncMap[name] == null && shims[name] == null) {
+          return null;
+        }
         const offset = localFuncResolver.get(name);
         return [op.call, ...unsignedLEB128(offset)];
       },

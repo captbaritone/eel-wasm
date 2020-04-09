@@ -82,9 +82,7 @@ describe("Small test cases", () => {
   });
 });
 
-const compilerErrors = [
-  ["bitwiseOr(1, 2);", 'Undefined local function "bitwiseor"'],
-];
+const compilerErrors = [["bitwiseOr(1, 2);", '"bitwiseor" is not defined.']];
 
 describe("Compiler errors", () => {
   compilerErrors.forEach(testCase => {
@@ -97,8 +95,22 @@ describe("Compiler errors", () => {
         shims,
       });
     };
+
+    let error = null;
+    try {
+      compileExpression();
+    } catch (e) {
+      error = e;
+    }
+
     test(expression, () => {
-      expect(compileExpression).toThrowError(expectedErrorMessage);
+      expect(error.message).toBe(expectedErrorMessage);
+      expect(error.loc).toEqual({
+        first_column: 0,
+        first_line: 1,
+        last_column: 9,
+        last_line: 1,
+      });
     });
   });
 });

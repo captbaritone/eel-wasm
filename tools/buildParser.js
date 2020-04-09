@@ -66,7 +66,7 @@ const grammar = {
     IDENTIFIER: [
       [
         "IDENTIFIER_TOKEN",
-        "$$ = {type: 'IDENTIFIER', value: $1.toLowerCase()};",
+        "$$ = {type: 'IDENTIFIER', value: $1.toLowerCase(), loc: @1};",
       ],
     ],
     argument: ["expression", "EXPRESSION_BLOCK"],

@@ -7,6 +7,7 @@ const {
   IS_ZEROISH,
   IS_NOT_ZEROISH,
 } = require("./encoding");
+const { createUserError } = require("./errorUtils");
 
 function arrayJoin(arr, joiner) {
   const newArr = [];
@@ -238,6 +239,12 @@ function emit(ast, context) {
       }
 
       const invocation = context.resolveLocalFunc(functionName);
+      if (invocation == null) {
+        throw createUserError(
+          `"${functionName}" is not defined.`,
+          ast.callee.loc
+        );
+      }
       return [...args, ...invocation];
     }
     case "ASSIGNMENT_EXPRESSION": {
