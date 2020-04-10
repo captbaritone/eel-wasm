@@ -9,4 +9,4 @@
   publish = "packages/playground/build"
 
   # Default build command.
-  command = "yarn build"
+  command = "ls ../../node_modules | grep eel && yarn build"
