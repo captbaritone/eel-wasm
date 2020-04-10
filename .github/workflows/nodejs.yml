@@ -19,6 +19,6 @@ jobs:
       - name: Run Tests
         run: |
           yarn
-          yarn ci
+          cd packages/compiler && yarn ci
         env:
           CI: true
