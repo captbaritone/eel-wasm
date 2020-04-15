@@ -1,6 +1,5 @@
 import { parse } from "./parser";
 import { emit } from "./emitter";
-import optimizeAst from "./optimizers/optimize";
 import {
   encodef64,
   encodeString,
@@ -46,7 +45,6 @@ type CompilerOptions = {
   globals: Set<string>;
   functions: { [name: string]: string };
   shims: Shims;
-  optimize: boolean;
   preParsed?: boolean;
 };
 
@@ -54,7 +52,6 @@ export function compileModule({
   globals: globalVariables,
   functions: functionCode,
   shims,
-  optimize,
   preParsed = false,
 }: CompilerOptions) {
   const functionImports = Object.entries(shims).map(([name, func]) => {
@@ -76,15 +73,12 @@ export function compileModule({
 
   let localF64Count = 0;
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
-    let ast = preParsed ? code : parse(code);
+    const ast = preParsed ? code : parse(code);
     if (typeof ast === "string") {
       // TODO: Change the API so this can be enforced by types
       throw new Error(
         "Got passed unparsed code without setting the preParsed flag"
       );
-    }
-    if (optimize) {
-      ast = optimizeAst(ast);
     }
 
     const context: CompilerContext = {

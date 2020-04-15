@@ -1,7 +1,7 @@
 import { preProcess, getLoc, Mapper } from "./preProcessor";
 import { Ast, SourceLocation } from "./types";
 import { parse as envParse } from "./envParser";
-import { mapAst } from "./optimizers/astUtils";
+import { mapAst } from "./astUtils";
 import { createUserError, createCompilerError } from "./errorUtils";
 
 function mapLoc(loc: SourceLocation, mapper: Mapper): SourceLocation {

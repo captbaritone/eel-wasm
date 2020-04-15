@@ -141,7 +141,6 @@ function validate(milkPath, context) {
       compileModule({
         globals: new Set(),
         functions: { run: root },
-        optimize: false,
         shims,
         preParsed: true,
       });

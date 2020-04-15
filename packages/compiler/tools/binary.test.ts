@@ -17,7 +17,6 @@ test("Can execute hand crafted binary Wasm", async () => {
     },
     shims,
     globals: new Set(Object.keys(importObject.js)),
-    optimize: false,
   });
 
   const mod = await WebAssembly.compile(buffer);

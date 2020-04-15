@@ -3,8 +3,6 @@ const fs = require("fs");
 const MILKDROP_GLOBALS = require("../tools/milkdropGlobals");
 const { parse } = require("./parser");
 const testCases = require("../tools/testCases");
-const { compileModule } = require("../src/compiler");
-const shims = require("../src/shims");
 
 test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).
@@ -64,32 +62,17 @@ test("parse", () => {
 describe("Small test cases", () => {
   testCases.forEach(testCase => {
     const [description, expression, expectedResult] = testCase;
-    describe(`${description}: "${expression}"`, () => {
-      test("not optimized", async () => {
-        const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
-        const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+    test(`${description}: "${expression}"`, async () => {
+      const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
+      const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 
-        const mod = await loadModule({
-          globals: { g, x },
-          functions: { run: expression },
-        });
-
-        mod.exports.run();
-        expect(g.value).toBe(expectedResult);
+      const mod = await loadModule({
+        globals: { g, x },
+        functions: { run: expression },
       });
-      test("optimized", async () => {
-        const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
-        const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 
-        const mod = await loadModule({
-          globals: { g, x },
-          functions: { run: expression },
-          optimize: true,
-        });
-
-        mod.exports.run();
-        expect(g.value).toBe(expectedResult);
-      });
+      mod.exports.run();
+      expect(g.value).toBe(expectedResult);
     });
   });
 });

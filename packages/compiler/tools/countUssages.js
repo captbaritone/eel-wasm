@@ -1,4 +1,4 @@
-const { mapAst } = require("../src/optimizers/astUtils");
+const { mapAst } = require("../src/astUtils");
 
 function countUssages(root, context) {
   mapAst(root, ast => {

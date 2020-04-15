@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { parse, compileModule, shims, print, optimizeAst } from "eel-wasm";
+import { parse, compileModule, shims } from "eel-wasm";
 import _wabt from "wabt";
 
 const wabt = _wabt();
@@ -44,7 +44,7 @@ async function modFromWasm(wasm, globals) {
 
   var importObject = {
     js: { ...globals },
-    imports: shims,
+    imports: shims
   };
 
   return await WebAssembly.instantiate(mod, importObject);
@@ -66,27 +66,6 @@ export function useAst(eel) {
   return [ast, astError];
 }
 
-export function useOptimizedAst(ast, optimize) {
-  const [optimizedAst, setOptimizedAst] = useState(null);
-  useEffect(() => {
-    if (optimize && ast != null) {
-      setOptimizedAst(optimizeAst(ast));
-    } else {
-      setOptimizedAst(ast);
-    }
-  }, [ast, optimize]);
-
-  return optimizedAst;
-}
-
-export function usePrettyPrintedEel(ast) {
-  const [eel, setEel] = useState(null);
-  useEffect(() => {
-    setEel(ast == null ? null : print(ast));
-  }, [ast]);
-  return eel;
-}
-
 export function useWasm(ast, globals) {
   const [wasm, setWasm] = useState(null);
   const [wasmError, setWasmError] = useState(null);
@@ -98,12 +77,11 @@ export function useWasm(ast, globals) {
     try {
       const wasm = compileModule({
         functions: {
-          main: ast,
+          main: ast
         },
         shims,
         globals: new Set(Object.keys(globals)),
-        optimize: false,
-        preParsed: true,
+        preParsed: true
       });
       setWasm(wasm);
       setWasmError(null);
@@ -195,7 +173,7 @@ export function useGlobals() {
       setGlobals(globals => {
         return {
           ...globals,
-          [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+          [name]: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
         };
       });
     },

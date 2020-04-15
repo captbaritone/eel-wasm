@@ -86,7 +86,7 @@ const baseValsDefaults = {
   ib_r: 0.25,
   ib_g: 0.25,
   ib_b: 0.25,
-  ib_a: 0
+  ib_a: 0,
 };
 
 class JsHarness {
@@ -114,7 +114,7 @@ class JsHarness {
 }
 
 class WasmHarness {
-  static async init(presetParts, optimize = false) {
+  static async init(presetParts) {
     const globals = {};
     MILKDROP_GLOBALS.forEach(name => {
       globals[name] = new WebAssembly.Global(
@@ -126,13 +126,12 @@ class WasmHarness {
     const functions = {
       presetInit: presetParts.presetInit,
       perFrame: presetParts.perFrame,
-      perPixel: presetParts.perVertex
+      perPixel: presetParts.perVertex,
     };
 
     const mod = await loadModule({
       globals,
       functions,
-      optimize
     });
 
     return new WasmHarness(mod, globals);
@@ -196,7 +195,7 @@ function perFrameVarsInit() {
     aspectx: invAspectx,
     aspecty: invAspecty,
     pixelsx: texsizeX,
-    pixelsy: texsizeY
+    pixelsy: texsizeY,
   };
 
   return perFrameVars;
@@ -254,7 +253,7 @@ function benchmarkHarness(harness, presetParts) {
 
 function readAndParsePreset(filePath) {
   const preset = fs.readFileSync(filePath, {
-    encoding: "utf8"
+    encoding: "utf8",
   });
   let mainPresetText = preset.split("[preset00]")[1];
   mainPresetText = mainPresetText.replace(/\r\n/g, "\n");
@@ -286,22 +285,16 @@ async function benchmarkMilk(filePath) {
   const { presetParts, presetMap } = readAndParsePreset(filePath);
   const jsHarness = new JsHarness(presetMap);
   const wasmHarness = await WasmHarness.init(presetParts);
-  const wasmOptimizedHarness = await WasmHarness.init(presetParts, true);
   const noopHarness = new NoopHarness(presetParts);
 
   const jsIterationsPerSecond = benchmarkHarness(jsHarness, presetParts);
   const wasmIteationsPerSecond = benchmarkHarness(wasmHarness, presetParts);
-  const wasmOptimizedIteationsPerSecond = benchmarkHarness(
-    wasmOptimizedHarness,
-    presetParts
-  );
   const noopIteationsPerSecond = benchmarkHarness(noopHarness, presetParts);
 
   return {
     js: jsIterationsPerSecond,
     wasm: wasmIteationsPerSecond,
-    wasmOptimized: wasmOptimizedIteationsPerSecond,
-    noop: noopIteationsPerSecond
+    noop: noopIteationsPerSecond,
   };
 }
 
@@ -310,7 +303,7 @@ const milkFiles = [
   "./fixtures/Cope - Cartune (extrusion machine) [fixed].milk",
   "./fixtures/27_super_goats - neon country frequent flier program.milk",
   "./fixtures/bdrv_flexi_va_ultramix_148_oblivion_notifier.milk",
-  "./fixtures/Flexi - piercing - pastel - 3d.milk"
+  "./fixtures/Flexi - piercing - pastel - 3d.milk",
 ];
 
 async function perf() {
@@ -386,7 +379,7 @@ async function consistencyCheck() {
         wasm,
         wasmOptimized,
         "js === wasm": js === wasm,
-        "wasm === wasmOptimized": wasm === wasmOptimized
+        "wasm === wasmOptimized": wasm === wasmOptimized,
       };
       consistencyCheck =
         consistencyCheck && js === wasm && wasm === wasmOptimized;
