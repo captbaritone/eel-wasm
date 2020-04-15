@@ -14,7 +14,7 @@
     "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
     "test-compile": "node tools/parseMilk.js --stats --summary --compile --dir=./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
-    "build": "yarn build-parser && parcel build src/index.ts --experimental-scope-hoisting"
+    "build": "yarn build-parser && tsc && parcel build src/index.ts -o built/index.bundle.js --experimental-scope-hoisting"
   },
   "dependencies": {
     "ieee754": "^1.1.13"

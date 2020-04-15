@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
-    "outDir": "./built",
+    "outDir": "./dist",
     "allowJs": true,
-    "target": "es2017",
     "noImplicitAny": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "sourceMap": true
   },
   "include": ["./src/**/*"]
 }
