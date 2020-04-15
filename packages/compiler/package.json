@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "jest",
-    "ci": "yarn test && node tools/parseMilk.js --dir=./fixtures/ && yarn build",
+    "ci": "yarn test && yarn build",
     "benchmark": "node tools/benchmark/performance.js perf",
     "consistency": "node tools/benchmark/performance.js consistency",
     "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
