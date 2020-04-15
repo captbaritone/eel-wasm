@@ -4,5 +4,9 @@
     "packages": [
       "packages/*"
     ]
+  },
+  "scripts": {
+    "build": "cd packages/compiler && yarn build && cd ../playground && yarn build",
+    "test": "cd packages/compiler && yarn ci"
   }
 }
