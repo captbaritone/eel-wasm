@@ -116,6 +116,13 @@ export interface Shims extends Record<string, Function> {
   ceil(n: number): number;
 }
 
+export type FunctionDefinition = {
+  args: number[];
+  returns: [number] | [];
+  binary: number[];
+  localF64Count?: number;
+};
+
 export interface CompilerContext {
   resolveVar(name: string): number[];
   resolveLocalFunc(name: string): number[];

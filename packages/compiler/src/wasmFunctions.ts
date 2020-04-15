@@ -5,8 +5,9 @@ import {
   VAL_TYPE,
   IS_NOT_ZEROISH,
 } from "./encoding";
+import { FunctionDefinition } from "./types";
 
-export const localFuncMap = {
+export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   sqr: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
