@@ -6,7 +6,7 @@
     ]
   },
   "scripts": {
-    "build": "cd packages/compiler && yarn build && cd ../playground && yarn build",
-    "test": "cd packages/compiler && yarn ci"
+    "build": "yarn workspace eel-wasm run build && yarn workspace playground run build",
+    "test": "yarn workspaces run test"
   }
 }
