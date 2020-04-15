@@ -204,7 +204,6 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       return [...left, ...right, ...code];
     }
     case "CALL_EXPRESSION": {
-      const foo = ast;
       const functionName = ast.callee.value;
       const args: number[] = flatten(
         ast.arguments.map(node => emit(node, context))
@@ -236,7 +235,9 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           const variableIdentifier = ast.arguments[0];
           if (variableIdentifier.type != "IDENTIFIER") {
             throw createUserError(
-              "Expected the first argument of `assign()` to be an identifier."
+              "Expected the first argument of `assign()` to be an identifier.",
+              variableIdentifier.loc,
+              context.rawSource
             );
           }
           const resolvedName = context.resolveVar(variableIdentifier.value);
@@ -272,7 +273,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       if (invocation == null) {
         throw createUserError(
           `"${functionName}" is not defined.`,
-          ast.callee.loc
+          ast.callee.loc,
+          context.rawSource
         );
       }
       return [...args, ...invocation];
@@ -284,7 +286,9 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         const { operator, left } = ast;
         if (ast.left.arguments.length !== 1) {
           throw createUserError(
-            `Expected 1 argument when assinging to a buffer`
+            `Expected 1 argument when assinging to a buffer`,
+            ast.loc,
+            context.rawSource
           );
         }
 
@@ -292,7 +296,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         if (bufferName !== "gmegabuf" && bufferName !== "megabuf") {
           throw createUserError(
             "The only function calls which may be assigned to are `gmegabuf()` and `megabuf()`.",
-            left.callee.loc
+            left.callee.loc,
+            context.rawSource
           );
         }
 

@@ -1,9 +1,7 @@
 const CHILDREN = {
   ASSIGNMENT_EXPRESSION: [
     { type: "NODE", key: "right" },
-    // `left` is a child node, but IDENTIFER is not emitted in the same way, so
-    // we skip here.
-    /* { type: "NODE", key: "left" },*/
+    //{ type: "NODE", key: "left" },
   ],
   SCRIPT: [{ type: "ARRAY", key: "body" }],
   EXPRESSION_BLOCK: [{ type: "ARRAY", key: "body" }],
@@ -12,9 +10,7 @@ const CHILDREN = {
   IDENTIFIER: [],
   CALL_EXPRESSION: [
     { type: "ARRAY", key: "arguments" },
-    // `callee` is a child node, but IDENTIFER is not emitted in the same way, so
-    // we skip here.
-    /* {type: "NODE", key: "callee"}*/
+    { type: "NODE", key: "callee" },
   ],
   BINARY_EXPRESSION: [
     { type: "NODE", key: "left" },

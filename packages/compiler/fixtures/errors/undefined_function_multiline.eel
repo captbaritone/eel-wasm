@@ -1,0 +1,5 @@
+y = 100;
+z = sqr(y, 10);
+x = noexist();
+y = 100;
+z = pow(y, 10);

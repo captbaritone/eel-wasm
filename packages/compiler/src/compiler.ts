@@ -23,7 +23,7 @@ import { Shims, CompilerContext } from "./types";
 class NamespaceResolver {
   _counter: number;
   _map: Map<string, number>;
-  constructor(initial = [], offset = 0) {
+  constructor(initial: string[] = [], offset = 0) {
     this._counter = -1 + offset;
     this._map = new Map();
 
@@ -106,6 +106,7 @@ export function compileModule({
         const offset = localFuncResolver.get(name);
         return [op.call, ...unsignedLEB128(offset)];
       },
+      rawSource: code,
     };
     const binary = emit(ast, context);
 
@@ -167,7 +168,7 @@ export function compileModule({
   // "Functions are referenced through function indices, starting with the smallest index not referencing a function import."
   const functions = [...moduleFuncs, ...localFuncs].map((_, i) => {
     const funcIndex = functionImports.length + i;
-    return funcIndex;
+    return [funcIndex];
   });
 
   const memories = [

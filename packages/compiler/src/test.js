@@ -40,10 +40,22 @@ test("parse", () => {
     Object {
       "body": Array [
         Object {
+          "loc": Object {
+            "first_column": 0,
+            "first_line": 1,
+            "last_column": 1,
+            "last_line": 1,
+          },
           "type": "NUMBER_LITERAL",
           "value": 1,
         },
       ],
+      "loc": Object {
+        "first_column": 0,
+        "first_line": 1,
+        "last_column": 2,
+        "last_line": 1,
+      },
       "type": "SCRIPT",
     }
   `);
@@ -77,39 +89,6 @@ describe("Small test cases", () => {
 
         mod.exports.run();
         expect(g.value).toBe(expectedResult);
-      });
-    });
-  });
-});
-
-const compilerErrors = [["bitwiseOr(1, 2);", '"bitwiseor" is not defined.']];
-
-describe("Compiler errors", () => {
-  compilerErrors.forEach(testCase => {
-    const [expression, expectedErrorMessage] = testCase;
-    const compileExpression = () => {
-      compileModule({
-        globals: new Set(),
-        functions: { run: expression },
-        optimize: false,
-        shims,
-      });
-    };
-
-    let error = null;
-    try {
-      compileExpression();
-    } catch (e) {
-      error = e;
-    }
-
-    test(expression, () => {
-      expect(error.message).toBe(expectedErrorMessage);
-      expect(error.loc).toEqual({
-        first_column: 0,
-        first_line: 1,
-        last_column: 9,
-        last_line: 1,
       });
     });
   });

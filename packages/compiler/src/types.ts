@@ -1,4 +1,4 @@
-export type Location = {
+export type SourceLocation = {
   first_column: number;
   last_column: number;
   first_line: number;
@@ -28,28 +28,32 @@ export type UnaryExpressionOperator = "+" | "-" | "!";
 export type IdentifierAstNode = {
   type: "IDENTIFIER";
   value: string;
-  loc: Location;
+  loc: SourceLocation;
 };
 
 export type CallExpressionAstNode = {
   type: "CALL_EXPRESSION";
   callee: IdentifierAstNode;
   arguments: Ast[];
+  loc: SourceLocation;
 };
 
 export type NumberLiteralAstNode = {
   type: "NUMBER_LITERAL";
   value: number;
+  loc: SourceLocation;
 };
 
 export type ScriptAstNode = {
   type: "SCRIPT";
   body: Ast[];
+  loc: SourceLocation;
 };
 
 export type ExpressionBlockAstNode = {
   type: "EXPRESSION_BLOCK";
   body: Ast[];
+  loc: SourceLocation;
 };
 
 export type BinaryExpressionAstNode = {
@@ -57,6 +61,7 @@ export type BinaryExpressionAstNode = {
   left: Ast;
   right: Ast;
   operator: BinaryExpressionOperator;
+  loc: SourceLocation;
 };
 
 export type AssignmentExpressionAstNode = {
@@ -64,6 +69,7 @@ export type AssignmentExpressionAstNode = {
   left: IdentifierAstNode | CallExpressionAstNode;
   right: Ast;
   operator: AssignmentOperator;
+  loc: SourceLocation;
 };
 
 export type LogicalExpressionAstNode = {
@@ -71,12 +77,14 @@ export type LogicalExpressionAstNode = {
   left: Ast;
   right: Ast;
   operator: LogicalExpressionOperator;
+  loc: SourceLocation;
 };
 
 export type UnaryExpressionAstNode = {
   type: "UNARY_EXPRESSION";
   value: Ast;
   operator: UnaryExpressionOperator;
+  loc: SourceLocation;
 };
 
 export type Ast =
@@ -112,4 +120,5 @@ export interface CompilerContext {
   resolveVar(name: string): number[];
   resolveLocalFunc(name: string): number[];
   resolveLocalF64(): number;
+  rawSource: string;
 }
