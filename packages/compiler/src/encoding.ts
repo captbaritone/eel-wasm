@@ -1,4 +1,4 @@
-import ieee754 from "ieee754";
+import * as ieee754 from "./ieee754";
 
 const EPSILON = 0.00001;
 
@@ -137,7 +137,7 @@ export const IS_NOT_ZEROISH = [
 // f64
 export function encodef64(num: number): Uint8Array {
   const arr = new Uint8Array(8);
-  ieee754.write(arr, num, 0, true, 52, 8);
+  ieee754.write(arr, num);
   return arr;
 }
 

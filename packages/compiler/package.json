@@ -16,9 +16,6 @@
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
     "build": "yarn build-parser && tsc && parcel build src/index.ts -o built/index.bundle.js --experimental-scope-hoisting"
   },
-  "dependencies": {
-    "ieee754": "^1.1.13"
-  },
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
