@@ -1,4 +1,4 @@
-import { preProcess, getLoc } from "./preProcessor";
+import { preProcess, getLoc } from "../preProcessor";
 
 describe("Newlines", () => {
   test("basic", () => {

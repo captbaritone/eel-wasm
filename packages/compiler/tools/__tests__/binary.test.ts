@@ -1,5 +1,5 @@
-import shims from "../src/shims";
-import { compileModule } from "../src/compiler";
+import shims from "../../src/shims";
+import { compileModule } from "../../src/compiler";
 
 // An attempt at generating Wasm binary directly (without the help fo wabt)
 test("Can execute hand crafted binary Wasm", async () => {

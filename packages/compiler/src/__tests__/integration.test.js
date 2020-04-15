@@ -1,8 +1,9 @@
-const { loadModule } = require("../tools/evaluator");
+const { loadModule } = require("../../tools/evaluator");
 const fs = require("fs");
-const MILKDROP_GLOBALS = require("../tools/milkdropGlobals");
-const { parse } = require("./parser");
-const testCases = require("../tools/testCases");
+const path = require("path");
+const MILKDROP_GLOBALS = require("../../tools/milkdropGlobals");
+const { parse } = require("../parser");
+const testCases = require("../../tools/testCases");
 
 test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).
@@ -84,11 +85,17 @@ test("Some actual equations", async () => {
   });
 
   const perFrame = fs.readFileSync(
-    "./fixtures/youtube_broadcast_yourself_per_frame.eel",
+    path.join(
+      __dirname,
+      "../../fixtures/youtube_broadcast_yourself_per_frame.eel"
+    ),
     { encoding: "utf8" }
   );
   const perPixel = fs.readFileSync(
-    "./fixtures/youtube_broadcast_yourself_per_pixel.eel",
+    path.join(
+      __dirname,
+      "../../fixtures/youtube_broadcast_yourself_per_pixel.eel"
+    ),
     { encoding: "utf8" }
   );
 

@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
-const { compileModule } = require("./compiler");
-const shims = require("./shims");
+const { compileModule } = require("../compiler");
+const shims = require("../shims");
 
-const DIR = path.join(__dirname, "../fixtures/errors");
+const DIR = path.join(__dirname, "../../fixtures/errors");
 
 const testCases = fs.readdirSync(DIR);
 

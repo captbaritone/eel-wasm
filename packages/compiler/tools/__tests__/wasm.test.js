@@ -1,4 +1,3 @@
-
 // An example file that executes Wasm. Useful for trying Wasm code out.
 // It's in this test so that I can run it in a fast-feedback loop (`jest --watch`)
 

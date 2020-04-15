@@ -1,5 +1,5 @@
-const { parse } = require("../src/parser");
-const { print } = require("./prettyPrinter");
+const { parse } = require("../../src/parser");
+const { print } = require("../prettyPrinter");
 
 function transform(code) {
   return print(parse(code));
