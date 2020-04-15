@@ -15,7 +15,6 @@ test("Can execute hand crafted binary Wasm", async () => {
     functions: {
       run: "g = 100;",
     },
-    shims,
     globals: new Set(Object.keys(importObject.js)),
   });
 

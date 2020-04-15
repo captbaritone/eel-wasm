@@ -16,8 +16,9 @@ import {
   EXPORT_TYPE,
   SECTION,
 } from "./encoding";
+import shims from "./shims";
 import { localFuncMap } from "./wasmFunctions";
-import { Shims, CompilerContext } from "./types";
+import { CompilerContext } from "./types";
 
 class NamespaceResolver {
   _counter: number;
@@ -44,14 +45,12 @@ class NamespaceResolver {
 type CompilerOptions = {
   globals: Set<string>;
   functions: { [name: string]: string };
-  shims: Shims;
   preParsed?: boolean;
 };
 
 export function compileModule({
   globals: globalVariables,
   functions: functionCode,
-  shims,
   preParsed = false,
 }: CompilerOptions) {
   const functionImports = Object.entries(shims).map(([name, func]) => {

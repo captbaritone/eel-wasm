@@ -1,5 +1,5 @@
-import shims from "../src/shims";
-import { compileModule } from "../src/compiler";
+import shims from "./shims";
+import { compileModule } from "./compiler";
 
 export async function loadModule({
   globals,
@@ -11,7 +11,6 @@ export async function loadModule({
   const buffer = compileModule({
     globals: new Set(Object.keys(globals)),
     functions,
-    shims,
   });
   const mod = await WebAssembly.compile(buffer);
 

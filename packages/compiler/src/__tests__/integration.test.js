@@ -1,4 +1,4 @@
-const { loadModule } = require("../../tools/evaluator");
+const { loadModule } = require("../evaluator");
 const fs = require("fs");
 const path = require("path");
 const MILKDROP_GLOBALS = require("../../tools/milkdropGlobals");
