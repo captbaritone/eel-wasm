@@ -41,9 +41,15 @@ export function preProcess(src: string): [string, Mapper] {
       emitAnchor = false;
     }
 
-    if (char === "\r" && src[i + 1] === "\n") {
+    if (char === "\n") {
       inlineComment = false;
+      srcLine++;
+      lineStart = i + 1;
+      emitAnchor = true;
+    } else if (char === "\r" && src[i + 1] === "\n") {
       i++;
+
+      inlineComment = false;
       srcLine++;
       lineStart = i + 1;
       emitAnchor = true;

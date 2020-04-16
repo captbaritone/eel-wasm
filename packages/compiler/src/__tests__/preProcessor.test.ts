@@ -1,6 +1,6 @@
 import { preProcess, getLoc } from "../preProcessor";
 
-describe("Newlines", () => {
+describe("Windows Newlines", () => {
   test("basic", () => {
     const [actual] = preProcess("No\r\n new \r\nline.");
     const expected = "No new line.";
@@ -8,6 +8,19 @@ describe("Newlines", () => {
   });
   test("within token", () => {
     const [actual] = preProcess("55\r\n55");
+    const expected = "5555";
+    expect(actual).toBe(expected);
+  });
+});
+
+describe("Newlines", () => {
+  test("basic", () => {
+    const [actual] = preProcess("No\n new \nline.");
+    const expected = "No new line.";
+    expect(actual).toBe(expected);
+  });
+  test("within token", () => {
+    const [actual] = preProcess("55\n55");
     const expected = "5555";
     expect(actual).toBe(expected);
   });
