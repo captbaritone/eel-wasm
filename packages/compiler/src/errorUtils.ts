@@ -35,20 +35,23 @@ function printLoc(loc: SourceLocation, rawSource: string, contextLines = 1) {
 
 class CompilerError extends Error {
   loc: SourceLocation;
+  sourceContext: string;
 
   constructor(message: string, loc: SourceLocation, rawSource: string) {
     super(message);
-    this.message = `${message}\n\n${printLoc(loc, rawSource)}`;
+    this.sourceContext = printLoc(loc, rawSource);
     this.loc = loc;
   }
 }
+
+class UserError extends CompilerError {}
 
 export function createUserError(
   message: string,
   loc: SourceLocation,
   rawSource: string
 ) {
-  return new CompilerError(message, loc, rawSource);
+  return new UserError(message, loc, rawSource);
 }
 
 export function createCompilerError(

@@ -36,3 +36,8 @@
     transform: rotate(360deg);
   }
 }
+
+.error-decoration {
+  text-decoration-line: underline;
+  text-decoration-color: red;
+}

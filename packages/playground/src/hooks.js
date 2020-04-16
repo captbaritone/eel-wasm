@@ -59,36 +59,34 @@ export function useAst(eel) {
       setAst(_ast);
       setAstError(null);
     } catch (e) {
-      setAstError(e.message);
+      setAstError(e);
     }
   }, [eel]);
 
   return [ast, astError];
 }
 
-export function useWasm(ast, globals) {
+export function useWasm(code, globals) {
   const [wasm, setWasm] = useState(null);
   const [wasmError, setWasmError] = useState(null);
 
   useEffect(() => {
-    if (ast == null) {
+    if (code == null) {
       return;
     }
     try {
       const wasm = compileModule({
         functions: {
-          main: ast
+          main: code
         },
-        shims,
-        globals: new Set(Object.keys(globals)),
-        preParsed: true
+        globals: new Set(Object.keys(globals))
       });
       setWasm(wasm);
       setWasmError(null);
     } catch (e) {
-      setWasmError(e.message);
+      setWasmError(e);
     }
-  }, [ast, globals]);
+  }, [code, globals]);
 
   return [wasm, wasmError];
 }
@@ -106,6 +104,7 @@ export function useWat(wasm) {
 
 export function useMod(wasm, globals) {
   const [mod, setMod] = useState(null);
+  const [modError, setModError] = useState(null);
 
   useEffect(() => {
     setMod(null);
@@ -114,12 +113,19 @@ export function useMod(wasm, globals) {
     }
     let unmounted = false;
 
-    modFromWasm(wasm, globals).then(mod => {
-      if (unmounted) {
-        return;
-      }
-      setMod(mod);
-    });
+    modFromWasm(wasm, globals)
+      .then(mod => {
+        if (unmounted) {
+          return;
+        }
+        setMod(mod);
+      })
+      .catch(e => {
+        if (unmounted) {
+          return;
+        }
+        setModError(e);
+      });
 
     return () => {
       unmounted = true;
@@ -131,7 +137,7 @@ export function useMod(wasm, globals) {
     // eslint-disable-next-line
   }, [wasm]);
 
-  return mod;
+  return [mod, modError];
 }
 
 function serializeGlobals(globals) {

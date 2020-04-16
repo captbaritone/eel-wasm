@@ -1,29 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`assign_non_identifier.eel 1`] = `
-"Expected the first argument of \`assign()\` to be an identifier.
+exports[`assign_non_identifier.eel 1`] = `"Expected the first argument of \`assign()\` to be an identifier."`;
 
+exports[`assign_non_identifier.eel 2`] = `
+"
 > 1 | assign(10 - 2, 10);
     |        ^^"
 `;
 
-exports[`assign_to_buffer_too_many_args.eel 1`] = `
-"Expected 1 argument when assinging to a buffer
+exports[`assign_to_buffer_too_many_args.eel 1`] = `"Expected 1 argument when assinging to a buffer"`;
 
+exports[`assign_to_buffer_too_many_args.eel 2`] = `
+"
 > 1 | megabuf(2, 3) = 10;
     | ^^^^^^^^^^^^^"
 `;
 
-exports[`assign_to_non_buff_function_call.eel 1`] = `
-"The only function calls which may be assigned to are \`gmegabuf()\` and \`megabuf()\`.
+exports[`assign_to_non_buff_function_call.eel 1`] = `"The only function calls which may be assigned to are \`gmegabuf()\` and \`megabuf()\`."`;
 
+exports[`assign_to_non_buff_function_call.eel 2`] = `
+"
 > 1 | abs(10) = 10;
     | ^^^"
 `;
 
-exports[`parse_error.eel 1`] = `
-"Parse Error: Expecting 'EOF', got ')'
+exports[`parse_error.eel 1`] = `"Parse Error: Expecting 'EOF', got ')'"`;
 
+exports[`parse_error.eel 2`] = `
+"
   2 | z = sqr(y, 10);
 > 3 | x = assign);
     |     ^^^^^^
@@ -31,16 +35,18 @@ exports[`parse_error.eel 1`] = `
 "
 `;
 
-exports[`undefined_function.eel 1`] = `
-"\\"noexist\\" is not defined.
+exports[`undefined_function.eel 1`] = `"\\"noexist\\" is not defined."`;
 
+exports[`undefined_function.eel 2`] = `
+"
 > 1 | x = noexist();
     |     ^^^^^^^"
 `;
 
-exports[`undefined_function_multiline.eel 1`] = `
-"\\"noexist\\" is not defined.
+exports[`undefined_function_multiline.eel 1`] = `"\\"noexist\\" is not defined."`;
 
+exports[`undefined_function_multiline.eel 2`] = `
+"
   2 | z = sqr(y, 10);
 > 3 | x = noexist();
     |     ^^^^^^^
@@ -48,9 +54,10 @@ exports[`undefined_function_multiline.eel 1`] = `
 "
 `;
 
-exports[`undefined_function_with_comments.eel 1`] = `
-"\\"noexist\\" is not defined.
+exports[`undefined_function_with_comments.eel 1`] = `"\\"noexist\\" is not defined."`;
 
+exports[`undefined_function_with_comments.eel 2`] = `
+"
   3 | // Comment line three
 > 4 | x = noexist();
     |     ^^^^^^^"

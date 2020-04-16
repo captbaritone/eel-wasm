@@ -1,3 +1,4 @@
+import { Range } from "monaco-editor";
 import React, { useEffect, useState, useMemo } from "react";
 import "./App.css";
 import Editor, { ControlledEditor } from "@monaco-editor/react";
@@ -40,10 +41,10 @@ function App() {
   const [eel, setEel] = useUrlState("eel", "foo = 1;");
   const [astString, setAstString] = useState(null);
   const [ast, astError] = useAst(eel);
-  const [wasm, wasmError] = useWasm(ast, globals);
+  const [wasm, wasmError] = useWasm(eel, globals);
   const [wat] = useWat(wasm);
   const anyErrors = astError != null || wasmError != null;
-  const mod = useMod(anyErrors ? null : wasm, globals);
+  const [mod, modError] = useMod(anyErrors ? null : wasm, globals);
   const forceUpdate = useForceUpdate();
 
   const run = useMemo(() => {
@@ -59,6 +60,42 @@ function App() {
   useEffect(() => {
     setAstString(JSON.stringify(ast, null, 2));
   }, [ast]);
+
+  const [editor, setEditor] = useState(null);
+
+  useEffect(() => {
+    if (editor == null) {
+      return;
+    }
+    const errors = [astError, wasmError].filter(e => {
+      return e != null && e.loc != null;
+    });
+    if (astError == null && wasmError == null) {
+      return;
+    }
+    var decorations = editor.deltaDecorations(
+      [],
+      errors.map(e => {
+        const { loc } = e;
+        return {
+          range: new Range(
+            loc.first_line,
+            loc.first_column + 1,
+            loc.last_line,
+            loc.last_column + 1
+          ),
+          options: {
+            inlineClassName: "error-decoration",
+            hoverMessage: [{ value: e.message }],
+            overviewRuler: { color: "red" }
+          }
+        };
+      })
+    );
+    return () => {
+      editor.deltaDecorations(decorations, []);
+    };
+  }, [astError, editor, wasmError]);
 
   return (
     <div style={{ display: "flex", width: "100vw", alignContent: "stretch" }}>
@@ -76,6 +113,9 @@ function App() {
       <Column>
         <h2>Code</h2>
         <ControlledEditor
+          editorDidMount={(_, editor) => {
+            setEditor(editor);
+          }}
           height="40vh"
           width="100%"
           value={eel}
@@ -115,7 +155,12 @@ function App() {
       </Column>
       <Column>
         <h2>AST</h2>
-        {astError != null && <ErrorBlock>{astError}</ErrorBlock>}
+        {astError != null && astError.loc == null && (
+          <ErrorBlock>{astError.message}</ErrorBlock>
+        )}
+        {wasmError != null && wasmError.loc == null && (
+          <ErrorBlock>{wasmError.message}</ErrorBlock>
+        )}
         <Editor
           height={"90vh"}
           width="100%"
@@ -126,7 +171,9 @@ function App() {
       </Column>
       <Column>
         <h2>Wasm</h2>
-        {wasmError != null && <ErrorBlock>{wasmError}</ErrorBlock>}
+        {modError != null && modError.loc == null && (
+          <ErrorBlock>{modError.message}</ErrorBlock>
+        )}
         <Editor
           height="90vh"
           width="100%"

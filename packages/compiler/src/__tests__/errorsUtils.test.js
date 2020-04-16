@@ -12,10 +12,16 @@ testCases.forEach(filename => {
   const testName = filename.replace(/^only\./, "");
   testFunc(`${testName}`, () => {
     const eel = fs.readFileSync(path.join(DIR, filename), { encoding: "utf8" });
-    const compile = () => {
+    let compilerError = null;
+    try {
       compileModule({ globals: new Set(), functions: { run: eel }, shims });
-    };
+    } catch (e) {
+      compilerError = e;
+    }
 
-    expect(compile).toThrowErrorMatchingSnapshot();
+    expect(compilerError.message).toMatchSnapshot();
+    // We prepend a newline here so that the error starts on a newline rather
+    // than a '"' in the snapshot and our underline alinment is easy to see.
+    expect("\n" + compilerError.sourceContext).toMatchSnapshot();
   });
 });
