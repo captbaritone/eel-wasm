@@ -7,8 +7,10 @@ import {
   IS_ZEROISH,
   IS_NOT_ZEROISH,
 } from "./encoding";
-import { createUserError } from "./errorUtils";
+import shims from "./shims";
+import { createUserError, createCompilerError } from "./errorUtils";
 import { Ast, CompilerContext, AssignmentOperator } from "./types";
+import { localFuncMap } from "./wasmFunctions";
 
 function arrayJoin<T1, T2>(arr: T1[], joiner: T2): Array<T1 | T2> {
   const newArr = [];
@@ -205,24 +207,53 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
     }
     case "CALL_EXPRESSION": {
       const functionName = ast.callee.value;
+
+      // Destructure this so that TypeScript knows it won't get mutated.
+      const argList = ast.arguments;
+
+      const assertArity = (arity: number) => {
+        if (argList.length < arity) {
+          throw createUserError(
+            `Too few arguments passed to \`${functionName}()\`. Expected ${arity} but only got ${argList.length}.`,
+            ast.loc,
+            context.rawSource
+          );
+        }
+        if (argList.length > arity) {
+          throw createUserError(
+            `Too many arguments passed to \`${functionName}()\`. Expected ${arity} but got ${argList.length}.`,
+            argList[arity].loc,
+            context.rawSource
+          );
+        }
+      };
+
       const args: number[] = flatten(
         ast.arguments.map(node => emit(node, context))
       );
+
       // Some functions have special behavior
       // TODO: Assert arity of these functions
       switch (functionName) {
         case "exec2":
+          assertArity(2);
+          return emitExpressionBlock(ast.arguments, context);
         case "exec3":
+          assertArity(3);
           return emitExpressionBlock(ast.arguments, context);
         case "if":
+          assertArity(3);
           const [test, consiquent, alternate] = ast.arguments;
           return emitConditional(test, consiquent, alternate, context);
         case "while":
+          assertArity(1);
           return emitWhile(ast.arguments[0], context);
         case "loop":
+          assertArity(2);
           return emitLoop(ast.arguments[0], ast.arguments[1], context);
         case "megabuf":
         case "gmegabuf":
+          assertArity(1);
           return [
             ...emit(ast.arguments[0], context),
             op.i32_trunc_s_f64,
@@ -232,6 +263,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             0x00, // Offset
           ];
         case "assign":
+          assertArity(2);
           const variableIdentifier = ast.arguments[0];
           if (variableIdentifier.type != "IDENTIFIER") {
             throw createUserError(
@@ -250,22 +282,31 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ];
         // Function calls which can be linlined
         case "abs":
+          assertArity(1);
           return [...args, op.f64_abs];
         case "sqrt":
+          assertArity(1);
           return [...args, op.f64_sqrt];
         case "int":
+          assertArity(1);
           return [...args, op.f64_floor];
         case "min":
+          assertArity(2);
           return [...args, op.f64_min];
         case "max":
+          assertArity(2);
           return [...args, op.f64_max];
         case "above":
+          assertArity(2);
           return [...args, op.f64_gt, op.f64_convert_i32_s];
         case "below":
+          assertArity(2);
           return [...args, op.f64_lt, op.f64_convert_i32_s];
         case "equal":
+          assertArity(2);
           return [...args, op.f64_sub, ...IS_ZEROISH, op.f64_convert_i32_s];
         case "bnot":
+          assertArity(1);
           return [...args, ...IS_ZEROISH, op.f64_convert_i32_s];
       }
 
@@ -273,6 +314,18 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       if (invocation == null) {
         throw createUserError(
           `"${functionName}" is not defined.`,
+          ast.callee.loc,
+          context.rawSource
+        );
+      }
+
+      if (shims[functionName] != null) {
+        assertArity(shims[functionName].length);
+      } else if (localFuncMap[functionName] != null) {
+        assertArity(localFuncMap[functionName].args.length);
+      } else {
+        throw createCompilerError(
+          `Missing arity information for the function \`${functionName}()\``,
           ast.callee.loc,
           context.rawSource
         );

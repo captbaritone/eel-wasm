@@ -35,6 +35,22 @@ exports[`parse_error.eel 2`] = `
 "
 `;
 
+exports[`too_few_arguments.eel 1`] = `"Too few arguments passed to \`pow()\`. Expected 2 but only got 1."`;
+
+exports[`too_few_arguments.eel 2`] = `
+"
+> 1 | x = pow(1);
+    |     ^^^"
+`;
+
+exports[`too_many_arguments.eel 1`] = `"Too many arguments passed to \`pow()\`. Expected 2 but got 3."`;
+
+exports[`too_many_arguments.eel 2`] = `
+"
+> 1 | x = pow(1, 2, 3);
+    |               ^"
+`;
+
 exports[`undefined_function.eel 1`] = `"\\"noexist\\" is not defined."`;
 
 exports[`undefined_function.eel 2`] = `
@@ -47,7 +63,7 @@ exports[`undefined_function_multiline.eel 1`] = `"\\"noexist\\" is not defined."
 
 exports[`undefined_function_multiline.eel 2`] = `
 "
-  2 | z = sqr(y, 10);
+  2 | z = sqr(y);
 > 3 | x = noexist();
     |     ^^^^^^^
   4 | y = 100;

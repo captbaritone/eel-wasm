@@ -90,8 +90,6 @@ export function compileModule({
       resolveLocalF64: () => {
         return localF64Count++;
       },
-      // TODO: We could pass in the arity here to get a compile-time check that we
-      // passed the right number of arguments.
       resolveLocalFunc: name => {
         if (shims[name] == null && localFuncMap[name] == null) {
           return null;
