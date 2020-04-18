@@ -102,17 +102,6 @@ export const BLOCK = {
   void: 0x40,
 };
 
-export function assertNumbers(nums: number[]): number[] {
-  nums.forEach((num, i) => {
-    if (typeof num != "number") {
-      throw new Error(
-        `Found non-numeric value in program binary at index ${i}. Got ${typeof num}`
-      );
-    }
-  });
-  return nums;
-}
-
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 export const FUNCTION_TYPE = 0x60;
 // I think these might actually be specific to importdesc
@@ -180,5 +169,5 @@ export function encodeSection(type: number, subSections: Array<number[]>) {
   // The size of this vector is not needed for decoding, but can be
   // used to skip sections when navigating through a binary.
   // TODO: Remove this assertion once we are more confident in our output.
-  return [type, ...assertNumbers(encodeVector(encodeVector(subSections)))];
+  return [type, ...encodeVector(encodeVector(subSections))];
 }

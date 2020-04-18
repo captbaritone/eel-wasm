@@ -7,7 +7,6 @@ import {
   encodeSection,
   op,
   unsignedLEB128,
-  assertNumbers,
   VAL_TYPE,
   FUNCTION_TYPE,
   GLOBAL_TYPE,
@@ -101,8 +100,6 @@ export function compileModule({
       rawSource: code,
     };
     const binary = emit(ast, context);
-
-    assertNumbers(binary);
 
     return {
       binary,
