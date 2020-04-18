@@ -6,7 +6,8 @@
     "skipLibCheck": true,
     "downlevelIteration": true,
     "sourceMap": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "esModuleInterop": true
   },
   "include": ["./src/**/*"]
 }
