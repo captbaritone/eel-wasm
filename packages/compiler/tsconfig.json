@@ -5,7 +5,8 @@
     "noImplicitAny": true,
     "skipLibCheck": true,
     "downlevelIteration": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "strictNullChecks": true
   },
   "include": ["./src/**/*"]
 }

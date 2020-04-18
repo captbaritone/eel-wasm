@@ -125,7 +125,7 @@ export type FunctionDefinition = {
 
 export interface CompilerContext {
   resolveVar(name: string): number[];
-  resolveLocalFunc(name: string): number[];
+  resolveLocalFunc(name: string): number[] | null;
   resolveLocalF64(): number;
   rawSource: string;
 }

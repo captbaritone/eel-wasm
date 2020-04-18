@@ -84,13 +84,13 @@ performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* actio
 var $0 = $$.length - 1;
 switch (yystate) {
 case 1:
-return {type: 'SCRIPT', body: [$$[$0-1]], loc: _$[$0-1]}
+return {type: 'SCRIPT', body: [$$[$0-1]], loc: this._$}
 break;
 case 2:
-return {type: 'SCRIPT', body: $$[$0-1], loc: _$[$0-1]}
+return {type: 'SCRIPT', body: $$[$0-1], loc: this._$}
 break;
 case 3:
-return {type: 'SCRIPT', body: [], loc: _$[$0]}
+return {type: 'SCRIPT', body: [], loc: this._$}
 break;
 case 6:
 this.$ = [$$[$0-1]]
@@ -105,10 +105,10 @@ case 9:
 this.$ = $$[$0-1].concat([$$[$0]])
 break;
 case 10:
-this.$ = {type: 'EXPRESSION_BLOCK', body: $$[$0], loc: _$[$0]}
+this.$ = {type: 'EXPRESSION_BLOCK', body: $$[$0], loc: this._$}
 break;
 case 11:
-this.$ = {type: 'IDENTIFIER', value: $$[$0].toLowerCase(), loc: _$[$0]};
+this.$ = {type: 'IDENTIFIER', value: $$[$0].toLowerCase(), loc: this._$};
 break;
 case 14:
 this.$ = [$$[$0]]
@@ -117,16 +117,16 @@ case 15:
 this.$ = $$[$0-2].concat([$$[$0]])
 break;
 case 16:
-this.$ = {type: 'CALL_EXPRESSION', callee: $$[$0-2], arguments: [], loc: _$[$0-2]}
+this.$ = {type: 'CALL_EXPRESSION', callee: $$[$0-2], arguments: [], loc: this._$}
 break;
 case 17:
-this.$ = {type: 'CALL_EXPRESSION', callee: $$[$0-3], arguments: $$[$0-1], loc: _$[$0-3]}
+this.$ = {type: 'CALL_EXPRESSION', callee: $$[$0-3], arguments: $$[$0-1], loc: this._$}
 break;
 case 18:
-this.$ = {type: 'LOGICAL_EXPRESSION', left: $$[$0-2], right: $$[$0], operator: $$[$0-1], loc: _$[$0-2]}
+this.$ = {type: 'LOGICAL_EXPRESSION', left: $$[$0-2], right: $$[$0], operator: $$[$0-1], loc: this._$}
 break;
 case 19: case 20:
-this.$ = {type: 'ASSIGNMENT_EXPRESSION', left: $$[$0-2], operator: $$[$0-1], right: $$[$0], loc: _$[$0-2]}
+this.$ = {type: 'ASSIGNMENT_EXPRESSION', left: $$[$0-2], operator: $$[$0-1], right: $$[$0], loc: this._$}
 break;
 case 21:
 this.$ = Number($$[$0])
@@ -144,13 +144,13 @@ case 25:
 this.$ = 0
 break;
 case 26:
-this.$ = {type: 'NUMBER_LITERAL', value: $$[$0], loc: _$[$0]}
+this.$ = {type: 'NUMBER_LITERAL', value: $$[$0], loc: this._$}
 break;
 case 27: case 28: case 29:
-this.$ = {type: 'UNARY_EXPRESSION', value: $$[$0], operator: $$[$0-1], loc: _$[$0-1]}
+this.$ = {type: 'UNARY_EXPRESSION', value: $$[$0], operator: $$[$0-1], loc: this._$}
 break;
 case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37: case 38:
-this.$ = {type: 'BINARY_EXPRESSION', left: $$[$0-2], right: $$[$0], operator: $$[$0-1], loc: _$[$0-2]}
+this.$ = {type: 'BINARY_EXPRESSION', left: $$[$0-2], right: $$[$0], operator: $$[$0-1], loc: this._$}
 break;
 case 41: case 47:
 this.$ = $$[$0-1]

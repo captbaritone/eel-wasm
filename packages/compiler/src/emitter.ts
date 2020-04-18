@@ -9,7 +9,12 @@ import {
 } from "./encoding";
 import shims from "./shims";
 import { createUserError, createCompilerError } from "./errorUtils";
-import { Ast, CompilerContext, AssignmentOperator } from "./types";
+import {
+  Ast,
+  CompilerContext,
+  AssignmentOperator,
+  SourceLocation,
+} from "./types";
 import { localFuncMap } from "./wasmFunctions";
 
 function arrayJoin<T1, T2>(arr: T1[], joiner: T2): Array<T1 | T2> {
@@ -121,12 +126,14 @@ function emitAssignment(
     set,
     get,
     operator,
+    loc,
   }: {
     index: number[];
     right: number[];
     set: number[];
     get: number[];
     operator: AssignmentOperator;
+    loc: SourceLocation;
   },
   context: CompilerContext
 ) {
@@ -143,7 +150,11 @@ function emitAssignment(
   };
   const code = operatorToCode[operator];
   if (code == null) {
-    throw new Error(`Unknown assignment operator "${operator}"`);
+    throw createCompilerError(
+      `Unknown assignment operator "${operator}"`,
+      loc,
+      context.rawSource
+    );
   }
   return [...index, ...get, ...right, ...code, ...set, ...get];
 }
@@ -151,20 +162,17 @@ function emitAssignment(
 // There are two sections of memory. This function emits code to add the correct
 // offset to an i32 index already on the stack.
 function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
-  const nameToCode = {
-    gmegabuf: [
-      op.i32_const,
-      // TODO: Is this the right encoding for an int32?
-      ...unsignedLEB128(1000000),
-      op.i32_add,
-    ],
-    megabuf: [] as number[],
-  };
-  const code = nameToCode[name];
-  if (code == null) {
-    throw new Error(`Invalid memory name ${name}`);
+  switch (name) {
+    case "gmegabuf":
+      return [
+        op.i32_const,
+        // TODO: Is this the right encoding for an int32?
+        ...unsignedLEB128(1000000),
+        op.i32_add,
+      ];
+    case "megabuf":
+      return [];
   }
-  return code;
 }
 
 export function emit(ast: Ast, context: CompilerContext): number[] {
@@ -201,7 +209,11 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       };
       const code = operatorToOps[ast.operator];
       if (code == null) {
-        throw new Error(`Unknown binary expression operator ${ast.operator}`);
+        throw createCompilerError(
+          `Unknown binary expression operator ${ast.operator}`,
+          ast.loc,
+          context.rawSource
+        );
       }
       return [...left, ...right, ...code];
     }
@@ -228,12 +240,9 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         }
       };
 
-      const args: number[] = flatten(
-        ast.arguments.map(node => emit(node, context))
-      );
+      const args = flatten(ast.arguments.map(node => emit(node, context)));
 
       // Some functions have special behavior
-      // TODO: Assert arity of these functions
       switch (functionName) {
         case "exec2":
           assertArity(2);
@@ -339,8 +348,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         const { operator, left } = ast;
         if (ast.left.arguments.length !== 1) {
           throw createUserError(
-            `Expected 1 argument when assinging to a buffer`,
-            ast.loc,
+            `Expected 1 argument when assinging to a buffer but got ${ast.left.arguments.length}.`,
+            ast.left.arguments[1].loc,
             context.rawSource
           );
         }
@@ -376,7 +385,10 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           0x03,
           0x00,
         ];
-        return emitAssignment({ index, right, set, get, operator }, context);
+        return emitAssignment(
+          { index, right, set, get, operator, loc: ast.loc },
+          context
+        );
       }
       const right = emit(ast.right, context);
       const variableName = ast.left.value;
@@ -392,7 +404,10 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       const { operator } = ast;
       const index: number[] = [];
 
-      return emitAssignment({ index, right, set, get, operator }, context);
+      return emitAssignment(
+        { index, right, set, get, operator, loc: ast.loc },
+        context
+      );
     }
     case "LOGICAL_EXPRESSION": {
       const left = emit(ast.left, context);
@@ -410,7 +425,11 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       const behavior = behaviorMap[ast.operator];
 
       if (behavior == null) {
-        throw new Error(`Unknown logical expression operator ${ast.operator}`);
+        throw createCompilerError(
+          `Unknown logical expression operator ${ast.operator}`,
+          ast.loc,
+          context.rawSource
+        );
       }
       const { comparison, shortCircutValue } = behavior;
       return [
@@ -437,7 +456,11 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       };
       const code = operatorToCode[ast.operator];
       if (code == null) {
-        throw new Error(`Unknown unary operator ${ast.operator}`);
+        throw createCompilerError(
+          `Unknown logical unary operator ${ast.operator}`,
+          ast.loc,
+          context.rawSource
+        );
       }
       return [...value, ...code];
     }
@@ -450,7 +473,12 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
     case "NUMBER_LITERAL":
       return [op.f64_const, ...encodef64(ast.value)];
     default:
-      // @ts-ignore This runtime check is here because the caller may not be type-checked
-      throw new Error(`Unknown AST node type ${ast.type}`);
+      throw createCompilerError(
+        // @ts-ignore This runtime check is here because the caller may not be type-checked
+        `Unknown AST node type ${ast.type}`,
+        // @ts-ignore This runtime check is here because the caller may not be type-checked
+        ast.loc,
+        context.rawSource
+      );
   }
 }

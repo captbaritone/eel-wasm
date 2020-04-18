@@ -1,9 +1,9 @@
 const { Parser } = require("jison");
 
 const binaryExpression =
-  "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2, loc: @1}";
+  "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2, loc: @$}";
 const unaryExpression =
-  "$$ = {type: 'UNARY_EXPRESSION', value: $2, operator: $1, loc: @1}";
+  "$$ = {type: 'UNARY_EXPRESSION', value: $2, operator: $1, loc: @$}";
 
 const grammar = {
   comment: "EEL Parser",
@@ -38,12 +38,12 @@ const grammar = {
 
   bnf: {
     SCRIPT: [
-      ["expression EOF", "return {type: 'SCRIPT', body: [$1], loc: @1}"],
+      ["expression EOF", "return {type: 'SCRIPT', body: [$1], loc: @$}"],
       [
         "expressionsOptionalTrailingSemi EOF",
-        "return {type: 'SCRIPT', body: $1, loc: @1}",
+        "return {type: 'SCRIPT', body: $1, loc: @$}",
       ],
-      ["EOF", "return {type: 'SCRIPT', body: [], loc: @1}"],
+      ["EOF", "return {type: 'SCRIPT', body: [], loc: @$}"],
     ],
     separator: [";", "separator ;"],
     expressions: [
@@ -60,13 +60,13 @@ const grammar = {
     EXPRESSION_BLOCK: [
       [
         "expressionsOptionalTrailingSemi",
-        "$$ = {type: 'EXPRESSION_BLOCK', body: $1, loc: @1}",
+        "$$ = {type: 'EXPRESSION_BLOCK', body: $1, loc: @$}",
       ],
     ],
     IDENTIFIER: [
       [
         "IDENTIFIER_TOKEN",
-        "$$ = {type: 'IDENTIFIER', value: $1.toLowerCase(), loc: @1};",
+        "$$ = {type: 'IDENTIFIER', value: $1.toLowerCase(), loc: @$};",
       ],
     ],
     argument: ["expression", "EXPRESSION_BLOCK"],
@@ -77,27 +77,27 @@ const grammar = {
     FUNCTION_CALL: [
       [
         "IDENTIFIER ( )",
-        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: [], loc: @1}",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: [], loc: @$}",
       ],
       [
         "IDENTIFIER ( arguments )",
-        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, loc: @1}",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, loc: @$}",
       ],
     ],
     LOGICAL_EXPRESSION: [
       [
         "expression LOGICAL_OPERATOR_TOKEN expression",
-        "$$ = {type: 'LOGICAL_EXPRESSION', left: $1, right: $3, operator: $2, loc: @1}",
+        "$$ = {type: 'LOGICAL_EXPRESSION', left: $1, right: $3, operator: $2, loc: @$}",
       ],
     ],
     ASSIGNMENT: [
       [
         "IDENTIFIER ASSIGNMENT_OPERATOR_TOKEN expression",
-        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, loc: @1}",
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, loc: @$}",
       ],
       [
         "FUNCTION_CALL ASSIGNMENT_OPERATOR_TOKEN expression",
-        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, loc: @1}",
+        "$$ = {type: 'ASSIGNMENT_EXPRESSION', left: $1, operator: $2, right: $3, loc: @$}",
       ],
     ],
     number: [
@@ -108,7 +108,7 @@ const grammar = {
       [".", "$$ = 0"],
     ],
     NUMBER_LITERAL: [
-      ["number", "$$ = {type: 'NUMBER_LITERAL', value: $1, loc: @1}"],
+      ["number", "$$ = {type: 'NUMBER_LITERAL', value: $1, loc: @$}"],
     ],
     UNARY_EXPRESSION: [
       ["- expression", unaryExpression],

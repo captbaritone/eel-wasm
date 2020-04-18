@@ -5,15 +5,15 @@ exports[`assign_non_identifier.eel 1`] = `"Expected the first argument of \`assi
 exports[`assign_non_identifier.eel 2`] = `
 "
 > 1 | assign(10 - 2, 10);
-    |        ^^"
+    |        ^^^^^^"
 `;
 
-exports[`assign_to_buffer_too_many_args.eel 1`] = `"Expected 1 argument when assinging to a buffer"`;
+exports[`assign_to_buffer_too_many_args.eel 1`] = `"Expected 1 argument when assinging to a buffer but got 2."`;
 
 exports[`assign_to_buffer_too_many_args.eel 2`] = `
 "
 > 1 | megabuf(2, 3) = 10;
-    | ^^^^^^^^^^^^^"
+    |            ^"
 `;
 
 exports[`assign_to_non_buff_function_call.eel 1`] = `"The only function calls which may be assigned to are \`gmegabuf()\` and \`megabuf()\`."`;
@@ -40,7 +40,7 @@ exports[`too_few_arguments.eel 1`] = `"Too few arguments passed to \`pow()\`. Ex
 exports[`too_few_arguments.eel 2`] = `
 "
 > 1 | x = pow(1);
-    |     ^^^"
+    |     ^^^^^^"
 `;
 
 exports[`too_many_arguments.eel 1`] = `"Too many arguments passed to \`pow()\`. Expected 2 but got 3."`;

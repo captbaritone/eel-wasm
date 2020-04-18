@@ -29,11 +29,12 @@ class NamespaceResolver {
 
     initial.forEach(name => this.get(name));
   }
-  get(name: string) {
+  get(name: string): number {
     if (!this._map.has(name)) {
       this._counter++;
       this._map.set(name, this._counter);
     }
+    // @ts-ignore we just set this.
     return this._map.get(name);
   }
 
