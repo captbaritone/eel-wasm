@@ -1,5 +1,37 @@
 import { preProcess, getLoc } from "../preProcessor";
 
+describe("getLoc", () => {
+  test("basic", () => {
+    expect(getLoc([], 10)).toEqual({ line: 1, column: 10 });
+  });
+  test("after first anchor", () => {
+    expect(getLoc([{ destCol: 5, srcCol: 5, srcLine: 5 }], 10)).toEqual({
+      line: 5,
+      column: 10,
+    });
+  });
+  test("before first anchor", () => {
+    expect(getLoc([{ destCol: 5, srcCol: 5, srcLine: 5 }], 3)).toEqual({
+      line: 1,
+      column: 3,
+    });
+  });
+  test("between two anchors", () => {
+    expect(
+      getLoc(
+        [
+          { destCol: 5, srcCol: 5, srcLine: 5 },
+          { destCol: 10, srcCol: 10, srcLine: 10 },
+        ],
+        8
+      )
+    ).toEqual({
+      line: 5,
+      column: 8,
+    });
+  });
+});
+
 describe("Windows Newlines", () => {
   test("basic", () => {
     const [actual] = preProcess("No\r\n new \r\nline.");
@@ -114,7 +146,7 @@ test("Block comment second line", () => {
     { destCol: 8, srcCol: 15, srcLine: 2 },
   ]);
   const expected = "Nothing to see here";
-  // expect(out).toBe(expected);
+  expect(out).toBe(expected);
 
   expect(getLoc(mapper, 7)).toEqual({
     line: 2,
