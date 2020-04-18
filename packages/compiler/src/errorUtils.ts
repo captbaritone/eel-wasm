@@ -1,8 +1,5 @@
 import { SourceLocation } from "./types";
-
-function repeat(n: number, char: string) {
-  return new Array(n).fill(char).join("");
-}
+import { repeat } from "./arrayUtils";
 
 /* Build up a string showing a formatted source location in context with line numbers.
  *

@@ -16,26 +16,7 @@ import {
   SourceLocation,
 } from "./types";
 import { localFuncMap } from "./wasmFunctions";
-
-function arrayJoin<T1, T2>(arr: T1[], joiner: T2): Array<T1 | T2> {
-  const newArr = [];
-  for (let i = 0; i < arr.length; i++) {
-    newArr.push(arr[i]);
-    const last = i === arr.length - 1;
-    if (!last) {
-      newArr.push(joiner);
-    }
-  }
-  return newArr;
-}
-
-function flatten<T>(arr: Array<T[]>): T[] {
-  const newArr: T[] = [];
-  arr.forEach(subArr => {
-    newArr.push(...subArr);
-  });
-  return newArr;
-}
+import { flatten, arrayJoin } from "./arrayUtils";
 
 function emitExpressionBlock(body: Ast[], context: CompilerContext) {
   const statements = body.map((statement, i) => {

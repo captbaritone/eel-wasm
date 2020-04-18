@@ -1,4 +1,5 @@
 import * as ieee754 from "./ieee754";
+import { flattenTwice } from "./arrayUtils";
 
 const EPSILON = 0.00001;
 
@@ -147,15 +148,11 @@ export function unsignedLEB128(n: number): number[] {
   } while (n !== 0);
   return buffer;
 }
-
-const flatten = (arr: Array<number[] | number>): number[] =>
-  [].concat.apply([], arr);
-
 // https://webassembly.github.io/spec/core/binary/conventions.html#binary-vec
 // Vectors are encoded with their length followed by their element sequence
 export const encodeVector = (data: Array<number[] | number>): number[] => [
   ...unsignedLEB128(data.length),
-  ...flatten(data),
+  ...flattenTwice(data),
 ];
 
 // subSections is an array of arrays
