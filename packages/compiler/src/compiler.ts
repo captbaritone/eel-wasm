@@ -154,7 +154,9 @@ export function compileModule({
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#function-section
-  // "Functions are referenced through function indices, starting with the smallest index not referencing a function import."
+  //
+  // > Functions are referenced through function indices, starting with the smallest
+  // > index not referencing a function import.
   const functions = [...moduleFuncs, ...localFuncs].map((_, i) => {
     const funcIndex = functionImports.length + i;
     return [funcIndex];
@@ -169,11 +171,11 @@ export function compileModule({
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
   const globals = userVarsResolver.map(() => {
     return [
-      VAL_TYPE.f64,
-      MUTABILITY.var,
-      op.f64_const,
+      VAL_TYPE.f64, // All eel values are float 64s
+      MUTABILITY.var, // All globals are mutable
+      op.f64_const, // Initialize the global to zero
       ...encodef64(0),
-      op.end,
+      op.end, // All done
     ];
   });
 
