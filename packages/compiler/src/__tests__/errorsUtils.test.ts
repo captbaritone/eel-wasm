@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { compileModule } from "../compiler";
-import shims from "../shims";
 import { printLoc } from "../errorUtils";
 
 const DIR = path.join(__dirname, "../../fixtures/errors");
@@ -15,7 +14,7 @@ testCases.forEach((filename: string) => {
     const eel = fs.readFileSync(path.join(DIR, filename), { encoding: "utf8" });
     let compilerError = null;
     try {
-      compileModule({ globals: new Set(), functions: { run: eel }, shims });
+      compileModule({ globals: new Set(), functions: { run: eel } });
     } catch (e) {
       compilerError = e;
     }
