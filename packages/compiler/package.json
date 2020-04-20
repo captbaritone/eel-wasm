@@ -1,11 +1,20 @@
 {
   "name": "eel-wasm",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "main": "dist/src/index.js",
   "license": "MIT",
+  "homepage": "https://github.com/captbaritone/eel-wasm",
+  "author": "Jordan Eldredge <jordan@jordaneldredge.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/captbaritone/eel-wasm.git"
+  },
   "prettier": {
     "trailingComma": "es5"
   },
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "test": "jest",
     "ci": "yarn test && yarn build",
@@ -14,7 +23,7 @@
     "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
     "test-compile": "node tools/parseMilk.js --stats --summary --compile --dir=./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
-    "build": "yarn build-parser && tsc && parcel build src/index.ts -o built/index.bundle.js --experimental-scope-hoisting"
+    "build": "yarn build-parser && tsc && parcel build src/index.ts -o dist/index.bundle.js --experimental-scope-hoisting"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
