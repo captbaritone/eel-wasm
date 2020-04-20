@@ -144,7 +144,11 @@ var parser = new Parser(grammar);
 
 // If called from CLI, we should output source.
 if (require.main === module) {
-  const settings = { moduleType: "commonjs" };
+  const settings = {
+    moduleType: "commonjs",
+    // Without this Jison defaults to including a commandline interface to the generated module.
+    moduleMain: () => {},
+  };
   console.log(parser.generate(settings));
 }
 
