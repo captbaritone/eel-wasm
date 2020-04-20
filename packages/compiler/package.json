@@ -1,6 +1,6 @@
 {
   "name": "eel-wasm",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "main": "dist/src/index.js",
   "license": "MIT",
   "homepage": "https://github.com/captbaritone/eel-wasm",
@@ -23,7 +23,9 @@
     "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
     "test-compile": "node tools/parseMilk.js --stats --summary --compile --dir=./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
-    "build": "yarn build-parser && tsc && parcel build src/index.ts -o dist/index.bundle.js --experimental-scope-hoisting"
+    "build": "yarn build-parser && tsc && parcel build src/index.ts -o dist/index.bundle.js --experimental-scope-hoisting",
+    "clean": "rm -rf build/*",
+    "prepublishOnly": "yarn test && yarn clean && yarn build"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
