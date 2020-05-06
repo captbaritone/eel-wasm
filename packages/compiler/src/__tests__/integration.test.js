@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const MILKDROP_GLOBALS = require("../../tools/milkdropGlobals");
 const { parse } = require("../parser");
-const testCases = require("../../tools/testCases");
+const { default: testCases } = require("../../tools/testCases");
 
 test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).

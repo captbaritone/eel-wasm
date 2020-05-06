@@ -1,4 +1,4 @@
-const testCases = [
+const testCases: [string, string, number][] = [
   ["Empty program", "", 0],
   ["Expressions", "g = ((6- -7)+ 3);", 16],
   ["Number", "g = 5;", 5],
@@ -154,4 +154,4 @@ const testCases = [
   ["Assign return value", "g = assign(x, 10);", 10],
 ];
 
-module.exports = testCases;
+export default testCases;
