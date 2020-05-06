@@ -327,10 +327,10 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       if (ast.left.type == "CALL_EXPRESSION") {
         const localIndex = context.resolveLocalF64();
         const { operator, left } = ast;
-        if (ast.left.arguments.length !== 1) {
+        if (left.arguments.length !== 1) {
           throw createUserError(
-            `Expected 1 argument when assinging to a buffer but got ${ast.left.arguments.length}.`,
-            ast.left.arguments[1].loc,
+            `Expected 1 argument when assinging to a buffer but got ${left.arguments.length}.`,
+            left.arguments.length === 0 ? left.loc : left.arguments[1].loc,
             context.rawSource
           );
         }
@@ -347,7 +347,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         const addOffset = emitAddMemoryOffset(bufferName);
 
         const index = [
-          ...emit(ast.left.arguments[0], context),
+          ...emit(left.arguments[0], context),
           op.local_tee,
           ...unsignedLEB128(localIndex),
           op.i32_trunc_s_f64,

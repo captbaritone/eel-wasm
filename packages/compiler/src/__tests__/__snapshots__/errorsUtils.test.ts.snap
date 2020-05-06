@@ -16,6 +16,14 @@ exports[`assign_to_buffer_too_many_args.eel 2`] = `
     |            ^"
 `;
 
+exports[`assign_to_buffer_zero_args.eel 1`] = `"Expected 1 argument when assinging to a buffer but got 0."`;
+
+exports[`assign_to_buffer_zero_args.eel 2`] = `
+"
+> 1 | megabuf() = 10;
+    | ^^^^^^^^^"
+`;
+
 exports[`assign_to_non_buff_function_call.eel 1`] = `"The only function calls which may be assigned to are \`gmegabuf()\` and \`megabuf()\`."`;
 
 exports[`assign_to_non_buff_function_call.eel 2`] = `
