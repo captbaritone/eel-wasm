@@ -19,6 +19,7 @@ testCases.forEach((filename: string) => {
       compilerError = e;
     }
 
+    // TODO: Assert that error is a user or compiler error
     expect(compilerError).not.toBe(null);
 
     expect(compilerError.message).toMatchSnapshot();
