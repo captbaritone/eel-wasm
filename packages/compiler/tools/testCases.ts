@@ -152,6 +152,8 @@ const testCases: [string, string, number][] = [
   ["Ceil", "g = ceil(-9.9);", -9],
   ["Assign", "assign(g, 10);", 10],
   ["Assign return value", "g = assign(x, 10);", 10],
+  ["EPSILON buffer indexes", "megabuf(9.99999) = 10; g = megabuf(10)", 10],
+  ["+EPSILON & rounding -#s toward 0", "megabuf(-1) = 10; g = megabuf(0)", 10],
 ];
 
 export default testCases;
