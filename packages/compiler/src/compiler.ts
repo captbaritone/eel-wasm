@@ -70,7 +70,6 @@ export function compileModule({
     functionImports.map(func => func.name)
   );
 
-  let localF64Count = 0;
   const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
     const ast = preParsed ? code : parse(code);
     if (typeof ast === "string") {
@@ -80,6 +79,7 @@ export function compileModule({
       );
     }
 
+    const localVariables: number[] = [];
     const context: CompilerContext = {
       resolveVar: name => {
         if (globalVariables.has(name)) {
@@ -87,8 +87,9 @@ export function compileModule({
         }
         return unsignedLEB128(userVarsResolver.get(name));
       },
-      resolveLocalF64: () => {
-        return localF64Count++;
+      resolveLocal: type => {
+        localVariables.push(type);
+        return localVariables.length - 1;
       },
       resolveLocalFunc: name => {
         if (shims[name] == null && localFuncMap[name] == null) {
@@ -106,7 +107,7 @@ export function compileModule({
       exportName: name,
       args: [],
       returns: [],
-      localF64Count,
+      localVariables,
     };
   });
 
@@ -187,13 +188,14 @@ export function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
   const codes = [...localFuncs, ...moduleFuncs].map(func => {
-    const localTypes = [];
-    // TODO: If we want to support other types of locals, things might get complicated.
-    if (func.localF64Count) {
-      localTypes.push([...unsignedLEB128(func.localF64Count), VAL_TYPE.f64]);
-    }
-    // TODO: It's a bit odd that every other section is an array of arrays and
-    // this one is an array of vectors already.
+    // TODO: We could collapose consecutive types here, or even move to a two
+    // pass approach where ids are resolved after the emitter is run.
+    const localTypes = (func.localVariables ?? []).map(type => {
+      return [...unsignedLEB128(1), type];
+    });
+    // It's a bit odd that every other section is an array of arrays and this
+    // one is an array of vectors. The spec says this is so that when navigating
+    // the binary functions can be skipped efficiently.
     return encodeVector([...encodeVector(localTypes), ...func.binary, op.end]);
   });
 

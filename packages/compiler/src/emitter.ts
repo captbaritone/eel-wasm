@@ -44,7 +44,8 @@ function emitWhile(expression: Ast, context: CompilerContext) {
 
 function emitLoop(count: Ast, expression: Ast, context: CompilerContext) {
   const body = emit(expression, context);
-  const localIndex = context.resolveLocalF64();
+  const localIndex = context.resolveLocal(VAL_TYPE.f64);
+
   // TODO: This could probably be simplified
   return [
     // Assign the count to a variable
@@ -325,7 +326,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
     case "ASSIGNMENT_EXPRESSION": {
       // There's a special assignment case for `megabuf(n) = e` and `gmegabuf(n) = e`.
       if (ast.left.type == "CALL_EXPRESSION") {
-        const localIndex = context.resolveLocalF64();
+        const localIndex = context.resolveLocal(VAL_TYPE.i32);
         const { operator, left } = ast;
         if (left.arguments.length !== 1) {
           throw createUserError(
@@ -348,20 +349,16 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
 
         const index = [
           ...emit(left.arguments[0], context),
-          op.local_tee,
-          ...unsignedLEB128(localIndex),
           op.i32_trunc_s_f64,
           ...addOffset,
+          op.local_tee,
+          ...unsignedLEB128(localIndex),
         ];
         const right = emit(ast.right, context);
         const set = [op.f64_store, 0x03, 0x00];
         const get = [
           op.local_get,
           ...unsignedLEB128(localIndex),
-          // TODO: We could avoid this casting and applying the offset twice if
-          // we supported local ints
-          op.i32_trunc_s_f64,
-          ...addOffset,
           op.f64_load,
           0x03,
           0x00,

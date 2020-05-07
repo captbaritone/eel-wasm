@@ -1,7 +1,7 @@
 import * as ieee754 from "./ieee754";
 import { flattenTwice } from "./arrayUtils";
 
-const EPSILON = 0.00001;
+export const EPSILON = 0.00001;
 
 // An intial attempt to construct a Wasm binary by hand.
 /*
@@ -36,6 +36,7 @@ export const EXPORT_TYPE = {
   GLOBAL: 0x03,
 };
 
+// TODO: Make the nameing of these consistent
 export const op = {
   block: 0x02,
   loop: 0x03,
@@ -53,7 +54,10 @@ export const op = {
   i32_add: 0x6a,
   i32_sub: 0x6b,
   i32_eqz: 0x45,
+  i32_gt_s: 0x4a,
+  i32_ge_s: 0x4e,
   i32_trunc_s_f64: 0xaa,
+  i32_trunc_u_f64: 0xab,
   i64_and: 0x83,
   i64_or: 0x84,
   i64_rem_s: 0x81,
@@ -92,7 +96,7 @@ export const VAL_TYPE = {
   i64: 0x7e,
   f32: 0x7d,
   f64: 0x7c,
-};
+} as const;
 
 export const MUTABILITY = {
   const: 0x00,

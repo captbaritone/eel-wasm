@@ -120,12 +120,12 @@ export type FunctionDefinition = {
   args: number[];
   returns: [number] | [];
   binary: number[];
-  localF64Count?: number;
+  localVariables?: number[];
 };
 
 export interface CompilerContext {
   resolveVar(name: string): number[];
   resolveLocalFunc(name: string): number[] | null;
-  resolveLocalF64(): number;
+  resolveLocal(type: 0x7f | 0x7e | 0x7d | 0x7c): number;
   rawSource: string;
 }
