@@ -4,6 +4,8 @@ import {
   op,
   VAL_TYPE,
   IS_NOT_ZEROISH,
+  EPSILON,
+  signedLEB128,
 } from "./encoding";
 import { FunctionDefinition } from "./types";
 
@@ -114,6 +116,79 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       op.i64_trunc_s_f64,
       op.i64_and,
       op.f64_convert_s_i64,
+    ],
+  },
+  // Takes a float buffer index and converts it to an int. Values out of range
+  // are returned as `-1`.
+  //
+  // NOTE: There's actually a subtle bug that exists in Milkdrop's Eel
+  // implementation, which we reproduce here.
+  //
+  // Wasm's `trunc()` rounds towards zero. This means that for index `-1` we
+  // will return zero, since: `roundTowardZero(-1 + EPSILON) == 0`
+  //
+  // A subsequent check handles negative indexes, so negative indexes > than
+  // `-1` are not affected.
+  _getBufferIndex: {
+    args: [VAL_TYPE.f64 /* 0: $index */],
+    returns: [VAL_TYPE.i32 /* $noramlizedIndex */],
+    localVariables: [
+      VAL_TYPE.f64, // 1: $with_near
+      VAL_TYPE.i32, // 2: $truncated
+    ],
+    binary: [
+      op.f64_const,
+      ...encodef64(EPSILON),
+      op.local_get,
+      ...unsignedLEB128(0), // $index
+      op.f64_add,
+      // STACK: [$i + EPSILON]
+      op.local_tee,
+      ...unsignedLEB128(1), // $with_near
+
+      op.i32_trunc_s_f64,
+      // TODO We could probably make this a tee and get rid of the next get if we swap the final condition
+      op.local_set,
+      ...unsignedLEB128(2), // $truncated
+      // STACK: []
+      op.i32_const,
+      ...signedLEB128(-1),
+      op.local_get,
+      ...unsignedLEB128(2), // $truncated
+      // STACK: [-1, $truncated]
+      op.local_get,
+      ...unsignedLEB128(2), // $truncated
+      op.i32_const,
+      ...unsignedLEB128(0),
+      // STACK: [-1, $truncated, $truncated, 0]
+      op.i32_lt_s,
+      // STACK: [-1, $truncated, <is index less than 0>]
+      op.local_get,
+      ...unsignedLEB128(2), // $truncated
+      op.i32_const,
+      ...unsignedLEB128(8388608), // MAX_INDEX
+      op.i32_gt_s,
+      // STACK: [-1, $truncated, <is index less than 0>, <is index more than MAX>]
+      op.i32_or,
+      // STACK: [-1, $truncated, <is index out of range>]
+      op.select,
+    ],
+  },
+  // index == -1 ? 0 : index
+  _normalizeBufferIndex: {
+    args: [VAL_TYPE.i32 /* 0: $index */],
+    returns: [VAL_TYPE.i32 /* $noramlizedIndex */],
+    binary: [
+      op.local_get,
+      ...unsignedLEB128(0),
+      op.i32_const,
+      ...signedLEB128(0),
+      op.local_get,
+      ...unsignedLEB128(0),
+      op.i32_const,
+      ...signedLEB128(-1),
+      op.i32_ne,
+      op.select,
     ],
   },
 };

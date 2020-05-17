@@ -61,9 +61,11 @@ test("parse", () => {
 });
 
 describe("Small test cases", () => {
-  testCases.forEach(testCase => {
+  testCases.forEach((testCase, i) => {
     const [description, expression, expectedResult] = testCase;
-    test(`${description}: "${expression}"`, async () => {
+    // Hack: Set this number to the number of the test in order to isolate just one.
+    const testFunction = i === -1 ? test.only : test;
+    testFunction(`${i}. ${description}: "${expression}"`, async () => {
       const x = new WebAssembly.Global({ value: "f64", mutable: true }, 10);
       const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 

@@ -6,7 +6,6 @@ import {
   BLOCK,
   IS_ZEROISH,
   IS_NOT_ZEROISH,
-  EPSILON,
 } from "./encoding";
 import shims from "./shims";
 import { createUserError, createCompilerError } from "./errorUtils";
@@ -158,18 +157,11 @@ function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
   }
 }
 
-// Assuming there is an f64 buffer on the stack, put the correct i32 index on the stack.
-function emitCoerceBufferIndex() {
-  // There's actually a subtle bug that exists in Milkdrop's Eel implementation,
-  // which we reproduce here.
-  //
-  // Wasm's `trunc()` rounds towards zero. This means that for index `-1` we
-  // will return zero, since: `roundTowardZero(-1 + EPSILON) == 0`
-  //
-  // A subsequent check (TODO in our implementation) handles negative indexes,
-  // so negative indexes other than `-1` are not affected, since coerced index
-  // will still be negative.
-  return [op.f64_const, ...encodef64(EPSILON), op.f64_add, op.i32_trunc_s_f64];
+function emitCoerceBufferIndex(context: CompilerContext) {
+  return [
+    ...context.resolveLocalFunc("_getBufferIndex"),
+    ...context.resolveLocalFunc("_normalizeBufferIndex"),
+  ];
 }
 
 export function emit(ast: Ast, context: CompilerContext): number[] {
@@ -262,7 +254,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           assertArity(1);
           return [
             ...emit(ast.arguments[0], context),
-            ...emitCoerceBufferIndex(),
+            ...context.resolveLocalFunc("_getBufferIndex"),
+            ...context.resolveLocalFunc("_normalizeBufferIndex"),
             ...emitAddMemoryOffset(functionName),
             op.f64_load,
             0x03, // Align
@@ -317,7 +310,15 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       }
 
       const invocation = context.resolveLocalFunc(functionName);
-      if (invocation == null) {
+      if (
+        invocation == null ||
+        // Ensure this isn't a private function. This is a bit awkward becuase
+        // Eel does implement some _ functions but while they are _intended_ to be
+        // private, they accidentally expose them. We should find a cleaner way
+        // to defining user accessible functions vs utility functions used by
+        // the compiler.
+        functionName.startsWith("_")
+      ) {
         throw createUserError(
           `"${functionName}" is not defined.`,
           ast.callee.loc,
@@ -364,7 +365,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
 
         const index = [
           ...emit(left.arguments[0], context),
-          ...emitCoerceBufferIndex(),
+          ...context.resolveLocalFunc("_getBufferIndex"),
+          ...context.resolveLocalFunc("_normalizeBufferIndex"),
           ...addOffset,
           op.local_tee,
           ...unsignedLEB128(localIndex),

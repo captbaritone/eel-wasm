@@ -54,6 +54,7 @@ export const op = {
   i32_add: 0x6a,
   i32_sub: 0x6b,
   i32_eqz: 0x45,
+  i32_lt_s: 0x48,
   i32_gt_s: 0x4a,
   i32_le_s: 0x4c,
   i32_ge_s: 0x4e,
@@ -153,6 +154,37 @@ export function unsignedLEB128(n: number): number[] {
     buffer.push(byte);
   } while (n !== 0);
   return buffer;
+}
+
+// https://github.com/shmishtopher/wasm-LEB128/blob/2f1039636e758293e571f996e8012c4d69f4b58f/lib/index.js#L6
+export function signedLEB128(value: number): number[] {
+  let bytes = [];
+  let byte = 0x00;
+  let size = Math.ceil(Math.log2(Math.abs(value)));
+  let negative = value < 0;
+  let more = true;
+
+  while (more) {
+    byte = value & 127;
+    value = value >> 7;
+
+    if (negative) {
+      value = value | -(1 << (size - 7));
+    }
+
+    if (
+      (value == 0 && (byte & 0x40) == 0) ||
+      (value == -1 && (byte & 0x40) == 0x40)
+    ) {
+      more = false;
+    } else {
+      byte = byte | 128;
+    }
+
+    bytes.push(byte);
+  }
+
+  return bytes;
 }
 // https://webassembly.github.io/spec/core/binary/conventions.html#binary-vec
 // Vectors are encoded with their length followed by their element sequence

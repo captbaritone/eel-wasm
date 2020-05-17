@@ -154,6 +154,9 @@ const testCases: [string, string, number][] = [
   ["Assign return value", "g = assign(x, 10);", 10],
   ["EPSILON buffer indexes", "megabuf(9.99999) = 10; g = megabuf(10)", 10],
   ["+EPSILON & rounding -#s toward 0", "megabuf(-1) = 10; g = megabuf(0)", 10],
+  ["Negative buffer index read as 0", "g = megabuf(-2);", 0],
+  // ["Negative buffer index", "g = (megabuf(-2) = 10);", 0],
+  // ["Negative buffer index", "g = (megabuf(10000000) = 10);", 0],
 ];
 
 export default testCases;
