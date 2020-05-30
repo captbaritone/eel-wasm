@@ -94,11 +94,13 @@ export const op = {
   global_set: 0x24,
 };
 
+// https://webassembly.github.io/spec/core/binary/instructions.html#binary-blocktype
 export const VAL_TYPE = {
   i32: 0x7f,
   i64: 0x7e,
   f32: 0x7d,
   f64: 0x7c,
+  EMPTY: 0x40,
 } as const;
 
 export const MUTABILITY = {

@@ -2,6 +2,7 @@ import {
   op,
   encodef64,
   unsignedLEB128,
+  signedLEB128,
   VAL_TYPE,
   BLOCK,
   IS_ZEROISH,
@@ -33,9 +34,7 @@ function emitWhile(expression: Ast, context: CompilerContext) {
     ...body,
     ...IS_NOT_ZEROISH,
     op.br_if,
-    // TODO: Chasm has these as _signedLEB128_.
-    // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
-    ...unsignedLEB128(0), // Return to the top of the loop
+    ...signedLEB128(0), // Return to the top of the loop
     op.end,
     op.f64_const,
     ...encodef64(0), // Implicitly return zero
@@ -387,6 +386,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             op.else,
             op.local_get,
             ...unsignedLEB128(unnormalizedIndex),
+            // TODO: Move this up
             ...context.resolveLocalFunc("_normalizeBufferIndex"),
             ...addOffset,
             op.local_tee,
@@ -402,6 +402,64 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             op.local_get,
             ...unsignedLEB128(rightValue),
             // STACK: [Right/Buffer value]
+            op.end,
+          ];
+        }
+        if (operator === "+=") {
+          // TODO: Move this to wasmFunctions once we know how to call functions
+          // from within functions (need to get the offset).
+          const index = context.resolveLocal(VAL_TYPE.i32);
+          const inBounds = context.resolveLocal(VAL_TYPE.i32);
+          const rightValue = context.resolveLocal(VAL_TYPE.f64);
+          const result = context.resolveLocal(VAL_TYPE.f64);
+          return [
+            ...emit(ast.right, context),
+            op.local_set,
+            ...unsignedLEB128(rightValue),
+            ...emit(left.arguments[0], context),
+            ...context.resolveLocalFunc("_getBufferIndex"),
+            ...context.resolveLocalFunc("_normalizeBufferIndex"),
+            op.local_tee,
+            ...unsignedLEB128(index),
+            // STACK: [index]
+            op.i32_const,
+            ...signedLEB128(-1),
+            op.i32_ne,
+            op.local_tee,
+            ...unsignedLEB128(inBounds),
+            op.if,
+            VAL_TYPE.f64,
+            op.local_get,
+            ...unsignedLEB128(index),
+            op.f64_load,
+            0x03,
+            0x00,
+            op.else,
+            op.f64_const,
+            ...encodef64(0),
+            op.end,
+            // STACK: [current value from memory || 0]
+
+            // Apply the mutation
+            op.local_get,
+            ...unsignedLEB128(rightValue),
+            op.f64_add,
+
+            op.local_tee,
+            ...unsignedLEB128(result),
+            // STACK: [new value]
+
+            op.local_get,
+            ...unsignedLEB128(inBounds),
+            op.if,
+            VAL_TYPE.EMPTY,
+            op.local_get,
+            ...unsignedLEB128(index),
+            op.local_get,
+            ...unsignedLEB128(result),
+            op.f64_store,
+            0x03,
+            0x00,
             op.end,
           ];
         }
