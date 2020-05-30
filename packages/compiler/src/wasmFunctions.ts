@@ -174,21 +174,4 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       op.select,
     ],
   },
-  // index == -1 ? 0 : index
-  _normalizeBufferIndex: {
-    args: [VAL_TYPE.i32 /* 0: $index */],
-    returns: [VAL_TYPE.i32 /* $noramlizedIndex */],
-    binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
-      op.i32_const,
-      ...signedLEB128(0),
-      op.local_get,
-      ...unsignedLEB128(0),
-      op.i32_const,
-      ...signedLEB128(-1),
-      op.i32_ne,
-      op.select,
-    ],
-  },
 };

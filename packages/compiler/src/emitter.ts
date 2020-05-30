@@ -224,14 +224,28 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         case "megabuf":
         case "gmegabuf":
           assertArity(1);
+          const index = context.resolveLocal(VAL_TYPE.i32);
           return [
             ...emit(ast.arguments[0], context),
             ...context.resolveLocalFunc("_getBufferIndex"),
-            ...context.resolveLocalFunc("_normalizeBufferIndex"),
+            op.local_tee,
+            ...unsignedLEB128(index),
+            op.i32_const,
+            ...signedLEB128(-1),
+            op.i32_ne,
+            // STACK: [in range]
+            op.if,
+            VAL_TYPE.f64,
+            op.local_get,
+            ...unsignedLEB128(index),
             ...emitAddMemoryOffset(functionName),
             op.f64_load,
             0x03, // Align
             0x00, // Offset
+            op.else,
+            op.f64_const,
+            ...encodef64(0),
+            op.end,
           ];
         case "assign":
           assertArity(2);
@@ -388,8 +402,6 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           op.else,
           op.local_get,
           ...unsignedLEB128(unnormalizedIndex),
-          // TODO: Move this up
-          ...context.resolveLocalFunc("_normalizeBufferIndex"),
           ...addOffset,
           op.local_tee,
           ...unsignedLEB128(localIndex),
@@ -420,7 +432,6 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...unsignedLEB128(rightValue),
         ...emit(left.arguments[0], context),
         ...context.resolveLocalFunc("_getBufferIndex"),
-        ...context.resolveLocalFunc("_normalizeBufferIndex"),
         op.local_tee,
         ...unsignedLEB128(index),
         // STACK: [index]
