@@ -15,6 +15,7 @@ import {
   CompilerContext,
   AssignmentOperator,
   SourceLocation,
+  AssignmentExpressionAstNode,
 } from "./types";
 import { localFuncMap } from "./wasmFunctions";
 import { flatten, arrayJoin } from "./arrayUtils";
@@ -96,50 +97,6 @@ function emitConditional(
   ];
 }
 
-// If `set` requires an index (for example for memory stores) then you can pass
-// a non-empty `index` which will array which will leave the index on the stack
-// before the value in `right`. For `set` calls that don't (for example global
-// variables), simply pass an empty `index` array.
-function emitAssignment(
-  {
-    index,
-    right,
-    set,
-    get,
-    operator,
-    loc,
-  }: {
-    index: number[];
-    right: number[];
-    set: number[];
-    get: number[];
-    operator: AssignmentOperator;
-    loc: SourceLocation;
-  },
-  context: CompilerContext
-) {
-  // `=` is a special case in that it does not need the original value.
-  if (operator === "=") {
-    return [...index, ...right, ...set, ...get];
-  }
-  const operatorToCode = {
-    "+=": [op.f64_add],
-    "-=": [op.f64_sub],
-    "*=": [op.f64_mul],
-    "/=": [op.f64_div],
-    "%=": context.resolveLocalFunc("mod"),
-  };
-  const code = operatorToCode[operator];
-  if (code == null) {
-    throw createCompilerError(
-      `Unknown assignment operator "${operator}"`,
-      loc,
-      context.rawSource
-    );
-  }
-  return [...index, ...get, ...right, ...code, ...set, ...get];
-}
-
 // There are two sections of memory. This function emits code to add the correct
 // offset to an i32 index already on the stack.
 function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
@@ -156,11 +113,27 @@ function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
   }
 }
 
-function emitCoerceBufferIndex(context: CompilerContext) {
-  return [
-    ...context.resolveLocalFunc("_getBufferIndex"),
-    ...context.resolveLocalFunc("_normalizeBufferIndex"),
-  ];
+function getAssignmentOperatorMutation(
+  ast: AssignmentExpressionAstNode,
+  context: CompilerContext
+): number[] | null {
+  const operatorToCode = {
+    "+=": [op.f64_add],
+    "-=": [op.f64_sub],
+    "*=": [op.f64_mul],
+    "/=": [op.f64_div],
+    "%=": context.resolveLocalFunc("mod"),
+    "=": null,
+  };
+  const operatorCode = operatorToCode[ast.operator];
+  if (operatorCode === undefined) {
+    throw createCompilerError(
+      `Unknown assignment operator "${ast.operator}"`,
+      ast.loc,
+      context.rawSource
+    );
+  }
+  return operatorCode;
 }
 
 export function emit(ast: Ast, context: CompilerContext): number[] {
@@ -339,164 +312,158 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       return [...args, ...invocation];
     }
     case "ASSIGNMENT_EXPRESSION": {
-      // There's a special assignment case for `megabuf(n) = e` and `gmegabuf(n) = e`.
-      if (ast.left.type == "CALL_EXPRESSION") {
-        const localIndex = context.resolveLocal(VAL_TYPE.i32);
-        const { operator, left } = ast;
-        if (left.arguments.length !== 1) {
-          throw createUserError(
-            `Expected 1 argument when assinging to a buffer but got ${left.arguments.length}.`,
-            left.arguments.length === 0 ? left.loc : left.arguments[1].loc,
-            context.rawSource
-          );
+      const { left } = ast;
+      const rightCode = emit(ast.right, context);
+      const mutationCode = getAssignmentOperatorMutation(ast, context);
+
+      if (left.type === "IDENTIFIER") {
+        const resolvedName = context.resolveVar(left.value);
+
+        // TODO: In lots of cases we don't care about the return value. In those
+        // cases we should try to find a way to omit the `get/drop` combo.
+        // Peephole optimization seems to be the conventional way to do this.
+        // https://en.wikipedia.org/wiki/Peephole_optimization
+        const get = [op.global_get, ...resolvedName];
+        const set = [op.global_set, ...resolvedName];
+
+        // `=` is a special case in that it does not need the original value.
+        if (mutationCode === null) {
+          return [...rightCode, ...set, ...get];
         }
 
-        const bufferName = left.callee.value;
-        if (bufferName !== "gmegabuf" && bufferName !== "megabuf") {
-          throw createUserError(
-            "The only function calls which may be assigned to are `gmegabuf()` and `megabuf()`.",
-            left.callee.loc,
-            context.rawSource
-          );
-        }
+        return [...get, ...rightCode, ...mutationCode, ...set, ...get];
+      }
 
-        const addOffset = emitAddMemoryOffset(bufferName);
-        if (operator === "=") {
-          // TODO: Move this to wasmFunctions once we know how to call functions
-          // from within functions (need to get the offset).
-          const unnormalizedIndex = context.resolveLocal(VAL_TYPE.i32);
-          const rightValue = context.resolveLocal(VAL_TYPE.f64);
-          return [
-            // Emit the right hand side unconditionally to ensure it always runs.
-            ...emit(ast.right, context),
-            op.local_set,
-            ...unsignedLEB128(rightValue),
-            ...emit(left.arguments[0], context),
-            ...context.resolveLocalFunc("_getBufferIndex"),
-            op.local_tee,
-            ...unsignedLEB128(unnormalizedIndex),
-            op.i32_const,
-            ...unsignedLEB128(0),
-            op.i32_lt_s,
-            // STACK: [is the index out of range?]
-            op.if,
-            VAL_TYPE.f64,
-            op.f64_const,
-            ...encodef64(0),
-            op.else,
-            op.local_get,
-            ...unsignedLEB128(unnormalizedIndex),
-            // TODO: Move this up
-            ...context.resolveLocalFunc("_normalizeBufferIndex"),
-            ...addOffset,
-            op.local_tee,
-            ...unsignedLEB128(localIndex),
-            // STACK: [buffer index]
-            op.local_get,
-            ...unsignedLEB128(rightValue),
-            // STACK: [buffer index, right]
-            op.f64_store,
-            0x03,
-            0x00,
-            // STACK: []
-            op.local_get,
-            ...unsignedLEB128(rightValue),
-            // STACK: [Right/Buffer value]
-            op.end,
-          ];
-        }
+      if (left.type !== "CALL_EXPRESSION") {
+        throw createCompilerError(
+          // @ts-ignore This is a guard in case the parser has an error
+          `Unexpected left hand side type for assignment: ${left.type}`,
+          ast.loc,
+          context.rawSource
+        );
+      }
 
-        const operatorToCode = {
-          "+=": [op.f64_add],
-          "-=": [op.f64_sub],
-          "*=": [op.f64_mul],
-          "/=": [op.f64_div],
-          "%=": context.resolveLocalFunc("mod"),
-        };
+      // Special assignment case for `megabuf(n) = e` and `gmegabuf(n) = e`.
+      const localIndex = context.resolveLocal(VAL_TYPE.i32);
+      if (left.arguments.length !== 1) {
+        throw createUserError(
+          `Expected 1 argument when assinging to a buffer but got ${left.arguments.length}.`,
+          left.arguments.length === 0 ? left.loc : left.arguments[1].loc,
+          context.rawSource
+        );
+      }
 
-        const operatorCode = operatorToCode[operator];
-        if (operatorCode == null) {
-          throw createCompilerError(
-            `Unknonw assignment operator ${operator}`,
-            ast.loc,
-            context.rawSource
-          );
-        }
+      const bufferName = left.callee.value;
+      if (bufferName !== "gmegabuf" && bufferName !== "megabuf") {
+        throw createUserError(
+          "The only function calls which may be assigned to are `gmegabuf()` and `megabuf()`.",
+          left.callee.loc,
+          context.rawSource
+        );
+      }
+
+      const addOffset = emitAddMemoryOffset(bufferName);
+      if (mutationCode === null) {
         // TODO: Move this to wasmFunctions once we know how to call functions
         // from within functions (need to get the offset).
-        const index = context.resolveLocal(VAL_TYPE.i32);
-        const inBounds = context.resolveLocal(VAL_TYPE.i32);
+        const unnormalizedIndex = context.resolveLocal(VAL_TYPE.i32);
         const rightValue = context.resolveLocal(VAL_TYPE.f64);
-        const result = context.resolveLocal(VAL_TYPE.f64);
         return [
-          ...emit(ast.right, context),
+          // Emit the right hand side unconditionally to ensure it always runs.
+          ...rightCode,
           op.local_set,
           ...unsignedLEB128(rightValue),
           ...emit(left.arguments[0], context),
           ...context.resolveLocalFunc("_getBufferIndex"),
-          ...context.resolveLocalFunc("_normalizeBufferIndex"),
           op.local_tee,
-          ...unsignedLEB128(index),
-          // STACK: [index]
+          ...unsignedLEB128(unnormalizedIndex),
           op.i32_const,
-          ...signedLEB128(-1),
-          op.i32_ne,
-          op.local_tee,
-          ...unsignedLEB128(inBounds),
+          ...unsignedLEB128(0),
+          op.i32_lt_s,
+          // STACK: [is the index out of range?]
           op.if,
           VAL_TYPE.f64,
-          op.local_get,
-          ...unsignedLEB128(index),
-          op.f64_load,
-          0x03,
-          0x00,
-          op.else,
           op.f64_const,
           ...encodef64(0),
-          op.end,
-          // STACK: [current value from memory || 0]
-
-          // Apply the mutation
+          op.else,
+          op.local_get,
+          ...unsignedLEB128(unnormalizedIndex),
+          // TODO: Move this up
+          ...context.resolveLocalFunc("_normalizeBufferIndex"),
+          ...addOffset,
+          op.local_tee,
+          ...unsignedLEB128(localIndex),
+          // STACK: [buffer index]
           op.local_get,
           ...unsignedLEB128(rightValue),
-          ...operatorCode,
-
-          op.local_tee,
-          ...unsignedLEB128(result),
-          // STACK: [new value]
-
-          op.local_get,
-          ...unsignedLEB128(inBounds),
-          op.if,
-          VAL_TYPE.EMPTY,
-          op.local_get,
-          ...unsignedLEB128(index),
-          op.local_get,
-          ...unsignedLEB128(result),
+          // STACK: [buffer index, right]
           op.f64_store,
           0x03,
           0x00,
+          // STACK: []
+          op.local_get,
+          ...unsignedLEB128(rightValue),
+          // STACK: [Right/Buffer value]
           op.end,
         ];
       }
-      const right = emit(ast.right, context);
-      const variableName = ast.left.value;
 
-      const resolvedName = context.resolveVar(variableName);
+      // TODO: Move this to wasmFunctions once we know how to call functions
+      // from within functions (need to get the offset).
+      const index = context.resolveLocal(VAL_TYPE.i32);
+      const inBounds = context.resolveLocal(VAL_TYPE.i32);
+      const rightValue = context.resolveLocal(VAL_TYPE.f64);
+      const result = context.resolveLocal(VAL_TYPE.f64);
+      return [
+        ...rightCode,
+        op.local_set,
+        ...unsignedLEB128(rightValue),
+        ...emit(left.arguments[0], context),
+        ...context.resolveLocalFunc("_getBufferIndex"),
+        ...context.resolveLocalFunc("_normalizeBufferIndex"),
+        op.local_tee,
+        ...unsignedLEB128(index),
+        // STACK: [index]
+        op.i32_const,
+        ...signedLEB128(-1),
+        op.i32_ne,
+        op.local_tee,
+        ...unsignedLEB128(inBounds),
+        op.if,
+        VAL_TYPE.f64,
+        op.local_get,
+        ...unsignedLEB128(index),
+        op.f64_load,
+        0x03,
+        0x00,
+        op.else,
+        op.f64_const,
+        ...encodef64(0),
+        op.end,
+        // STACK: [current value from memory || 0]
 
-      // TODO: In lots of cases we don't care about the return value. In those
-      // cases we should try to find a way to omit the `get/drop` combo.
-      // Peephole optimization seems to be the conventional way to do this.
-      // https://en.wikipedia.org/wiki/Peephole_optimization
-      const get = [op.global_get, ...resolvedName];
-      const set = [op.global_set, ...resolvedName];
-      const { operator } = ast;
-      const index: number[] = [];
+        // Apply the mutation
+        op.local_get,
+        ...unsignedLEB128(rightValue),
+        ...mutationCode,
 
-      return emitAssignment(
-        { index, right, set, get, operator, loc: ast.loc },
-        context
-      );
+        op.local_tee,
+        ...unsignedLEB128(result),
+        // STACK: [new value]
+
+        op.local_get,
+        ...unsignedLEB128(inBounds),
+        op.if,
+        VAL_TYPE.EMPTY,
+        op.local_get,
+        ...unsignedLEB128(index),
+        op.local_get,
+        ...unsignedLEB128(result),
+        op.f64_store,
+        0x03,
+        0x00,
+        op.end,
+      ];
     }
     case "LOGICAL_EXPRESSION": {
       const left = emit(ast.left, context);
