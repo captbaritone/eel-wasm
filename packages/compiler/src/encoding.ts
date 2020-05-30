@@ -100,7 +100,6 @@ export const VAL_TYPE = {
   i64: 0x7e,
   f32: 0x7d,
   f64: 0x7c,
-  EMPTY: 0x40,
 } as const;
 
 export const MUTABILITY = {
@@ -110,7 +109,11 @@ export const MUTABILITY = {
 
 export const BLOCK = {
   void: 0x40,
-};
+  i32: 0x7f,
+  i64: 0x7e,
+  f32: 0x7d,
+  f64: 0x7c,
+} as const;
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 export const FUNCTION_TYPE = 0x60;

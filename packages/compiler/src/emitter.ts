@@ -10,13 +10,7 @@ import {
 } from "./encoding";
 import shims from "./shims";
 import { createUserError, createCompilerError } from "./errorUtils";
-import {
-  Ast,
-  CompilerContext,
-  AssignmentOperator,
-  SourceLocation,
-  AssignmentExpressionAstNode,
-} from "./types";
+import { Ast, CompilerContext, AssignmentExpressionAstNode } from "./types";
 import { localFuncMap } from "./wasmFunctions";
 import { flatten, arrayJoin } from "./arrayUtils";
 
@@ -27,7 +21,7 @@ function emitExpressionBlock(body: Ast[], context: CompilerContext) {
   return flatten(arrayJoin(statements, [op.drop]));
 }
 
-function emitWhile(expression: Ast, context: CompilerContext) {
+function emitWhile(expression: Ast, context: CompilerContext): number[] {
   const body = emit(expression, context);
   return [
     op.loop,
@@ -42,7 +36,11 @@ function emitWhile(expression: Ast, context: CompilerContext) {
   ];
 }
 
-function emitLoop(count: Ast, expression: Ast, context: CompilerContext) {
+function emitLoop(
+  count: Ast,
+  expression: Ast,
+  context: CompilerContext
+): number[] {
   const body = emit(expression, context);
   const localIndex = context.resolveLocal(VAL_TYPE.f64);
 
@@ -82,14 +80,14 @@ function emitConditional(
   consiquent: Ast,
   alternate: Ast,
   context: CompilerContext
-) {
+): number[] {
   // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
   // Is that an optimization that we might want as well?
   return [
     ...emit(test, context),
     ...IS_NOT_ZEROISH,
     op.if,
-    VAL_TYPE.f64, // Return type (f64)
+    BLOCK.f64, // Return type (f64)
     ...emit(consiquent, context),
     op.else,
     ...emit(alternate, context),
@@ -235,7 +233,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             op.i32_ne,
             // STACK: [in range]
             op.if,
-            VAL_TYPE.f64,
+            BLOCK.f64,
             op.local_get,
             ...unsignedLEB128(index),
             ...emitAddMemoryOffset(functionName),
@@ -396,7 +394,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           op.i32_lt_s,
           // STACK: [is the index out of range?]
           op.if,
-          VAL_TYPE.f64,
+          BLOCK.f64,
           op.f64_const,
           ...encodef64(0),
           op.else,
@@ -441,7 +439,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         op.local_tee,
         ...unsignedLEB128(inBounds),
         op.if,
-        VAL_TYPE.f64,
+        BLOCK.f64,
         op.local_get,
         ...unsignedLEB128(index),
         op.f64_load,
@@ -465,7 +463,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         op.local_get,
         ...unsignedLEB128(inBounds),
         op.if,
-        VAL_TYPE.EMPTY,
+        BLOCK.void,
         op.local_get,
         ...unsignedLEB128(index),
         op.local_get,
@@ -503,7 +501,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...left,
         ...comparison,
         op.if,
-        VAL_TYPE.f64,
+        BLOCK.f64,
         op.f64_const,
         ...encodef64(shortCircutValue),
         op.else,
