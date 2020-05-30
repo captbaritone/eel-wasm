@@ -159,6 +159,10 @@ const testCases: [string, string, number][] = [
   ["Negative buffer index gmegabuf", "g = (gmegabuf(-2) = 20);", 0],
   ["Negative buf index execs right hand side", "megabuf(-2) = (g = 10);", 10],
   ["Negative buf index +=", "g = megabuf(-2) += 10;", 10],
+  ["Negative buf index -=", "g = megabuf(-2) -= 10;", -10],
+  ["Negative buf index *=", "g = megabuf(-2) *= 10;", 0],
+  ["Negative buf index /=", "g = megabuf(-2) /= 10;", 0],
+  ["Negative buf index %=", "g = megabuf(-2) %= 10;", 0],
   ["Buff += mutates", "megabuf(100) += 10; g = megabuf(100)", 10],
 ];
 
