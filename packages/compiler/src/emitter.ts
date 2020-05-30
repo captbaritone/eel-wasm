@@ -362,6 +362,49 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         }
 
         const addOffset = emitAddMemoryOffset(bufferName);
+        if (operator === "=") {
+          // TODO: Move this to wasmFunctions once we know how to call functions
+          // from within functions (need to get the offset).
+          const unnormalizedIndex = context.resolveLocal(VAL_TYPE.i32);
+          const rightValue = context.resolveLocal(VAL_TYPE.f64);
+          return [
+            // Emit the right hand side unconditionally to ensure it always runs.
+            ...emit(ast.right, context),
+            op.local_set,
+            ...unsignedLEB128(rightValue),
+            ...emit(left.arguments[0], context),
+            ...context.resolveLocalFunc("_getBufferIndex"),
+            op.local_tee,
+            ...unsignedLEB128(unnormalizedIndex),
+            op.i32_const,
+            ...unsignedLEB128(0),
+            op.i32_lt_s,
+            // STACK: [is the index out of range?]
+            op.if,
+            VAL_TYPE.f64,
+            op.f64_const,
+            ...encodef64(0),
+            op.else,
+            op.local_get,
+            ...unsignedLEB128(unnormalizedIndex),
+            ...context.resolveLocalFunc("_normalizeBufferIndex"),
+            ...addOffset,
+            op.local_tee,
+            ...unsignedLEB128(localIndex),
+            // STACK: [buffer index]
+            op.local_get,
+            ...unsignedLEB128(rightValue),
+            // STACK: [buffer index, right]
+            op.f64_store,
+            0x03,
+            0x00,
+            // STACK: []
+            op.local_get,
+            ...unsignedLEB128(rightValue),
+            // STACK: [Right/Buffer value]
+            op.end,
+          ];
+        }
 
         const index = [
           ...emit(left.arguments[0], context),

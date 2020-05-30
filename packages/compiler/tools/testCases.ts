@@ -155,8 +155,9 @@ const testCases: [string, string, number][] = [
   ["EPSILON buffer indexes", "megabuf(9.99999) = 10; g = megabuf(10)", 10],
   ["+EPSILON & rounding -#s toward 0", "megabuf(-1) = 10; g = megabuf(0)", 10],
   ["Negative buffer index read as 0", "g = megabuf(-2);", 0],
-  // ["Negative buffer index", "g = (megabuf(-2) = 10);", 0],
-  // ["Negative buffer index", "g = (megabuf(10000000) = 10);", 0],
+  ["Negative buffer index", "g = (megabuf(-2) = 20);", 0],
+  ["Negative buffer index gmegabuf", "g = (gmegabuf(-2) = 20);", 0],
+  ["Negative buf index execs right hand side", "megabuf(-2) = (g = 10);", 10],
 ];
 
 export default testCases;
