@@ -116,12 +116,15 @@ export interface Shims extends Record<string, Function> {
   ceil(n: number): number;
 }
 
-export type FunctionDefinition = {
+export interface TypedFunction {
   args: number[];
-  returns: [number] | [];
+  returns: number[];
+}
+
+export interface FunctionDefinition extends TypedFunction {
   binary: number[];
   localVariables?: number[];
-};
+}
 
 export interface CompilerContext {
   resolveVar(name: string): number;

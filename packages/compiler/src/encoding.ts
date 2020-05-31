@@ -34,7 +34,7 @@ export const EXPORT_TYPE = {
   TABLE: 0x01,
   MEMORY: 0x02,
   GLOBAL: 0x03,
-};
+} as const;
 
 // TODO: Make the nameing of these consistent
 export const op = {

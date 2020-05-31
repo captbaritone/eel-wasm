@@ -1,7 +1,6 @@
 import { parse } from "./parser";
 import { emit } from "./emitter";
 import {
-  encodef64,
   encodeString,
   encodeVector,
   encodeSection,
@@ -17,7 +16,7 @@ import {
 } from "./encoding";
 import shims from "./shims";
 import { localFuncMap } from "./wasmFunctions";
-import { CompilerContext } from "./types";
+import { CompilerContext, TypedFunction } from "./types";
 
 class NamespaceResolver {
   _counter: number;
@@ -123,17 +122,35 @@ export function compileModule({
       return func;
     });
 
+  // Given a function definition, return a hashable string representation of its signature.
+  const getSignatureKey = (func: TypedFunction) => {
+    return [...func.args, "|", ...func.returns].join("-");
+  };
+
   // https://webassembly.github.io/spec/core/binary/modules.html#type-section
-  // TODO: Theoretically we could merge identiacal type definitions
-  const types = [...functionImports, ...localFuncs, ...moduleFuncs].map(
-    func => {
-      return [
-        FUNCTION_TYPE,
-        ...encodeVector(func.args),
-        ...encodeVector(func.returns),
-      ];
+  const types: number[][] = [];
+  const typeIndexByKey: Map<string, number> = new Map();
+  [...functionImports, ...localFuncs, ...moduleFuncs].forEach(func => {
+    const key = getSignatureKey(func);
+    if (typeIndexByKey.has(key)) {
+      return;
     }
-  );
+    types.push([
+      FUNCTION_TYPE,
+      ...encodeVector(func.args),
+      ...encodeVector(func.returns),
+    ]);
+    typeIndexByKey.set(key, types.length - 1);
+  });
+
+  function getTypeIndex(func: TypedFunction): number {
+    const key = getSignatureKey(func);
+    const typeIndex = typeIndexByKey.get(key);
+    if (typeIndex == null) {
+      throw new Error(`Failed to get a type index for key ${key}`);
+    }
+    return typeIndex;
+  }
 
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
   const imports = [
@@ -146,10 +163,11 @@ export function compileModule({
       ];
     }),
     ...functionImports.map((func, i) => {
+      const typeIndex = getTypeIndex(func);
       return [
         ...encodeString("imports"),
         ...encodeString(func.name),
-        ...[TYPE_IDX, i],
+        ...[TYPE_IDX, ...unsignedLEB128(typeIndex)],
       ];
     }),
   ];
@@ -158,9 +176,9 @@ export function compileModule({
   //
   // > Functions are referenced through function indices, starting with the smallest
   // > index not referencing a function import.
-  const functions = [...moduleFuncs, ...localFuncs].map((_, i) => {
-    const funcIndex = functionImports.length + i;
-    return [funcIndex];
+  const functions = [...localFuncs, ...moduleFuncs].map(func => {
+    const typeIndex = getTypeIndex(func);
+    return unsignedLEB128(typeIndex);
   });
 
   const memories = [
@@ -182,7 +200,11 @@ export function compileModule({
   // https://webassembly.github.io/spec/core/binary/modules.html#binary-exportsec
   const xports = [...moduleFuncs].map((func, i) => {
     const funcIndex = i + functionImports.length + localFuncs.length;
-    return [...encodeString(func.exportName), EXPORT_TYPE.FUNC, funcIndex];
+    return [
+      ...encodeString(func.exportName),
+      EXPORT_TYPE.FUNC,
+      ...unsignedLEB128(funcIndex),
+    ];
   });
 
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
