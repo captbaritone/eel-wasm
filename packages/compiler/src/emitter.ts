@@ -1,6 +1,5 @@
 import {
   op,
-  encodef64,
   unsignedLEB128,
   signedLEB128,
   VAL_TYPE,
@@ -28,8 +27,7 @@ function emitWhile(expression: Ast, context: CompilerContext): number[] {
     BLOCK.void, // void block type
     ...body,
     ...IS_NOT_ZEROISH,
-    op.br_if,
-    ...signedLEB128(0), // Return to the top of the loop
+    ...op.br_if(0), // Return to the top of the loop
     op.end,
     ...op.f64_const(0), // Implicitly return zero
   ];
@@ -60,10 +58,7 @@ function emitLoop(
     ...op.local_tee(localIndex),
     // Test if we've reached the end
     ...IS_NOT_ZEROISH,
-    op.br_if,
-    // TODO: Chasm has these as _signedLEB128_.
-    // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
-    ...unsignedLEB128(0), // Return to the top of the loop
+    ...op.br_if(0), // Return to the top of the loop
     op.end,
     ...op.f64_const(0), // Implicitly return zero
   ];

@@ -41,7 +41,7 @@ export const op = {
   block: 0x02,
   loop: 0x03,
   br: 0x0c,
-  br_if: 0x0d,
+  br_if: (i: number) => [0x0d, ...signedLEB128(i)],
   select: 0x1b,
   call: 0x10,
   drop: 0x1a,
