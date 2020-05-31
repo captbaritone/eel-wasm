@@ -83,9 +83,9 @@ export function compileModule({
     const context: CompilerContext = {
       resolveVar: name => {
         if (globalVariables.has(name)) {
-          return unsignedLEB128(externalVarsResolver.get(name));
+          return externalVarsResolver.get(name);
         }
-        return unsignedLEB128(userVarsResolver.get(name));
+        return userVarsResolver.get(name);
       },
       resolveLocal: type => {
         localVariables.push(type);
@@ -96,7 +96,7 @@ export function compileModule({
           return null;
         }
         const offset = localFuncResolver.get(name);
-        return [op.call, ...unsignedLEB128(offset)];
+        return op.call(offset);
       },
       rawSource: code,
     };

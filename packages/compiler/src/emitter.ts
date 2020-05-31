@@ -226,10 +226,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           const resolvedName = context.resolveVar(variableIdentifier.value);
           return [
             ...emit(ast.arguments[1], context),
-            op.global_set,
-            ...resolvedName,
-            op.global_get,
-            ...resolvedName,
+            ...op.global_set(resolvedName),
+            ...op.global_get(resolvedName),
           ];
         // Function calls which can be linlined
         case "abs":
@@ -303,8 +301,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         // cases we should try to find a way to omit the `get/drop` combo.
         // Peephole optimization seems to be the conventional way to do this.
         // https://en.wikipedia.org/wiki/Peephole_optimization
-        const get = [op.global_get, ...resolvedName];
-        const set = [op.global_set, ...resolvedName];
+        const get = op.global_get(resolvedName);
+        const set = op.global_set(resolvedName);
 
         // `=` is a special case in that it does not need the original value.
         if (mutationCode === null) {
@@ -478,7 +476,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       // TODO: It's a bit odd that not every IDENTIFIER node gets emitted. In
       // function calls and assignments we just peek at the name and never emit
       // it.
-      return [op.global_get, ...context.resolveVar(variableName)];
+      return op.global_get(context.resolveVar(variableName));
     case "NUMBER_LITERAL":
       return op.f64_const(ast.value);
     default:

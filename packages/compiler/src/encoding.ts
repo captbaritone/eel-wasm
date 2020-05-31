@@ -38,12 +38,10 @@ export const EXPORT_TYPE = {
 
 // TODO: Make the nameing of these consistent
 export const op = {
-  block: 0x02,
   loop: (blockType: BlockType) => [0x03, blockType],
-  br: 0x0c,
   br_if: (i: number) => [0x0d, ...signedLEB128(i)],
   select: 0x1b,
-  call: 0x10,
+  call: (i: number) => [0x10, ...unsignedLEB128(i)],
   drop: 0x1a,
   f64_load: 0x2b,
   f64_store: 0x39,
@@ -90,8 +88,8 @@ export const op = {
   local_get: (i: number) => [0x20, ...signedLEB128(i)],
   local_set: (i: number) => [0x21, ...signedLEB128(i)],
   local_tee: (i: number) => [0x22, ...signedLEB128(i)],
-  global_get: 0x23,
-  global_set: 0x24,
+  global_get: (i: number) => [0x23, ...signedLEB128(i)],
+  global_set: (i: number) => [0x24, ...signedLEB128(i)],
 };
 
 // https://webassembly.github.io/spec/core/binary/instructions.html#binary-blocktype
