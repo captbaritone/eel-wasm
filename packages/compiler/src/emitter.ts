@@ -31,8 +31,7 @@ function emitWhile(expression: Ast, context: CompilerContext): number[] {
     op.br_if,
     ...signedLEB128(0), // Return to the top of the loop
     op.end,
-    op.f64_const,
-    ...encodef64(0), // Implicitly return zero
+    ...op.f64_const(0), // Implicitly return zero
   ];
 }
 
@@ -58,8 +57,7 @@ function emitLoop(
     // Decrement the count
     op.local_get,
     ...unsignedLEB128(localIndex),
-    op.f64_const,
-    ...encodef64(1),
+    ...op.f64_const(1),
     op.f64_sub,
     op.local_tee,
     ...unsignedLEB128(localIndex),
@@ -70,8 +68,7 @@ function emitLoop(
     // https://github.com/ColinEberhardt/chasm/blob/c95459af54440661dd69415501d4d52e149c3985/src/emitter.ts#L173
     ...unsignedLEB128(0), // Return to the top of the loop
     op.end,
-    op.f64_const,
-    ...encodef64(0), // Implicitly return zero
+    ...op.f64_const(0), // Implicitly return zero
   ];
 }
 
@@ -100,12 +97,7 @@ function emitConditional(
 function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
   switch (name) {
     case "gmegabuf":
-      return [
-        op.i32_const,
-        // TODO: Is this the right encoding for an int32?
-        ...unsignedLEB128(1000000),
-        op.i32_add,
-      ];
+      return [...op.i32_const(1000000), op.i32_add];
     case "megabuf":
       return [];
   }
@@ -228,8 +220,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             ...context.resolveLocalFunc("_getBufferIndex"),
             op.local_tee,
             ...unsignedLEB128(index),
-            op.i32_const,
-            ...signedLEB128(-1),
+            ...op.i32_const(-1),
             op.i32_ne,
             // STACK: [in range]
             op.if,
@@ -241,8 +232,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             0x03, // Align
             0x00, // Offset
             op.else,
-            op.f64_const,
-            ...encodef64(0),
+            ...op.f64_const(0),
             op.end,
           ];
         case "assign":
@@ -389,14 +379,12 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ...context.resolveLocalFunc("_getBufferIndex"),
           op.local_tee,
           ...unsignedLEB128(unnormalizedIndex),
-          op.i32_const,
-          ...unsignedLEB128(0),
+          ...op.i32_const(0),
           op.i32_lt_s,
           // STACK: [is the index out of range?]
           op.if,
           BLOCK.f64,
-          op.f64_const,
-          ...encodef64(0),
+          ...op.f64_const(0),
           op.else,
           op.local_get,
           ...unsignedLEB128(unnormalizedIndex),
@@ -433,8 +421,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         op.local_tee,
         ...unsignedLEB128(index),
         // STACK: [index]
-        op.i32_const,
-        ...signedLEB128(-1),
+        ...op.i32_const(-1),
         op.i32_ne,
         op.local_tee,
         ...unsignedLEB128(inBounds),
@@ -446,8 +433,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         0x03,
         0x00,
         op.else,
-        op.f64_const,
-        ...encodef64(0),
+        ...op.f64_const(0),
         op.end,
         // STACK: [current value from memory || 0]
 
@@ -502,8 +488,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...comparison,
         op.if,
         BLOCK.f64,
-        op.f64_const,
-        ...encodef64(shortCircutValue),
+        ...op.f64_const(shortCircutValue),
         op.else,
         ...right,
         ...IS_NOT_ZEROISH,
@@ -536,7 +521,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       // it.
       return [op.global_get, ...context.resolveVar(variableName)];
     case "NUMBER_LITERAL":
-      return [op.f64_const, ...encodef64(ast.value)];
+      return op.f64_const(ast.value);
     default:
       throw createCompilerError(
         // @ts-ignore This runtime check is here because the caller may not be type-checked

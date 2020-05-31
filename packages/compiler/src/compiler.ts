@@ -174,8 +174,7 @@ export function compileModule({
     return [
       VAL_TYPE.f64, // All eel values are float 64s
       MUTABILITY.var, // All globals are mutable
-      op.f64_const, // Initialize the global to zero
-      ...encodef64(0),
+      ...op.f64_const(0), // Initialize the global to zero
       op.end, // All done
     ];
   });

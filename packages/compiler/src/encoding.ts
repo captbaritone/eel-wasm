@@ -49,7 +49,7 @@ export const op = {
   f64_store: 0x39,
   i32_and: 0x71,
   i32_or: 0x72,
-  i32_const: 0x41,
+  i32_const: (i: number) => [0x41, ...signedLEB128(i)],
   i32_ne: 0x47,
   i32_add: 0x6a,
   i32_sub: 0x6b,
@@ -64,7 +64,7 @@ export const op = {
   i64_and: 0x83,
   i64_or: 0x84,
   i64_rem_s: 0x81,
-  f64_const: 0x44,
+  f64_const: (i: number) => [0x44, ...encodef64(i)],
   f64_ne: 0x62,
   f64_neg: 0x9a,
   f64_add: 0xa0,
@@ -123,16 +123,14 @@ export const TYPE_IDX = 0x00;
 
 // Takes an f64 on the stack and leaves an int32 boolean representing if it's
 // within epsilon of zero.
-export const IS_ZEROISH = [
+export const IS_ZEROISH: number[] = [
   op.f64_abs,
-  op.f64_const,
-  ...encodef64(EPSILON),
+  ...op.f64_const(EPSILON),
   op.f64_lt,
 ];
-export const IS_NOT_ZEROISH = [
+export const IS_NOT_ZEROISH: number[] = [
   op.f64_abs,
-  op.f64_const,
-  ...encodef64(EPSILON),
+  ...op.f64_const(EPSILON),
   op.f64_gt,
 ];
 

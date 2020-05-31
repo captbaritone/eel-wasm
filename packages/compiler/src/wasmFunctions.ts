@@ -32,9 +32,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...unsignedLEB128(1),
       ...IS_NOT_ZEROISH,
       op.i32_or,
-      op.i32_const,
-      // TODO: Is this the right encoding for an int32?
-      ...unsignedLEB128(0),
+      ...op.i32_const(0),
       op.i32_ne,
       op.f64_convert_i32_s,
     ],
@@ -50,9 +48,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...unsignedLEB128(1),
       ...IS_NOT_ZEROISH,
       op.i32_and,
-      op.i32_const,
-      // TODO: Is this the right encoding for an int32?
-      ...unsignedLEB128(0),
+      ...op.i32_const(0),
       op.i32_ne,
       op.f64_convert_i32_s,
     ],
@@ -61,15 +57,13 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     binary: [
-      op.f64_const,
-      ...encodef64(0),
+      ...op.f64_const(0),
       op.local_get,
       ...unsignedLEB128(0),
       op.f64_lt,
       op.local_get,
       ...unsignedLEB128(0),
-      op.f64_const,
-      ...encodef64(0),
+      ...op.f64_const(0),
       op.f64_lt,
       op.i32_sub,
       op.f64_convert_i32_s,
@@ -137,8 +131,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       VAL_TYPE.i32, // 2: $truncated
     ],
     binary: [
-      op.f64_const,
-      ...encodef64(EPSILON),
+      ...op.f64_const(EPSILON),
       op.local_get,
       ...unsignedLEB128(0), // $index
       op.f64_add,
@@ -151,22 +144,19 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       op.local_set,
       ...unsignedLEB128(2), // $truncated
       // STACK: []
-      op.i32_const,
-      ...signedLEB128(-1),
+      ...op.i32_const(-1),
       op.local_get,
       ...unsignedLEB128(2), // $truncated
       // STACK: [-1, $truncated]
       op.local_get,
       ...unsignedLEB128(2), // $truncated
-      op.i32_const,
-      ...unsignedLEB128(0),
+      ...op.i32_const(0),
       // STACK: [-1, $truncated, $truncated, 0]
       op.i32_lt_s,
       // STACK: [-1, $truncated, <is index less than 0>]
       op.local_get,
       ...unsignedLEB128(2), // $truncated
-      op.i32_const,
-      ...unsignedLEB128(8388608), // MAX_INDEX
+      ...op.i32_const(8388608),
       op.i32_gt_s,
       // STACK: [-1, $truncated, <is index less than 0>, <is index more than MAX>]
       op.i32_or,
