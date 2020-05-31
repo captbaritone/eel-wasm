@@ -13,23 +13,15 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   sqr: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
-      op.local_get,
-      ...unsignedLEB128(0),
-      op.f64_mul,
-    ],
+    binary: [...op.local_get(0), ...op.local_get(0), op.f64_mul],
   },
   bor: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
+      ...op.local_get(0),
       ...IS_NOT_ZEROISH,
-      op.local_get,
-      ...unsignedLEB128(1),
+      ...op.local_get(1),
       ...IS_NOT_ZEROISH,
       op.i32_or,
       ...op.i32_const(0),
@@ -41,11 +33,9 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
+      ...op.local_get(0),
       ...IS_NOT_ZEROISH,
-      op.local_get,
-      ...unsignedLEB128(1),
+      ...op.local_get(1),
       ...IS_NOT_ZEROISH,
       op.i32_and,
       ...op.i32_const(0),
@@ -58,11 +48,9 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     returns: [VAL_TYPE.f64],
     binary: [
       ...op.f64_const(0),
-      op.local_get,
-      ...unsignedLEB128(0),
+      ...op.local_get(0),
       op.f64_lt,
-      op.local_get,
-      ...unsignedLEB128(0),
+      ...op.local_get(0),
       ...op.f64_const(0),
       op.f64_lt,
       op.i32_sub,
@@ -74,11 +62,9 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     returns: [VAL_TYPE.f64],
     // TODO: Simplify all this type coersion
     binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
+      ...op.local_get(0),
       op.i64_trunc_s_f64,
-      op.local_get,
-      ...unsignedLEB128(1),
+      ...op.local_get(1),
       op.i64_trunc_s_f64,
       op.i64_rem_s,
       op.f64_convert_s_i64,
@@ -88,11 +74,9 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
+      ...op.local_get(0),
       op.i64_trunc_s_f64,
-      op.local_get,
-      ...unsignedLEB128(1),
+      ...op.local_get(1),
       op.i64_trunc_s_f64,
       op.i64_or,
       op.f64_convert_s_i64,
@@ -102,11 +86,9 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     binary: [
-      op.local_get,
-      ...unsignedLEB128(0),
+      ...op.local_get(0),
       op.i64_trunc_s_f64,
-      op.local_get,
-      ...unsignedLEB128(1),
+      ...op.local_get(1),
       op.i64_trunc_s_f64,
       op.i64_and,
       op.f64_convert_s_i64,
@@ -132,29 +114,24 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     ],
     binary: [
       ...op.f64_const(EPSILON),
-      op.local_get,
-      ...unsignedLEB128(0), // $index
+      ...op.local_get(0),
       op.f64_add,
       // STACK: [$i + EPSILON]
       ...op.local_tee(1), // $with_near
 
       op.i32_trunc_s_f64,
       // TODO We could probably make this a tee and get rid of the next get if we swap the final condition
-      op.local_set,
-      ...unsignedLEB128(2), // $truncated
+      ...op.local_set(2),
       // STACK: []
       ...op.i32_const(-1),
-      op.local_get,
-      ...unsignedLEB128(2), // $truncated
+      ...op.local_get(2),
       // STACK: [-1, $truncated]
-      op.local_get,
-      ...unsignedLEB128(2), // $truncated
+      ...op.local_get(2), // $truncated
       ...op.i32_const(0),
       // STACK: [-1, $truncated, $truncated, 0]
       op.i32_lt_s,
       // STACK: [-1, $truncated, <is index less than 0>]
-      op.local_get,
-      ...unsignedLEB128(2), // $truncated
+      ...op.local_get(2), // $truncated
       ...op.i32_const(8388608),
       op.i32_gt_s,
       // STACK: [-1, $truncated, <is index less than 0>, <is index more than MAX>]
