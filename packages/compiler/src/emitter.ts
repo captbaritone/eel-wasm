@@ -206,9 +206,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             ...op.if(BLOCK.f64),
             ...op.local_get(index),
             ...emitAddMemoryOffset(functionName),
-            op.f64_load,
-            0x03, // Align
-            0x00, // Offset
+            ...op.f64_load(0x03, 0x00),
             op.else,
             ...op.f64_const(0),
             op.end,
@@ -365,9 +363,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           // STACK: [buffer index]
           ...op.local_get(rightValue),
           // STACK: [buffer index, right]
-          op.f64_store,
-          0x03,
-          0x00,
+          ...op.f64_store(0x03, 0x00),
           // STACK: []
           ...op.local_get(rightValue),
           // STACK: [Right/Buffer value]
@@ -393,9 +389,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...op.local_tee(inBounds),
         ...op.if(BLOCK.f64),
         ...op.local_get(index),
-        op.f64_load,
-        0x03,
-        0x00,
+        ...op.f64_load(0x03, 0x00),
         op.else,
         ...op.f64_const(0),
         op.end,
@@ -412,9 +406,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...op.if(BLOCK.void),
         ...op.local_get(index),
         ...op.local_get(result),
-        op.f64_store,
-        0x03,
-        0x00,
+        ...op.f64_store(0x03, 0x00),
         op.end,
       ];
     }

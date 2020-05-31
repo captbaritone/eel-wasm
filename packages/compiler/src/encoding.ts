@@ -36,60 +36,129 @@ export const EXPORT_TYPE = {
   GLOBAL: 0x03,
 } as const;
 
-// TODO: Make the nameing of these consistent
 export const op = {
+  /*
+   * Control Instructions
+   * https://webassembly.github.io/spec/core/binary/instructions.html#control-instructions
+   */
+  // unreachable: 0x00,
+  // nop: 0x01,
+  // block: 0x02,
   loop: (blockType: BlockType) => [0x03, blockType],
-  br_if: (i: number) => [0x0d, ...signedLEB128(i)],
-  select: 0x1b,
+  if: (retType: BlockType) => [0x04, retType],
+  else: 0x05,
+  end: 0x0b,
+  // br: (i: number) => [0x0c, ...signedLEB128(i)],
+  br_if: (i: number) => [0x0d, ...unsignedLEB128(i)],
+  // br_table: 0x0d,
+  // return: 0x0f,
   call: (i: number) => [0x10, ...unsignedLEB128(i)],
+  // call_indirect: 0x11,
+
+  /*
+   * Parametric Instructions
+   * https://webassembly.github.io/spec/core/binary/instructions.html#parametric-instructions
+   */
   drop: 0x1a,
-  f64_load: 0x2b,
-  f64_store: 0x39,
-  i32_and: 0x71,
-  i32_or: 0x72,
+  select: 0x1b,
+
+  /*
+   * Variable Instructions
+   * https://webassembly.github.io/spec/core/binary/instructions.html#variable-instructions
+   */
+  local_get: (i: number) => [0x20, ...unsignedLEB128(i)],
+  local_set: (i: number) => [0x21, ...unsignedLEB128(i)],
+  local_tee: (i: number) => [0x22, ...unsignedLEB128(i)],
+  global_get: (i: number) => [0x23, ...unsignedLEB128(i)],
+  global_set: (i: number) => [0x24, ...unsignedLEB128(i)],
+
+  /*
+   * Memory Instructions
+   * https://webassembly.github.io/spec/core/binary/instructions.html#memory-instructions
+   */
+  f64_load: (align: number, offset: number) => [
+    0x2b,
+    ...unsignedLEB128(align),
+    ...unsignedLEB128(offset),
+  ],
+  f64_store: (align: number, offset: number) => [
+    0x39,
+    ...unsignedLEB128(align),
+    ...unsignedLEB128(offset),
+  ],
+
+  /*
+   * Numeric Instructions
+   * https://webassembly.github.io/spec/core/binary/instructions.html#numeric-instructions
+   */
   i32_const: (i: number) => [0x41, ...signedLEB128(i)],
+  // i64_const: 0x42,
+  // f32_const: 0x43,
+  f64_const: (i: number) => [0x44, ...encodef64(i)],
+
+  i32_eqz: 0x45,
+  // i32_eq: 0x46,
   i32_ne: 0x47,
+  i32_lt_s: 0x48,
+  // i32_lt_u: 0x49,
+  i32_gt_s: 0x4a,
+  // i32_gt_u: 0x4b,
+  i32_le_s: 0x4c,
+  i32_le_u: 0x4d,
+  i32_ge_s: 0x4e,
+  // i32_ge_u: 0x4f,
+
+  // [0x50...0x5a] i64
+  // [0x5b...0x60] f32
+
+  f64_eq: 0x61,
+  f64_ne: 0x62,
+  f64_lt: 0x63,
+  f64_gt: 0x64,
+  f64_le: 0x65,
+  f64_ge: 0x66,
+
+  // i32_clz: 0x67,
+  // i32_ctz: 0x68,
+  // i32_popcnt: 0x69,
   i32_add: 0x6a,
   i32_sub: 0x6b,
-  i32_eqz: 0x45,
-  i32_lt_s: 0x48,
-  i32_gt_s: 0x4a,
-  i32_le_s: 0x4c,
-  i32_ge_s: 0x4e,
-  i32_ge_u: 0x5a,
-  i32_trunc_s_f64: 0xaa,
-  i32_trunc_u_f64: 0xab,
+  // i32_mul: 0x6c,
+  // i32_div_s: 0x6d,
+  // i32_div_u: 0x6e,
+  // i32_rem_s: 0x6f,
+  // i32_rem_u: 0x70,
+  i32_and: 0x71,
+  i32_or: 0x72,
+  // [0x73...0x78] More i32
+
+  // [0x79...0x8a] More i64
+  i64_rem_s: 0x81,
   i64_and: 0x83,
   i64_or: 0x84,
-  i64_rem_s: 0x81,
-  f64_const: (i: number) => [0x44, ...encodef64(i)],
-  f64_ne: 0x62,
+
+  // [0x8b...0x98] More f32
+
+  f64_abs: 0x99,
   f64_neg: 0x9a,
+  // f64_ceil: 0x9b,
+  f64_floor: 0x9c,
+  // f64_trunc: 0x9d,
+  // f64_nearest: 0x9e,
+  f64_sqrt: 0x9f,
   f64_add: 0xa0,
   f64_sub: 0xa1,
   f64_mul: 0xa2,
   f64_div: 0xa3,
-  f64_abs: 0x99,
-  f64_sqrt: 0x9f,
-  f64_floor: 0x9c,
   f64_min: 0xa4,
   f64_max: 0xa5,
-  f64_gt: 0x64,
-  f64_eq: 0x61,
-  f64_lt: 0x63,
-  f64_le: 0x65,
-  f64_ge: 0x66,
+  // f64_copysign: 0xa6,
+
+  i32_trunc_f64_s: 0xaa,
+  // i32_trunc_f64_u: 0xab,
   i64_trunc_s_f64: 0xb0,
-  f64_convert_s_i64: 0xb9,
+  f64_convert_i64_s: 0xb9,
   f64_convert_i32_s: 0xb7,
-  if: (retType: BlockType) => [0x04, retType],
-  else: 0x05,
-  end: 0x0b,
-  local_get: (i: number) => [0x20, ...signedLEB128(i)],
-  local_set: (i: number) => [0x21, ...signedLEB128(i)],
-  local_tee: (i: number) => [0x22, ...signedLEB128(i)],
-  global_get: (i: number) => [0x23, ...signedLEB128(i)],
-  global_set: (i: number) => [0x24, ...signedLEB128(i)],
 };
 
 // https://webassembly.github.io/spec/core/binary/instructions.html#binary-blocktype

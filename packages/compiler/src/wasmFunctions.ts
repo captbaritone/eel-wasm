@@ -67,7 +67,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...op.local_get(1),
       op.i64_trunc_s_f64,
       op.i64_rem_s,
-      op.f64_convert_s_i64,
+      op.f64_convert_i64_s,
     ],
   },
   bitwiseOr: {
@@ -79,7 +79,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...op.local_get(1),
       op.i64_trunc_s_f64,
       op.i64_or,
-      op.f64_convert_s_i64,
+      op.f64_convert_i64_s,
     ],
   },
   bitwiseAnd: {
@@ -91,7 +91,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...op.local_get(1),
       op.i64_trunc_s_f64,
       op.i64_and,
-      op.f64_convert_s_i64,
+      op.f64_convert_i64_s,
     ],
   },
   // Takes a float buffer index and converts it to an int. Values out of range
@@ -119,7 +119,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       // STACK: [$i + EPSILON]
       ...op.local_tee(1), // $with_near
 
-      op.i32_trunc_s_f64,
+      op.i32_trunc_f64_s,
       // TODO We could probably make this a tee and get rid of the next get if we swap the final condition
       ...op.local_set(2),
       // STACK: []
