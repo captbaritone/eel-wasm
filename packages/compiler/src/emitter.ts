@@ -1,12 +1,4 @@
-import {
-  op,
-  unsignedLEB128,
-  signedLEB128,
-  VAL_TYPE,
-  BLOCK,
-  IS_ZEROISH,
-  IS_NOT_ZEROISH,
-} from "./encoding";
+import { op, VAL_TYPE, BLOCK, IS_ZEROISH, IS_NOT_ZEROISH } from "./encoding";
 import shims from "./shims";
 import { createUserError, createCompilerError } from "./errorUtils";
 import { Ast, CompilerContext, AssignmentExpressionAstNode } from "./types";
@@ -23,8 +15,7 @@ function emitExpressionBlock(body: Ast[], context: CompilerContext) {
 function emitWhile(expression: Ast, context: CompilerContext): number[] {
   const body = emit(expression, context);
   return [
-    op.loop,
-    BLOCK.void, // void block type
+    ...op.loop(BLOCK.void),
     ...body,
     ...IS_NOT_ZEROISH,
     ...op.br_if(0), // Return to the top of the loop
@@ -46,8 +37,7 @@ function emitLoop(
     // Assign the count to a variable
     ...emit(count, context),
     ...op.local_set(localIndex),
-    op.loop,
-    BLOCK.void, // void block type
+    ...op.loop(BLOCK.void),
     // Run the body
     ...body,
     op.drop,
@@ -75,8 +65,7 @@ function emitConditional(
   return [
     ...emit(test, context),
     ...IS_NOT_ZEROISH,
-    op.if,
-    BLOCK.f64, // Return type (f64)
+    ...op.if(BLOCK.f64),
     ...emit(consiquent, context),
     op.else,
     ...emit(alternate, context),
@@ -214,8 +203,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             ...op.i32_const(-1),
             op.i32_ne,
             // STACK: [in range]
-            op.if,
-            BLOCK.f64,
+            ...op.if(BLOCK.f64),
             ...op.local_get(index),
             ...emitAddMemoryOffset(functionName),
             op.f64_load,
@@ -370,8 +358,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ...op.i32_const(0),
           op.i32_lt_s,
           // STACK: [is the index out of range?]
-          op.if,
-          BLOCK.f64,
+          ...op.if(BLOCK.f64),
           ...op.f64_const(0),
           op.else,
           ...op.local_get(unnormalizedIndex),
@@ -406,8 +393,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...op.i32_const(-1),
         op.i32_ne,
         ...op.local_tee(inBounds),
-        op.if,
-        BLOCK.f64,
+        ...op.if(BLOCK.f64),
         ...op.local_get(index),
         op.f64_load,
         0x03,
@@ -425,8 +411,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         // STACK: [new value]
 
         ...op.local_get(inBounds),
-        op.if,
-        BLOCK.void,
+        ...op.if(BLOCK.void),
         ...op.local_get(index),
         ...op.local_get(result),
         op.f64_store,
@@ -461,8 +446,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       return [
         ...left,
         ...comparison,
-        op.if,
-        BLOCK.f64,
+        ...op.if(BLOCK.f64),
         ...op.f64_const(shortCircutValue),
         op.else,
         ...right,

@@ -39,7 +39,7 @@ export const EXPORT_TYPE = {
 // TODO: Make the nameing of these consistent
 export const op = {
   block: 0x02,
-  loop: 0x03,
+  loop: (blockType: BlockType) => [0x03, blockType],
   br: 0x0c,
   br_if: (i: number) => [0x0d, ...signedLEB128(i)],
   select: 0x1b,
@@ -84,7 +84,7 @@ export const op = {
   i64_trunc_s_f64: 0xb0,
   f64_convert_s_i64: 0xb9,
   f64_convert_i32_s: 0xb7,
-  if: 0x04,
+  if: (retType: BlockType) => [0x04, retType],
   else: 0x05,
   end: 0x0b,
   local_get: (i: number) => [0x20, ...signedLEB128(i)],
@@ -114,6 +114,8 @@ export const BLOCK = {
   f32: 0x7d,
   f64: 0x7c,
 } as const;
+type BlockKeys = keyof typeof BLOCK;
+export type BlockType = typeof BLOCK[BlockKeys];
 
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 export const FUNCTION_TYPE = 0x60;
