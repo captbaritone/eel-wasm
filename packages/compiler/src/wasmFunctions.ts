@@ -136,8 +136,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...unsignedLEB128(0), // $index
       op.f64_add,
       // STACK: [$i + EPSILON]
-      op.local_tee,
-      ...unsignedLEB128(1), // $with_near
+      ...op.local_tee(1), // $with_near
 
       op.i32_trunc_s_f64,
       // TODO We could probably make this a tee and get rid of the next get if we swap the final condition

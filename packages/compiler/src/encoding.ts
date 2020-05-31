@@ -89,7 +89,7 @@ export const op = {
   end: 0x0b,
   local_get: 0x20,
   local_set: 0x21,
-  local_tee: 0x22,
+  local_tee: (i: number) => [0x22, ...signedLEB128(i)],
   global_get: 0x23,
   global_set: 0x24,
 };

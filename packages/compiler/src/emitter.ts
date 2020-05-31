@@ -59,8 +59,7 @@ function emitLoop(
     ...unsignedLEB128(localIndex),
     ...op.f64_const(1),
     op.f64_sub,
-    op.local_tee,
-    ...unsignedLEB128(localIndex),
+    ...op.local_tee(localIndex),
     // Test if we've reached the end
     ...IS_NOT_ZEROISH,
     op.br_if,
@@ -218,8 +217,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           return [
             ...emit(ast.arguments[0], context),
             ...context.resolveLocalFunc("_getBufferIndex"),
-            op.local_tee,
-            ...unsignedLEB128(index),
+            ...op.local_tee(index),
             ...op.i32_const(-1),
             op.i32_ne,
             // STACK: [in range]
@@ -377,8 +375,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ...unsignedLEB128(rightValue),
           ...emit(left.arguments[0], context),
           ...context.resolveLocalFunc("_getBufferIndex"),
-          op.local_tee,
-          ...unsignedLEB128(unnormalizedIndex),
+          ...op.local_tee(unnormalizedIndex),
           ...op.i32_const(0),
           op.i32_lt_s,
           // STACK: [is the index out of range?]
@@ -389,8 +386,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           op.local_get,
           ...unsignedLEB128(unnormalizedIndex),
           ...addOffset,
-          op.local_tee,
-          ...unsignedLEB128(localIndex),
+          ...op.local_tee(localIndex),
           // STACK: [buffer index]
           op.local_get,
           ...unsignedLEB128(rightValue),
@@ -418,13 +414,11 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...unsignedLEB128(rightValue),
         ...emit(left.arguments[0], context),
         ...context.resolveLocalFunc("_getBufferIndex"),
-        op.local_tee,
-        ...unsignedLEB128(index),
+        ...op.local_tee(index),
         // STACK: [index]
         ...op.i32_const(-1),
         op.i32_ne,
-        op.local_tee,
-        ...unsignedLEB128(inBounds),
+        ...op.local_tee(inBounds),
         op.if,
         BLOCK.f64,
         op.local_get,
@@ -442,8 +436,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...unsignedLEB128(rightValue),
         ...mutationCode,
 
-        op.local_tee,
-        ...unsignedLEB128(result),
+        ...op.local_tee(result),
         // STACK: [new value]
 
         op.local_get,
