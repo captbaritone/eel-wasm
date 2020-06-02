@@ -126,17 +126,20 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...op.i32_const(-1),
       ...op.local_get(2),
       // STACK: [-1, $truncated]
+      ...op.i32_const(8),
+      op.i32_mul,
+      // STACK: [-1, $truncated * 8]
       ...op.local_get(2), // $truncated
       ...op.i32_const(0),
-      // STACK: [-1, $truncated, $truncated, 0]
+      // STACK: [-1, $truncated * 8, $truncated, 0]
       op.i32_lt_s,
-      // STACK: [-1, $truncated, <is index less than 0>]
+      // STACK: [-1, $truncated * 8, <is index less than 0>]
       ...op.local_get(2), // $truncated
       ...op.i32_const(8388608),
       op.i32_gt_s,
-      // STACK: [-1, $truncated, <is index less than 0>, <is index more than MAX>]
+      // STACK: [-1, $truncated * 8, <is index less than 0>, <is index more than MAX>]
       op.i32_or,
-      // STACK: [-1, $truncated, <is index out of range>]
+      // STACK: [-1, $truncated * 8, <is index out of range>]
       op.select,
     ],
   },

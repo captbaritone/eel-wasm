@@ -164,6 +164,22 @@ const testCases: [string, string, number][] = [
   ["Negative buf index /=", "g = megabuf(-2) /= 10;", 0],
   ["Negative buf index %=", "g = megabuf(-2) %= 10;", 0],
   ["Buff += mutates", "megabuf(100) += 10; g = megabuf(100)", 10],
+  ["Buffers don't collide", "megabuf(100) = 10; g = gmegabuf(100)", 0],
+  [
+    "gmegabuf does not write megabuf",
+    "i = 100; loop(10000,gmegabuf(i) = 10; i += 1); g = megabuf(100)",
+    0,
+  ],
+  [
+    "megabuf does not write gmegabuf",
+    "i = 100; loop(10000,megabuf(i) = 10; i += 1); g = gmegabuf(100)",
+    0,
+  ],
+  [
+    "Adjacent buf indicies don't collide",
+    "megabuf(99) = 10; megabuf(100) = 1; g = megabuf(99)",
+    10,
+  ],
 ];
 
 export default testCases;

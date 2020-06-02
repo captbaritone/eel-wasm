@@ -78,7 +78,7 @@ function emitConditional(
 function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
   switch (name) {
     case "gmegabuf":
-      return [...op.i32_const(1000000), op.i32_add];
+      return [...op.i32_const(1000000 * 8), op.i32_add];
     case "megabuf":
       return [];
   }
