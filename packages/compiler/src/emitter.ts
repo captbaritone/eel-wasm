@@ -389,6 +389,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...op.local_tee(inBounds),
         ...op.if(BLOCK.f64),
         ...op.local_get(index),
+        ...addOffset,
         ...op.f64_load(0x03, 0x00),
         op.else,
         ...op.f64_const(0),
