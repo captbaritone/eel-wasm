@@ -75,12 +75,13 @@ function emitConditional(
 
 // There are two sections of memory. This function emits code to add the correct
 // offset to an i32 index already on the stack.
-function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number[] {
+function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number {
   switch (name) {
     case "gmegabuf":
-      return [...op.i32_const(1000000 * 8), op.i32_add];
+      // TODO: Ensure this number is actually correct.
+      return 1000000 * 8;
     case "megabuf":
-      return [];
+      return 0;
   }
 }
 
@@ -205,8 +206,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             // STACK: [in range]
             ...op.if(BLOCK.f64),
             ...op.local_get(index),
-            ...emitAddMemoryOffset(functionName),
-            ...op.f64_load(3, 0),
+            ...op.f64_load(3, emitAddMemoryOffset(functionName)),
             op.else,
             ...op.f64_const(0),
             op.end,
@@ -358,12 +358,11 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ...op.f64_const(0),
           op.else,
           ...op.local_get(unnormalizedIndex),
-          ...addOffset,
           ...op.local_tee(localIndex),
           // STACK: [buffer index]
           ...op.local_get(rightValue),
           // STACK: [buffer index, right]
-          ...op.f64_store(3, 0),
+          ...op.f64_store(3, addOffset),
           // STACK: []
           ...op.local_get(rightValue),
           // STACK: [Right/Buffer value]
@@ -389,8 +388,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...op.local_tee(inBounds),
         ...op.if(BLOCK.f64),
         ...op.local_get(index),
-        ...addOffset,
-        ...op.f64_load(3, 0),
+        ...op.f64_load(3, addOffset),
         op.else,
         ...op.f64_const(0),
         op.end,
@@ -407,7 +405,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...op.if(BLOCK.void),
         ...op.local_get(index),
         ...op.local_get(result),
-        ...op.f64_store(3, 0),
+        ...op.f64_store(3, addOffset),
         op.end,
       ];
     }
