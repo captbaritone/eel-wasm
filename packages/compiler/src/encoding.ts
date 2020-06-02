@@ -36,6 +36,8 @@ export const EXPORT_TYPE = {
   GLOBAL: 0x03,
 } as const;
 
+type Align = 1 | 2 | 3;
+
 export const op = {
   /*
    * Control Instructions
@@ -76,12 +78,12 @@ export const op = {
    * Memory Instructions
    * https://webassembly.github.io/spec/core/binary/instructions.html#memory-instructions
    */
-  f64_load: (align: number, offset: number) => [
+  f64_load: (align: Align, offset: number) => [
     0x2b,
     ...unsignedLEB128(align),
     ...unsignedLEB128(offset),
   ],
-  f64_store: (align: number, offset: number) => [
+  f64_store: (align: Align, offset: number) => [
     0x39,
     ...unsignedLEB128(align),
     ...unsignedLEB128(offset),
@@ -123,7 +125,7 @@ export const op = {
   // i32_popcnt: 0x69,
   i32_add: 0x6a,
   i32_sub: 0x6b,
-  // i32_mul: 0x6c,
+  i32_mul: 0x6c,
   // i32_div_s: 0x6d,
   // i32_div_u: 0x6e,
   // i32_rem_s: 0x6f,
