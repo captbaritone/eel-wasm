@@ -1,6 +1,9 @@
 import * as ieee754 from "./ieee754";
 import { flattenTwice } from "./arrayUtils";
 
+export const MAGIC = [0x00, 0x61, 0x73, 0x6d];
+export const WASM_VERSION = [0x01, 0x00, 0x00, 0x00];
+
 export const EPSILON = 0.00001;
 
 // An intial attempt to construct a Wasm binary by hand.
@@ -189,6 +192,7 @@ export type BlockType = typeof BLOCK[BlockKeys];
 // http://webassembly.github.io/spec/core/binary/types.html#function-types
 export const FUNCTION_TYPE = 0x60;
 // I think these might actually be specific to importdesc
+export const MEMORY_IDX = 0x02;
 export const GLOBAL_TYPE = 0x03;
 export const TYPE_IDX = 0x00;
 

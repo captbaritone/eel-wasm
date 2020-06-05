@@ -13,6 +13,9 @@ import {
   TYPE_IDX,
   EXPORT_TYPE,
   SECTION,
+  MEMORY_IDX,
+  MAGIC,
+  WASM_VERSION,
 } from "./encoding";
 import shims from "./shims";
 import { localFuncMap } from "./wasmFunctions";
@@ -184,7 +187,11 @@ export function compileModule({
 
   const memories = [
     // Only one memory
-    [...unsignedLEB128(0), ...unsignedLEB128(WASM_MEMORY_SIZE)],
+    [
+      0x01, // Indicates that we are specifying two values (initial/max)
+      ...unsignedLEB128(WASM_MEMORY_SIZE), // Initial size
+      ...unsignedLEB128(WASM_MEMORY_SIZE), // Max size
+    ],
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
@@ -219,12 +226,11 @@ export function compileModule({
     // the binary functions can be skipped efficiently.
     return encodeVector([...encodeVector(localTypes), ...func.binary, op.end]);
   });
-
   return new Uint8Array([
     // Magic module header
-    ...[0x00, 0x61, 0x73, 0x6d],
+    ...MAGIC,
     // Version number
-    ...[0x01, 0x00, 0x00, 0x00],
+    ...WASM_VERSION,
     ...encodeSection(SECTION.TYPE, types),
     ...encodeSection(SECTION.IMPORT, imports),
     ...encodeSection(SECTION.FUNC, functions),
