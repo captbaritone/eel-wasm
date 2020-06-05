@@ -17,6 +17,7 @@ import {
 import shims from "./shims";
 import { localFuncMap } from "./wasmFunctions";
 import { CompilerContext, TypedFunction } from "./types";
+import { WASM_MEMORY_SIZE } from "./constants";
 
 class NamespaceResolver {
   _counter: number;
@@ -183,8 +184,7 @@ export function compileModule({
 
   const memories = [
     // Only one memory
-    // TODO: What size should this be?
-    [...unsignedLEB128(0), ...unsignedLEB128(1000)],
+    [...unsignedLEB128(0), ...unsignedLEB128(WASM_MEMORY_SIZE)],
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section

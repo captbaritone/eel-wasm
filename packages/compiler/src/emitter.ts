@@ -4,6 +4,7 @@ import { createUserError, createCompilerError } from "./errorUtils";
 import { Ast, CompilerContext, AssignmentExpressionAstNode } from "./types";
 import { localFuncMap } from "./wasmFunctions";
 import { flatten, arrayJoin } from "./arrayUtils";
+import { BUFFER_SIZE } from "./constants";
 
 function emitExpressionBlock(body: Ast[], context: CompilerContext) {
   const statements = body.map((statement, i) => {
@@ -78,8 +79,7 @@ function emitConditional(
 function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number {
   switch (name) {
     case "gmegabuf":
-      // TODO: Ensure this number is actually correct.
-      return 1000000 * 8;
+      return BUFFER_SIZE * 8;
     case "megabuf":
       return 0;
   }

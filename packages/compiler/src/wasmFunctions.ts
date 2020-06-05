@@ -1,13 +1,6 @@
-import {
-  encodef64,
-  unsignedLEB128,
-  op,
-  VAL_TYPE,
-  IS_NOT_ZEROISH,
-  EPSILON,
-  signedLEB128,
-} from "./encoding";
+import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON } from "./encoding";
 import { FunctionDefinition } from "./types";
+import { BUFFER_SIZE } from "./constants";
 
 export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   sqr: {
@@ -135,7 +128,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       op.i32_lt_s,
       // STACK: [-1, $truncated * 8, <is index less than 0>]
       ...op.local_get(2), // $truncated
-      ...op.i32_const(8388608),
+      ...op.i32_const(BUFFER_SIZE),
       op.i32_gt_s,
       // STACK: [-1, $truncated * 8, <is index less than 0>, <is index more than MAX>]
       op.i32_or,
