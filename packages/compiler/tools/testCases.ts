@@ -182,6 +182,11 @@ const testCases: [string, string, number][] = [
     "megabuf(99) = 10; megabuf(100) = 1; g = megabuf(99)",
     10,
   ],
+  // TODO: https://github.com/captbaritone/eel-wasm/issues/30
+  // This asserts current behavior, but is likely wrong. We should test real Milkdrop to confirm.
+  ["Exponentiation associativity", "g = 2 ^ 2 ^ 4", 256],
+  // Here is the alternative assertion:
+  // ["Exponentiation associativity", "g = 2 ^ 2 ^ 4", 65536],
 ];
 
 export default testCases;

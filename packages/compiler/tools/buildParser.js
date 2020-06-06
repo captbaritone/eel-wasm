@@ -30,6 +30,8 @@ const grammar = {
     ["right", "ASSIGNMENT_OPERATOR_TOKEN"],
     ["right", "COMPARISON_TOKEN"],
     ["left", "+", "-", "!"],
+    // TODO: https://github.com/captbaritone/eel-wasm/issues/30
+    // ^ Should likley be right assoiciative
     ["left", "*", "/", "%", "^"],
     ["left", "&", "|" /* "~"" will go here as well */],
     ["left", "LOGICAL_OPERATOR_TOKEN"],
