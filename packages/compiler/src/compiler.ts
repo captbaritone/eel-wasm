@@ -214,6 +214,14 @@ export function compileModule({
     ];
   });
 
+  /* Uncomment this to expose memory
+  xports.push([
+    ...encodeString("memory"),
+    EXPORT_TYPE.MEMORY,
+    ...unsignedLEB128(0),
+  ]);
+  */
+
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
   const codes = [...localFuncs, ...moduleFuncs].map(func => {
     // TODO: We could collapose consecutive types here, or even move to a two
