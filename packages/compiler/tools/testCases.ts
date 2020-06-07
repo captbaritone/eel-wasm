@@ -183,6 +183,12 @@ const testCases: [string, string, number][] = [
     10,
   ],
   ["Exponentiation associativity", "g = 2 ^ 2 ^ 4", 256],
+  ["^ has lower precedence than * (left)", "g = 2 ^ 2 * 4", 16],
+  ["^ has lower precedence than * (right)", "g = 2 * 2 ^ 4", 32],
+  ["% has lower precedence than * (right)", "g = 2 * 5 % 2", 2],
+  ["% has lower precedence than * (left)", "g = 2 % 5 * 2", 4],
+  ["% and ^ have the same precedence (% first)", "g = 2 % 5 ^ 2", 4],
+  ["% and ^ have the same precedence (^ first)", "g = 2 ^ 5 % 2", 0],
 ];
 
 export default testCases;
