@@ -128,7 +128,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       op.i32_lt_s,
       // STACK: [-1, $truncated * 8, <is index less than 0>]
       ...op.local_get(2), // $truncated
-      ...op.i32_const(BUFFER_SIZE),
+      ...op.i32_const(BUFFER_SIZE - 1),
       op.i32_gt_s,
       // STACK: [-1, $truncated * 8, <is index less than 0>, <is index more than MAX>]
       op.i32_or,
