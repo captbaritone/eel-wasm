@@ -13,7 +13,6 @@ import {
   TYPE_IDX,
   EXPORT_TYPE,
   SECTION,
-  MEMORY_IDX,
   MAGIC,
   WASM_VERSION,
 } from "./encoding";
