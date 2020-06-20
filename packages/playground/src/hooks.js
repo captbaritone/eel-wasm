@@ -43,8 +43,8 @@ async function modFromWasm(wasm, globals) {
   const mod = await WebAssembly.compile(wasm);
 
   var importObject = {
-    js: { ...globals },
-    imports: shims
+    main: { ...globals },
+    shims
   };
 
   return await WebAssembly.instantiate(mod, importObject);

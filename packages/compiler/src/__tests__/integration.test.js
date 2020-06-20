@@ -19,7 +19,7 @@ test("Minimal example", async () => {
   };
 
   // Build (compile/initialize) the Wasm module
-  const mod = await loadModule({ globals, functions });
+  const mod = await loadModule({ pools: { main: { globals, functions } } });
 
   // Assert that x starts as zero
   expect(globals.x.value).toBe(0);
@@ -70,8 +70,12 @@ describe("Small test cases", () => {
       const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 
       const mod = await loadModule({
-        globals: { g, x },
-        functions: { run: expression },
+        pools: {
+          main: {
+            globals: { g, x },
+            functions: { run: expression },
+          },
+        },
       });
 
       mod.exports.run();
@@ -102,10 +106,14 @@ test("Some actual equations", async () => {
   );
 
   const mod = await loadModule({
-    globals,
-    functions: {
-      perFrame,
-      perPixel,
+    pools: {
+      main: {
+        globals,
+        functions: {
+          perFrame,
+          perPixel,
+        },
+      },
     },
   });
 

@@ -14,7 +14,9 @@ testCases.forEach((filename: string) => {
     const eel = fs.readFileSync(path.join(DIR, filename), { encoding: "utf8" });
     let compilerError = null;
     try {
-      compileModule({ globals: new Set(), functions: { run: eel } });
+      compileModule({
+        pools: { main: { globals: new Set(), functions: { run: eel } } },
+      });
     } catch (e) {
       compilerError = e;
     }

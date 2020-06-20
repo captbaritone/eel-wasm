@@ -45,16 +45,33 @@ class NamespaceResolver {
 }
 
 type CompilerOptions = {
-  globals: Set<string>;
-  functions: { [name: string]: string };
+  pools: {
+    [name: string]: {
+      globals: Set<string>;
+      functions: { [name: string]: string };
+    };
+  };
   preParsed?: boolean;
 };
 
-export function compileModule({
-  globals: globalVariables,
-  functions: functionCode,
-  preParsed = false,
-}: CompilerOptions) {
+export function compileModule({ pools, preParsed = false }: CompilerOptions) {
+  if (
+    pools == null ||
+    Object.keys(pools).length != 1 ||
+    pools["main"] == null
+  ) {
+    throw new Error(
+      "Pools are a work in progress. For now you must pass a `main` pool and only a `main` pool."
+    );
+  }
+  if (Object.keys(pools).includes("shims")) {
+    throw new Error(
+      'You may not name a pool "shims". "shims" is reserved for injected JavaScript functions.'
+    );
+  }
+  const functionCode = pools.main.functions;
+  const globalVariables = pools.main.globals;
+
   const functionImports = Object.entries(shims).map(([name, func]) => {
     return {
       args: new Array(func.length).fill(null).map(_ => VAL_TYPE.f64),
@@ -160,7 +177,8 @@ export function compileModule({
     // Somehow these implicitly map to the first n indexes of the globals section?
     ...Array.from(globalVariables).map(name => {
       return [
-        ...encodeString("js"),
+        // TODO: Use pool name
+        ...encodeString("main"),
         ...encodeString(name),
         ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var],
       ];
@@ -168,7 +186,7 @@ export function compileModule({
     ...functionImports.map((func, i) => {
       const typeIndex = getTypeIndex(func);
       return [
-        ...encodeString("imports"),
+        ...encodeString("shims"),
         ...encodeString(func.name),
         ...[TYPE_IDX, ...unsignedLEB128(typeIndex)],
       ];
