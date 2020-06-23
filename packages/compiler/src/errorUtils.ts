@@ -1,5 +1,5 @@
 import { SourceLocation } from "./types";
-import { repeat } from "./arrayUtils";
+import { repeat } from "./utils";
 
 /* Build up a string showing a formatted source location in context with line numbers.
  *

@@ -17,6 +17,7 @@ import {
   WASM_VERSION,
 } from "./encoding";
 import shims from "./shims";
+import { ScopedIdMap } from "./utils";
 import { localFuncMap } from "./wasmFunctions";
 import { CompilerContext, TypedFunction } from "./types";
 import { WASM_MEMORY_SIZE } from "./constants";
@@ -69,8 +70,6 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
       'You may not name a pool "shims". "shims" is reserved for injected JavaScript functions.'
     );
   }
-  const functionCode = pools.main.functions;
-  const globalVariables = pools.main.globals;
 
   const functionImports = Object.entries(shims).map(([name, func]) => {
     return {
@@ -81,53 +80,66 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
     };
   });
 
-  const externalVarsResolver = new NamespaceResolver(
-    Array.from(globalVariables)
-  );
-  const userVarsResolver = new NamespaceResolver([], globalVariables.size);
+  const externalVarsResolver = new ScopedIdMap();
+  Object.entries(pools).forEach(([poolName, pool]) => {
+    pool.globals.forEach(variableName => {
+      externalVarsResolver.add(poolName, variableName);
+    });
+  });
+  const userVarsResolver = new ScopedIdMap(externalVarsResolver.size());
   const localFuncResolver = new NamespaceResolver(
     functionImports.map(func => func.name)
   );
 
-  const moduleFuncs = Object.entries(functionCode).map(([name, code]) => {
-    const ast = preParsed ? code : parse(code);
-    if (typeof ast === "string") {
-      // TODO: Change the API so this can be enforced by types
-      throw new Error(
-        "Got passed unparsed code without setting the preParsed flag"
-      );
-    }
+  const moduleFuncs: {
+    binary: number[];
+    exportName: string;
+    args: never[];
+    returns: never[];
+    localVariables: number[];
+  }[] = [];
 
-    const localVariables: number[] = [];
-    const context: CompilerContext = {
-      resolveVar: name => {
-        if (globalVariables.has(name)) {
-          return externalVarsResolver.get(name);
-        }
-        return userVarsResolver.get(name);
-      },
-      resolveLocal: type => {
-        localVariables.push(type);
-        return localVariables.length - 1;
-      },
-      resolveLocalFunc: name => {
-        if (shims[name] == null && localFuncMap[name] == null) {
-          return null;
-        }
-        const offset = localFuncResolver.get(name);
-        return op.call(offset);
-      },
-      rawSource: code,
-    };
-    const binary = emit(ast, context);
+  Object.entries(pools).forEach(([poolName, pool]) => {
+    Object.entries(pool.functions).forEach(([name, code]) => {
+      const ast = preParsed ? code : parse(code);
+      if (typeof ast === "string") {
+        // TODO: Change the API so this can be enforced by types
+        throw new Error(
+          "Got passed unparsed code without setting the preParsed flag"
+        );
+      }
 
-    return {
-      binary,
-      exportName: name,
-      args: [],
-      returns: [],
-      localVariables,
-    };
+      const localVariables: number[] = [];
+      const context: CompilerContext = {
+        resolveVar: name => {
+          if (externalVarsResolver.has(poolName, name)) {
+            return externalVarsResolver.get(poolName, name);
+          }
+          return userVarsResolver.get(poolName, name);
+        },
+        resolveLocal: type => {
+          localVariables.push(type);
+          return localVariables.length - 1;
+        },
+        resolveLocalFunc: name => {
+          if (shims[name] == null && localFuncMap[name] == null) {
+            return null;
+          }
+          const offset = localFuncResolver.get(name);
+          return op.call(offset);
+        },
+        rawSource: code,
+      };
+      const binary = emit(ast, context);
+
+      moduleFuncs.push({
+        binary,
+        exportName: name,
+        args: [],
+        returns: [],
+        localVariables,
+      });
+    });
   });
 
   const localFuncs = localFuncResolver
@@ -175,10 +187,10 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
   const imports = [
     // Somehow these implicitly map to the first n indexes of the globals section?
-    ...Array.from(globalVariables).map(name => {
+    ...externalVarsResolver.map((namespace, name) => {
       return [
         // TODO: Use pool name
-        ...encodeString("main"),
+        ...encodeString(namespace),
         ...encodeString(name),
         ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var],
       ];
