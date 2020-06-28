@@ -29,28 +29,6 @@ export function repeat(n: number, char: string): string {
   return new Array(n).fill(char).join("");
 }
 
-// TODO: See if we can get rid of this
-export class NamespaceResolver {
-  _counter: number;
-  _map: Map<string, number>;
-  constructor() {
-    this._counter = -1;
-    this._map = new Map();
-  }
-  get(name: string): number {
-    if (!this._map.has(name)) {
-      this._counter++;
-      this._map.set(name, this._counter);
-    }
-    // @ts-ignore we just set this.
-    return this._map.get(name);
-  }
-
-  map<T>(cb: (value: string, i: number) => T): T[] {
-    return Array.from(this._map.entries()).map(([value, i]) => cb(value, i));
-  }
-}
-
 // Maintain an ordered list of indexes for namespace/key pairs.
 // In Wasm binary variables are referenced by their index. In our emitter we
 // want to emit variables indexes as we encounter their names. This data

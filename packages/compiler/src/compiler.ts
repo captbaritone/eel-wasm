@@ -17,7 +17,7 @@ import {
   WASM_VERSION,
 } from "./encoding";
 import shims from "./shims";
-import { ScopedIdMap, NamespaceResolver, times } from "./utils";
+import { ScopedIdMap, times } from "./utils";
 import { localFuncMap } from "./wasmFunctions";
 import { CompilerContext, TypedFunction } from "./types";
 import { WASM_MEMORY_SIZE } from "./constants";
@@ -62,7 +62,7 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
     };
   });
 
-  const localFuncResolver = new NamespaceResolver();
+  const localFuncOrder: string[] = [];
 
   const moduleFuncs: {
     binary: number[];
@@ -96,11 +96,18 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
           if (shimdex !== -1) {
             return op.call(shimdex);
           }
+
+          // If it's not a shim and it's not a defined function, return null.
+          // The emitter will generate a nice error.
           if (localFuncMap[name] == null) {
             return null;
           }
-          const offset = localFuncResolver.get(name);
-          return op.call(offset + functionImports.length);
+          let index = localFuncOrder.indexOf(name);
+          if (index === -1) {
+            localFuncOrder.push(name);
+            index = localFuncOrder.length - 1;
+          }
+          return op.call(index + functionImports.length);
         },
         rawSource: code,
       };
@@ -116,8 +123,10 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
     });
   });
 
-  const localFuncs = localFuncResolver.map(name => {
+  const localFuncs = localFuncOrder.map(name => {
     const func = localFuncMap[name];
+    // This check is technicaly redundant since we check inside resolveLocalFunc
+    // in the compiler context. It's here just to catch potential compiler bugs.
     if (func == null) {
       throw new Error(`Undefined local function "${name}"`);
     }
