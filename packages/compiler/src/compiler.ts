@@ -17,33 +17,10 @@ import {
   WASM_VERSION,
 } from "./encoding";
 import shims from "./shims";
-import { ScopedIdMap } from "./utils";
+import { ScopedIdMap, NamespaceResolver, times } from "./utils";
 import { localFuncMap } from "./wasmFunctions";
 import { CompilerContext, TypedFunction } from "./types";
 import { WASM_MEMORY_SIZE } from "./constants";
-
-class NamespaceResolver {
-  _counter: number;
-  _map: Map<string, number>;
-  constructor(initial: string[] = [], offset = 0) {
-    this._counter = -1 + offset;
-    this._map = new Map();
-
-    initial.forEach(name => this.get(name));
-  }
-  get(name: string): number {
-    if (!this._map.has(name)) {
-      this._counter++;
-      this._map.set(name, this._counter);
-    }
-    // @ts-ignore we just set this.
-    return this._map.get(name);
-  }
-
-  map<T>(cb: (value: string, i: number) => T): T[] {
-    return Array.from(this._map.entries()).map(([value, i]) => cb(value, i));
-  }
-}
 
 type CompilerOptions = {
   pools: {
@@ -56,20 +33,25 @@ type CompilerOptions = {
 };
 
 export function compileModule({ pools, preParsed = false }: CompilerOptions) {
-  if (
-    pools == null ||
-    Object.keys(pools).length != 1 ||
-    pools["main"] == null
-  ) {
-    throw new Error(
-      "Pools are a work in progress. For now you must pass a `main` pool and only a `main` pool."
-    );
-  }
   if (Object.keys(pools).includes("shims")) {
     throw new Error(
       'You may not name a pool "shims". "shims" is reserved for injected JavaScript functions.'
     );
   }
+
+  // Collect all the globals that we expect to get as imports.
+  const importedVars: [string, string][] = [];
+  Object.entries(pools).forEach(([poolName, pool]) => {
+    pool.globals.forEach(variableName => {
+      importedVars.push([poolName, variableName]);
+    });
+  });
+
+  // Ensure all the imported globals get the first ids.
+  const varResolver = new ScopedIdMap();
+  importedVars.forEach(([poolName, variableName]) => {
+    varResolver.get(poolName, variableName);
+  });
 
   const functionImports = Object.entries(shims).map(([name, func]) => {
     return {
@@ -80,16 +62,7 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
     };
   });
 
-  const externalVarsResolver = new ScopedIdMap();
-  Object.entries(pools).forEach(([poolName, pool]) => {
-    pool.globals.forEach(variableName => {
-      externalVarsResolver.add(poolName, variableName);
-    });
-  });
-  const userVarsResolver = new ScopedIdMap(externalVarsResolver.size());
-  const localFuncResolver = new NamespaceResolver(
-    functionImports.map(func => func.name)
-  );
+  const localFuncResolver = new NamespaceResolver();
 
   const moduleFuncs: {
     binary: number[];
@@ -111,22 +84,23 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
 
       const localVariables: number[] = [];
       const context: CompilerContext = {
-        resolveVar: name => {
-          if (externalVarsResolver.has(poolName, name)) {
-            return externalVarsResolver.get(poolName, name);
-          }
-          return userVarsResolver.get(poolName, name);
-        },
+        resolveVar: name => varResolver.get(poolName, name),
         resolveLocal: type => {
           localVariables.push(type);
           return localVariables.length - 1;
         },
+        // TODO: Rename to resolveFunc
         resolveLocalFunc: name => {
-          if (shims[name] == null && localFuncMap[name] == null) {
+          // If this is a shim, return the shim index.
+          const shimdex = functionImports.findIndex(func => func.name === name);
+          if (shimdex !== -1) {
+            return op.call(shimdex);
+          }
+          if (localFuncMap[name] == null) {
             return null;
           }
           const offset = localFuncResolver.get(name);
-          return op.call(offset);
+          return op.call(offset + functionImports.length);
         },
         rawSource: code,
       };
@@ -142,17 +116,13 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
     });
   });
 
-  const localFuncs = localFuncResolver
-    .map(name => name)
-    // TODO: This .slice es muy grosso.
-    .slice(functionImports.length)
-    .map(name => {
-      const func = localFuncMap[name];
-      if (func == null) {
-        throw new Error(`Undefined local function "${name}"`);
-      }
-      return func;
-    });
+  const localFuncs = localFuncResolver.map(name => {
+    const func = localFuncMap[name];
+    if (func == null) {
+      throw new Error(`Undefined local function "${name}"`);
+    }
+    return func;
+  });
 
   // Given a function definition, return a hashable string representation of its signature.
   const getSignatureKey = (func: TypedFunction) => {
@@ -187,7 +157,7 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
   const imports = [
     // Somehow these implicitly map to the first n indexes of the globals section?
-    ...externalVarsResolver.map((namespace, name) => {
+    ...importedVars.map(([namespace, name]) => {
       return [
         // TODO: Use pool name
         ...encodeString(namespace),
@@ -224,7 +194,8 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
   ];
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
-  const globals = userVarsResolver.map(() => {
+  const globalCount = varResolver.size() - importedVars.length;
+  const globals = times(globalCount, () => {
     return [
       VAL_TYPE.f64, // All eel values are float 64s
       MUTABILITY.var, // All globals are mutable

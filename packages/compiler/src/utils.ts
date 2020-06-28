@@ -21,8 +21,34 @@ export function flatten<T>(arr: Array<T[]>): T[] {
 export const flattenTwice = (arr: Array<number[] | number>): number[] =>
   [].concat.apply([], arr);
 
+export function times<T>(n: number, cb: (i: number) => T): T[] {
+  return new Array(n).fill(null).map((_, i) => cb(i));
+}
+
 export function repeat(n: number, char: string): string {
   return new Array(n).fill(char).join("");
+}
+
+// TODO: See if we can get rid of this
+export class NamespaceResolver {
+  _counter: number;
+  _map: Map<string, number>;
+  constructor() {
+    this._counter = -1;
+    this._map = new Map();
+  }
+  get(name: string): number {
+    if (!this._map.has(name)) {
+      this._counter++;
+      this._map.set(name, this._counter);
+    }
+    // @ts-ignore we just set this.
+    return this._map.get(name);
+  }
+
+  map<T>(cb: (value: string, i: number) => T): T[] {
+    return Array.from(this._map.entries()).map(([value, i]) => cb(value, i));
+  }
 }
 
 // Maintain an ordered list of indexes for namespace/key pairs.
@@ -30,49 +56,25 @@ export function repeat(n: number, char: string): string {
 // want to emit variables indexes as we encounter their names. This data
 // structure lets us issue variable indexes on demmand and then iterate through
 // them post facto.
+//
+// TODO: We could improve this with a map to get constant time lookups, but I
+// suspect it's not worth the complexity.
 export class ScopedIdMap {
-  _counter: number;
-  _map: Map<string, Map<string, number>>;
-  _list: Array<[string, string]>;
-  _offset: number;
-  constructor(offset: number = 0) {
-    this._offset = offset;
-    this._counter = -1 + offset;
-    this._map = new Map();
+  _list: [string, string][];
+  constructor() {
     this._list = [];
-  }
-  // Ensure a namespace/key pair are present in the map
-  add(namespace: string, key: string): void {
-    this.get(namespace, key);
-  }
-  has(namespace: string, key: string): boolean {
-    return this._map.has(namespace) && this._map.get(namespace).has(key);
   }
   // Get the index of a given namespace/key pair
   get(namespace: string, key: string): number {
-    if (!this._map.has(namespace)) {
-      this._map.set(namespace, new Map());
-    }
-
-    // @ts-ignore We just checked that, dude.
-    const namespaceMap: Map<string, number> = this._map.get(namespace);
-
-    if (!namespaceMap.has(key)) {
-      this._counter++;
+    const i = this._list.findIndex(([n, k]) => n === namespace && k === key);
+    if (i === -1) {
       this._list.push([namespace, key]);
-      namespaceMap.set(key, this._counter);
+      return this._list.length - 1;
     }
-
-    // @ts-ignore We just checked that, dude.
-    return namespaceMap.get(key);
+    return i;
   }
 
-  map<T>(cb: (namespace: string, key: string, index: number) => T): T[] {
-    return this._list.map(([namespace, key], index) => {
-      return cb(namespace, key, index);
-    });
-  }
   size(): number {
-    return this._counter + 1 - this._offset;
+    return this._list.length;
   }
 }
