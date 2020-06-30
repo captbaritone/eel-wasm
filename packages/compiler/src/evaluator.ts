@@ -4,32 +4,30 @@ import { compileModule } from "./compiler";
 type LoadModuleOptions = {
   pools: {
     [name: string]: {
-      globals: { [name: string]: WebAssembly.Global };
-      functions: { [name: string]: string };
+      [name: string]: WebAssembly.Global;
+    };
+  };
+  functions: {
+    [name: string]: {
+      pool: string;
+      code: string;
     };
   };
 };
 
-type Pool = {
-  globals: Set<string>;
-  functions: { [name: string]: string };
-};
-
-export async function loadModule({ pools }: LoadModuleOptions) {
-  let compilerPools: { [name: string]: Pool } = {};
-  Object.entries(pools).forEach(([key, value]) => {
-    compilerPools[key] = {
-      globals: new Set(Object.keys(value.globals)),
-      functions: value.functions,
-    };
+export async function loadModule({ pools, functions }: LoadModuleOptions) {
+  let compilerPools: { [name: string]: Set<string> } = {};
+  Object.entries(pools).forEach(([key, globals]) => {
+    compilerPools[key] = new Set(Object.keys(globals));
   });
   const buffer = compileModule({
     pools: compilerPools,
+    functions,
   });
   const mod = await WebAssembly.compile(buffer);
 
   var importObject = {
-    main: pools.main.globals,
+    ...pools,
     shims,
   };
 

@@ -24,15 +24,22 @@ import { WASM_MEMORY_SIZE } from "./constants";
 
 type CompilerOptions = {
   pools: {
+    [name: string]: Set<string>;
+  };
+  functions: {
     [name: string]: {
-      globals: Set<string>;
-      functions: { [name: string]: string };
+      pool: string;
+      code: string;
     };
   };
   preParsed?: boolean;
 };
 
-export function compileModule({ pools, preParsed = false }: CompilerOptions) {
+export function compileModule({
+  pools,
+  functions: funcs,
+  preParsed = false,
+}: CompilerOptions) {
   if (Object.keys(pools).includes("shims")) {
     throw new Error(
       'You may not name a pool "shims". "shims" is reserved for injected JavaScript functions.'
@@ -42,7 +49,7 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
   // Collect all the globals that we expect to get as imports.
   const importedVars: [string, string][] = [];
   Object.entries(pools).forEach(([poolName, pool]) => {
-    pool.globals.forEach(variableName => {
+    pool.forEach(variableName => {
       importedVars.push([poolName, variableName]);
     });
   });
@@ -72,54 +79,80 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
     localVariables: number[];
   }[] = [];
 
-  Object.entries(pools).forEach(([poolName, pool]) => {
-    Object.entries(pool.functions).forEach(([name, code]) => {
-      const ast = preParsed ? code : parse(code);
-      if (typeof ast === "string") {
-        // TODO: Change the API so this can be enforced by types
+  function formatList(list: string[]) {
+    if (list.length === 0) {
+      throw new Error("Cannot format an empty list");
+    }
+    if (list.length === 1) {
+      return list[0];
+    }
+    const quoted = list.map(name => `"${name}"`);
+    const last = quoted.pop();
+    return quoted.join(", ") + ` and ${last}`;
+  }
+
+  Object.entries(funcs).forEach(([name, { pool, code }]) => {
+    if (pools[pool] == null) {
+      const poolsList = Object.keys(pools);
+      if (poolsList.length === 0) {
         throw new Error(
-          "Got passed unparsed code without setting the preParsed flag"
+          `The function "${name}" was declared as using a variable ` +
+            `pool named "${pool}" but no pools were defined.`
         );
       }
+      throw new Error(
+        `The function "${name}" was declared as using a variable ` +
+          `pool named "${pool}" which is not among the variable ` +
+          `pools defined. The defined variable pools are: ` +
+          `${formatList(poolsList)}.`
+      );
+    }
+    const ast = preParsed ? code : parse(code);
+    if (typeof ast === "string") {
+      // TODO: Change the API so this can be enforced by types
+      throw new Error(
+        "Got passed unparsed code without setting the preParsed flag"
+      );
+    }
+    const localVariables: number[] = [];
+    const context: CompilerContext = {
+      resolveVar: name => {
+        return varResolver.get(pool, name);
+      },
+      resolveLocal: type => {
+        localVariables.push(type);
+        return localVariables.length - 1;
+      },
+      // TODO: Rename to resolveFunc
+      resolveLocalFunc: name => {
+        // If this is a shim, return the shim index.
+        const shimdex = functionImports.findIndex(func => func.name === name);
+        if (shimdex !== -1) {
+          return op.call(shimdex);
+        }
 
-      const localVariables: number[] = [];
-      const context: CompilerContext = {
-        resolveVar: name => varResolver.get(poolName, name),
-        resolveLocal: type => {
-          localVariables.push(type);
-          return localVariables.length - 1;
-        },
-        // TODO: Rename to resolveFunc
-        resolveLocalFunc: name => {
-          // If this is a shim, return the shim index.
-          const shimdex = functionImports.findIndex(func => func.name === name);
-          if (shimdex !== -1) {
-            return op.call(shimdex);
-          }
+        // If it's not a shim and it's not a defined function, return null.
+        // The emitter will generate a nice error.
+        if (localFuncMap[name] == null) {
+          return null;
+        }
+        let index = localFuncOrder.indexOf(name);
+        if (index === -1) {
+          localFuncOrder.push(name);
+          index = localFuncOrder.length - 1;
+        }
+        return op.call(index + functionImports.length);
+      },
+      rawSource: code,
+    };
+    const binary = emit(ast, context);
 
-          // If it's not a shim and it's not a defined function, return null.
-          // The emitter will generate a nice error.
-          if (localFuncMap[name] == null) {
-            return null;
-          }
-          let index = localFuncOrder.indexOf(name);
-          if (index === -1) {
-            localFuncOrder.push(name);
-            index = localFuncOrder.length - 1;
-          }
-          return op.call(index + functionImports.length);
-        },
-        rawSource: code,
-      };
-      const binary = emit(ast, context);
-
-      moduleFuncs.push({
-        binary,
-        exportName: name,
-        args: [],
-        returns: [],
-        localVariables,
-      });
+    moduleFuncs.push({
+      binary,
+      exportName: name,
+      args: [],
+      returns: [],
+      localVariables,
     });
   });
 
@@ -166,7 +199,7 @@ export function compileModule({ pools, preParsed = false }: CompilerOptions) {
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
   const imports = [
     // Somehow these implicitly map to the first n indexes of the globals section?
-    ...importedVars.map(([namespace, name]) => {
+    ...importedVars.map(([namespace, name], i) => {
       return [
         // TODO: Use pool name
         ...encodeString(namespace),

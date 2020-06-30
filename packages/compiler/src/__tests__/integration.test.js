@@ -12,14 +12,14 @@ test("Minimal example", async () => {
     y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
   };
 
-  // Define the EEL scripts that your module will include
-  const functions = {
-    ten: "x = 10;",
-    setXToY: "x = y;",
-  };
-
   // Build (compile/initialize) the Wasm module
-  const mod = await loadModule({ pools: { main: { globals, functions } } });
+  const mod = await loadModule({
+    pools: { main: globals },
+    functions: {
+      ten: { pool: "main", code: "x = 10" },
+      setXToY: { pool: "main", code: "x = y" },
+    },
+  });
 
   // Assert that x starts as zero
   expect(globals.x.value).toBe(0);
@@ -70,17 +70,80 @@ describe("Small test cases", () => {
       const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
 
       const mod = await loadModule({
-        pools: {
-          main: {
-            globals: { g, x },
-            functions: { run: expression },
-          },
+        pools: { main: { g, x } },
+        functions: {
+          run: { pool: "main", code: expression },
         },
       });
 
       mod.exports.run();
       expect(g.value).toBe(expectedResult);
     });
+  });
+});
+
+describe("Scopes", () => {
+  test("isolate variables", async () => {
+    const ax = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+    const bx = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+
+    const mod = await loadModule({
+      pools: {
+        a: { x: ax },
+        b: { x: bx },
+      },
+      functions: {
+        setInA: { pool: "a", code: "x = 10;" },
+        setInB: { pool: "b", code: "x = 20;" },
+      },
+    });
+
+    expect(ax.value).toBe(0);
+    expect(bx.value).toBe(0);
+    mod.exports.setInA();
+    expect(ax.value).toBe(10);
+    expect(bx.value).toBe(0);
+    mod.exports.setInB();
+    expect(ax.value).toBe(10);
+    expect(bx.value).toBe(20);
+  });
+});
+
+describe("Invalid pool for function", () => {
+  test("function pool is not among defined", async () => {
+    const ax = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+    const bx = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+
+    const moduleOptions = {
+      pools: {
+        a: { x: ax },
+        b: { x: bx },
+      },
+      functions: {
+        myInvalidFunction: { pool: "c", code: "x = 10;" },
+      },
+    };
+
+    await expect(loadModule(moduleOptions)).rejects.toEqual(
+      new Error(
+        `The function "myInvalidFunction" was declared as using a variable pool named "c" which is not among the variable pools defined. The defined variable pools are: "a" and "b".`
+      )
+    );
+  });
+
+  test("no function pools are defined", async () => {
+    const moduleOptions = {
+      pools: {},
+      functions: {
+        myInvalidFunction: { pool: "c", code: "x = 10;" },
+      },
+    };
+
+    await expect(loadModule(moduleOptions)).rejects.toEqual(
+      new Error(
+        `The function "myInvalidFunction" was declared as using a variable pool named "c" but no pools were defined.`
+      )
+    );
   });
 });
 
@@ -107,13 +170,11 @@ test("Some actual equations", async () => {
 
   const mod = await loadModule({
     pools: {
-      main: {
-        globals,
-        functions: {
-          perFrame,
-          perPixel,
-        },
-      },
+      main: globals,
+    },
+    functions: {
+      perFrame: { pool: "main", code: perFrame },
+      perPixel: { pool: "main", code: perPixel },
     },
   });
 

@@ -15,7 +15,8 @@ testCases.forEach((filename: string) => {
     let compilerError = null;
     try {
       compileModule({
-        pools: { main: { globals: new Set(), functions: { run: eel } } },
+        pools: { main: new Set() },
+        functions: { run: { pool: "main", code: eel } },
       });
     } catch (e) {
       compilerError = e;

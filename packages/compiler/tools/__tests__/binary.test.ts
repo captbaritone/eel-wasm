@@ -14,12 +14,10 @@ test("Can execute hand crafted binary Wasm", async () => {
 
   const buffer = compileModule({
     pools: {
-      main: {
-        functions: {
-          run: "g = 100;",
-        },
-        globals: new Set(Object.keys(importObject.main)),
-      },
+      main: new Set(Object.keys(importObject.main)),
+    },
+    functions: {
+      run: { pool: "main", code: "g = 100;" },
     },
   });
 
