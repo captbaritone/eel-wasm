@@ -38,19 +38,26 @@ And then use it like so:
 const { loadModule } = require("eel-wasm");
 
 // Initialize global values avaliable to your EEL scripts (and JS).
-const globals = {
-  x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
-  y: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+// Variables exist in "pools" and each function has access to the 
+// varibles in one pool. The keys of the `pools` object are the 
+// names of the pools and the keys within each pool object are 
+// the names of the variables.
+const pools = {
+  poolA: {
+    x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
+    y: new WebAssembly.Global({ value: "f64", mutable: true }, 0)
+  }
 };
 
-// Define the EEL scripts that your module will include
+// Define the EEL scripts that your module will include. The object
+// key will become the name of the function on the Wasm module.
 const functions = {
-  ten: "x = 10;",
-  setXToY: "x = y;"
+  ten: { pool: 'poolA', code: "x = 10;" },
+  setXToY: { pool: 'poolA', code: "x = y;" }
 };
 
 // Build (compile/initialize) the Wasm module
-const mod = await loadModule({ globals, functions });
+const mod = await loadModule({ pools, functions });
 
 console.log(`x starts at 0. x:${globals.x.value}`);
 
