@@ -56,3 +56,15 @@ export class ScopedIdMap {
     return this._list.length;
   }
 }
+
+export function formatList(list: string[]): string {
+  if (list.length === 0) {
+    throw new Error("Cannot format an empty list");
+  }
+  if (list.length === 1) {
+    return list[0];
+  }
+  const quoted = list.map(name => `"${name}"`);
+  const last = quoted.pop();
+  return quoted.join(", ") + ` and ${last}`;
+}

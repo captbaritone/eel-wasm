@@ -17,7 +17,7 @@ import {
   WASM_VERSION,
 } from "./encoding";
 import shims from "./shims";
-import { ScopedIdMap, times } from "./utils";
+import * as Utils from "./utils";
 import { localFuncMap } from "./wasmFunctions";
 import { CompilerContext, TypedFunction } from "./types";
 import { WASM_MEMORY_SIZE } from "./constants";
@@ -55,7 +55,7 @@ export function compileModule({
   });
 
   // Ensure all the imported globals get the first ids.
-  const varResolver = new ScopedIdMap();
+  const varResolver = new Utils.ScopedIdMap();
   importedVars.forEach(([poolName, variableName]) => {
     varResolver.get(poolName, variableName);
   });
@@ -79,18 +79,6 @@ export function compileModule({
     localVariables: number[];
   }[] = [];
 
-  function formatList(list: string[]) {
-    if (list.length === 0) {
-      throw new Error("Cannot format an empty list");
-    }
-    if (list.length === 1) {
-      return list[0];
-    }
-    const quoted = list.map(name => `"${name}"`);
-    const last = quoted.pop();
-    return quoted.join(", ") + ` and ${last}`;
-  }
-
   Object.entries(funcs).forEach(([name, { pool, code }]) => {
     if (pools[pool] == null) {
       const poolsList = Object.keys(pools);
@@ -104,7 +92,7 @@ export function compileModule({
         `The function "${name}" was declared as using a variable ` +
           `pool named "${pool}" which is not among the variable ` +
           `pools defined. The defined variable pools are: ` +
-          `${formatList(poolsList)}.`
+          `${Utils.formatList(poolsList)}.`
       );
     }
     const ast = preParsed ? code : parse(code);
@@ -245,7 +233,7 @@ export function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#global-section
   const globalCount = varResolver.size() - importedVars.length;
-  const globals = times(globalCount, () => {
+  const globals = Utils.times(globalCount, () => {
     return [
       VAL_TYPE.f64, // All eel values are float 64s
       MUTABILITY.var, // All globals are mutable
