@@ -107,6 +107,34 @@ describe("Scopes", () => {
     expect(ax.value).toBe(10);
     expect(bx.value).toBe(20);
   });
+
+  test.only("share reg variables", async () => {
+    const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+    const mod = await loadModule({
+      pools: {
+        a: {},
+        b: { g },
+      },
+      functions: {
+        setRegOne: { pool: "a", code: "reg01 = 10;" },
+        setRegNintyNine: { pool: "a", code: "reg99 = 10;" },
+        getRegOne: { pool: "b", code: "g = reg01;" },
+        getRegNintyNine: { pool: "b", code: "g = reg99;" },
+      },
+    });
+
+    mod.exports.getRegOne();
+    expect(g.value).toBe(0);
+    mod.exports.setRegOne();
+    mod.exports.getRegOne();
+    expect(g.value).toBe(10);
+
+    mod.exports.getRegNintyNine();
+    expect(g.value).toBe(0);
+    mod.exports.setRegNintyNine();
+    mod.exports.getRegNintyNine();
+    expect(g.value).toBe(10);
+  });
 });
 
 describe("Invalid pool for function", () => {
