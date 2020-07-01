@@ -20,8 +20,6 @@ const shims: Shims = {
     const t = 1 + Math.exp(-x * y);
     return Math.abs(t) > EPSILON ? 1.0 / t : 0;
   },
-  floor: Math.floor,
-  ceil: Math.ceil,
 };
 
 export default shims;

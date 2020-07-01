@@ -255,6 +255,12 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         case "bnot":
           assertArity(1);
           return [...args, ...IS_ZEROISH, op.f64_convert_i32_s];
+        case "floor":
+          assertArity(1);
+          return [...args, op.f64_floor];
+        case "ceil":
+          assertArity(1);
+          return [...args, op.f64_ceil];
       }
 
       const invocation = context.resolveFunc(functionName);
