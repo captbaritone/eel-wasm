@@ -4,7 +4,7 @@ EEL-Wasm is a compiler, written in TypeScript, that can convert Milkdrop EEL sou
 
 # Project Status (Alpha)
 
-This project is fully functional according to its test suite, but has yet to be tested in a real environment. The next step will be to adapt [Butterchurn](https://github.com/jberg/butterchurn) to use it instead of it’s current EEL → JavaScript compiler. I suspect that this will reveal some bugs.
+This project is fully functional according to its test suite, but has not yet been shipped to any real users. We are [currently working](https://github.com/jberg/butterchurn/pull/35) on getting [Butterchurn](https://github.com/jberg/butterchurn) to use it instead of it’s current EEL → JavaScript compiler.
 
 # Motivation
 
@@ -12,9 +12,8 @@ This project is fully functional according to its test suite, but has yet to be 
 
 Milkdrop presets, user defined visualizations, consist of shader code as well as EEL code. EEL is a custom programing language made by Nullsoft. Currently Butterchurn handles EEL code by compiling it to JavaScript ahead of time (not in the browser). This works well, but it has a few downsides:
 
-
-1. In order to load a preset from an arbitrary source — such as the Internet Archive — you must be willing to execute arbitrary JavaScript from that source in the same context as Webamp. This security risk is currently preventing us from enabling Dropbox integration on https://webamp.org.
-2. Compiling EEL ahead of time precludes the possibility of building an in-browser preset editor where the user can edit their preset and see the changes in real time.
+1. In order to load a preset from an arbitrary source — such as the Internet Archive's [collection of ~40k presets](https://archive.org/details/milkdrops) — you must be willing to execute arbitrary JavaScript from that source in the same context as Webamp. This security risk is currently preventing us from enabling Dropbox integration on https://webamp.org.
+2. EEL at run time gets us closer to being able to build an in-browser preset editor where the user can edit their preset and see the changes in real time.
 
 Finally, the compiled JavaScript is currently a performance bottleneck for Butterchurn. Some more-complicated presets struggle to render at a good frame rate. We suspect — but don’t know — that WebAssembly could run faster than JavaScript.
 
@@ -81,7 +80,7 @@ The **pretty printer** will take an AST and output EEL source code. This is usef
 
 ## Test Preset
 
-To assert the correctness of the compiler I built out a test suite of small EEL snippets that assert various features and edge cases of the language. Our test suite asserts that our compiler passes these assertions. However, to be sure that these assertions actually match the behavior of Milkdrop’s implementation of EEL, I built `builtTestPrest.js` takes these snippets and builds them into a `.milk` file which can be loaded into Milkdrop.
+To assert the correctness of the compiler I built out a test suite of small EEL snippets that assert various features and edge cases of the language. Our test suite asserts that our compiler passes these assertions. However, to be sure that these assertions actually match the behavior of Milkdrop’s implementation of EEL, I built `buildTestPrest.js` which takes these snippets and builds them into a `.milk` file which can be loaded into Milkdrop.
 
 If the assertions all pass, the preset will render a green background. If they don’t it will render a red background and the `monitor` variable (visible in the upper right hand corner if you press “n”) will be set to the number (1 based index) of the first assertion that fails.
 
@@ -99,7 +98,7 @@ If you are interested in contributing to the compiler, or just reading the sourc
 
 ## Preprocessor
 
-The **preprocessor** takes the raw source and strips out newlines and comments. It returns the stripped source as well as a `mapper` artifact which can be passed to `getLoc` to map a column in the stripped source back to the line/column in the raw source.
+The **preprocessor** takes the raw source and strips out newlines and comments. It returns the stripped source as well as a `mapper` artifact which can be passed to `getLoc` to map a column in the stripped source (since new lines are removed, line numbers are not needed) back to the line/column in the raw source.
 
 ## Parser
 
@@ -127,11 +126,16 @@ The compiler has two large responsibilities:
 
 It returns a `Uint8Array` which is the binary representation of a Wasm module. When instantiated, the module expects to be passed a `WebAssembly.Global` for each global variable as well as as well as the `shims` object.
 
+## Loader
+
+The **loader** is a nice wrapper around the compiler which will compile the Wasm module and then instantiate and return an instance. It has an API similar to the **compiler** expect that it expects a `WebAssembly.Global` instance for each variable that is exposed to the JavaScript environment.
+
 # Prior Art
 - [Milkdrop's EEL compiler](https://github.com/WACUP/vis_milk2/tree/master/ns-eel2), written in C
 - [WDL](https://www.cockos.com/wdl/) includes an [EEL2 compiler](https://github.com/justinfrankel/WDL/tree/master/WDL/eel2).
 - [Butterchun's existing EEL -> JavaScript compiler](https://github.com/jberg/milkdrop-eel-parser), written in Clojure.
 - WebVS includes an [EEL -> JavaScript compiler](https://github.com/azeem/webvs/tree/master/src/expr) written in TypeScript.
+
 # Related Documentation
 - Mikdrop Preset documentation: http://www.geisswerks.com/hosted/milkdrop2/milkdrop_preset_authoring.html
 - EEL2 Documentation (may vary from EEL): https://www.cockos.com/EEL2/
