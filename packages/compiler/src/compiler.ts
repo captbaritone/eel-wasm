@@ -107,11 +107,7 @@ export function compileModule({
       resolveVar: name => {
         // The `reg00`-`reg99` variables are special in that they are shared between all pools.
         if (/reg\d\d/.test(name)) {
-          // TODO: Hack! We need a scope name here that is guaranteed not to be
-          // used by our users. Since the "shims" namespace is already reserverd
-          // (see above) we use it here, even though the `reg00`-`reg99` values
-          // have nothing to do with shims.
-          return varResolver.get("shims", name);
+          return varResolver.get(null, name);
         }
         return varResolver.get(pool, name);
       },

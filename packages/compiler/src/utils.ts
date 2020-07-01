@@ -35,15 +35,18 @@ export function repeat(n: number, char: string): string {
 // structure lets us issue variable indexes on demmand and then iterate through
 // them post facto.
 //
+// `null` may be passed for the namespace argument in order to get a global
+// variable that exists in all namespaces.
+//
 // TODO: We could improve this with a map to get constant time lookups, but I
 // suspect it's not worth the complexity.
 export class ScopedIdMap {
-  _list: [string, string][];
+  _list: [string | null, string][];
   constructor() {
     this._list = [];
   }
   // Get the index of a given namespace/key pair
-  get(namespace: string, key: string): number {
+  get(namespace: string | null, key: string): number {
     const i = this._list.findIndex(([n, k]) => n === namespace && k === key);
     if (i === -1) {
       this._list.push([namespace, key]);
