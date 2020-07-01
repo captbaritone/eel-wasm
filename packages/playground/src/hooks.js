@@ -77,9 +77,9 @@ export function useWasm(code, globals) {
     try {
       const wasm = compileModule({
         functions: {
-          main: code
+          main: { pool: "main", code }
         },
-        globals: new Set(Object.keys(globals))
+        pools: { main: new Set(Object.keys(globals)) }
       });
       setWasm(wasm);
       setWasmError(null);
@@ -170,7 +170,7 @@ function deserializeGlobals(str) {
 export function useGlobals() {
   const [globals, setGlobals] = useUrlState(
     "globals",
-    {},
+    { foo: new WebAssembly.Global({ value: "f64", mutable: true }, 0) },
     { serialize: serializeGlobals, deserialize: deserializeGlobals }
   );
 
