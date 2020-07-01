@@ -108,7 +108,7 @@ describe("Scopes", () => {
     expect(bx.value).toBe(20);
   });
 
-  test.only("share reg variables", async () => {
+  test("share reg variables", async () => {
     const g = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
     const mod = await loadModule({
       pools: {
