@@ -116,11 +116,13 @@ export function compileModule({
         return varResolver.get(pool, name);
       },
       resolveLocal: type => {
+        // TODO: We could provide a way for the emitter to release a local
+        // variable so that we can reuse it, much in the same way a traditional
+        // compiler does in register allocation.
         localVariables.push(type);
         return localVariables.length - 1;
       },
-      // TODO: Rename to resolveFunc
-      resolveLocalFunc: name => {
+      resolveFunc: name => {
         // If this is a shim, return the shim index.
         const shimdex = functionImports.findIndex(func => func.name === name);
         if (shimdex !== -1) {
@@ -194,10 +196,8 @@ export function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#import-section
   const imports = [
-    // Somehow these implicitly map to the first n indexes of the globals section?
-    ...importedVars.map(([namespace, name], i) => {
+    ...importedVars.map(([namespace, name]) => {
       return [
-        // TODO: Use pool name
         ...encodeString(namespace),
         ...encodeString(name),
         ...[GLOBAL_TYPE, VAL_TYPE.f64, MUTABILITY.var],

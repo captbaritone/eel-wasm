@@ -94,7 +94,7 @@ function getAssignmentOperatorMutation(
     "-=": [op.f64_sub],
     "*=": [op.f64_mul],
     "/=": [op.f64_div],
-    "%=": context.resolveLocalFunc("mod"),
+    "%=": context.resolveFunc("mod"),
     "=": null,
   };
   const operatorCode = operatorToCode[ast.operator];
@@ -128,10 +128,10 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         "-": [op.f64_sub],
         "*": [op.f64_mul],
         "/": [op.f64_div],
-        "%": context.resolveLocalFunc("mod"),
-        "|": context.resolveLocalFunc("bitwiseOr"),
-        "&": context.resolveLocalFunc("bitwiseAnd"),
-        "^": context.resolveLocalFunc("pow"),
+        "%": context.resolveFunc("mod"),
+        "|": context.resolveFunc("bitwiseOr"),
+        "&": context.resolveFunc("bitwiseAnd"),
+        "^": context.resolveFunc("pow"),
         // Comparison operators
         "==": [op.f64_sub, ...IS_ZEROISH, op.f64_convert_i32_s],
         "!=": [op.f64_sub, ...IS_NOT_ZEROISH, op.f64_convert_i32_s],
@@ -199,7 +199,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           const index = context.resolveLocal(VAL_TYPE.i32);
           return [
             ...emit(ast.arguments[0], context),
-            ...context.resolveLocalFunc("_getBufferIndex"),
+            ...context.resolveFunc("_getBufferIndex"),
             ...op.local_tee(index),
             ...op.i32_const(-1),
             op.i32_ne,
@@ -257,7 +257,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           return [...args, ...IS_ZEROISH, op.f64_convert_i32_s];
       }
 
-      const invocation = context.resolveLocalFunc(functionName);
+      const invocation = context.resolveFunc(functionName);
       if (
         invocation == null ||
         // Ensure this isn't a private function. This is a bit awkward becuase
@@ -349,7 +349,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ...rightCode,
           ...op.local_set(rightValue),
           ...emit(left.arguments[0], context),
-          ...context.resolveLocalFunc("_getBufferIndex"),
+          ...context.resolveFunc("_getBufferIndex"),
           ...op.local_tee(unnormalizedIndex),
           ...op.i32_const(0),
           op.i32_lt_s,
@@ -380,7 +380,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...rightCode,
         ...op.local_set(rightValue),
         ...emit(left.arguments[0], context),
-        ...context.resolveLocalFunc("_getBufferIndex"),
+        ...context.resolveFunc("_getBufferIndex"),
         ...op.local_tee(index),
         // STACK: [index]
         ...op.i32_const(-1),

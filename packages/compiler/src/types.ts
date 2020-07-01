@@ -128,7 +128,7 @@ export interface FunctionDefinition extends TypedFunction {
 
 export interface CompilerContext {
   resolveVar(name: string): number;
-  resolveLocalFunc(name: string): number[] | null;
+  resolveFunc(name: string): number[] | null;
   resolveLocal(type: 0x7f | 0x7e | 0x7d | 0x7c): number;
   rawSource: string;
 }
