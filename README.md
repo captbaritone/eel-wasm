@@ -4,7 +4,7 @@ EEL-Wasm is a compiler, written in TypeScript, that can convert Milkdrop EEL sou
 
 # Project Status (Alpha)
 
-This project is fully functional according to its test suite, but has not yet been shipped to any real users. We are [currently working](https://github.com/jberg/butterchurn/pull/35) on getting [Butterchurn](https://github.com/jberg/butterchurn) to use it instead of it’s current EEL → JavaScript compiler.
+This project is fully functional according to its test suite, but has not yet been shipped to any real users. We are [currently working](https://github.com/jberg/butterchurn/pull/35) on getting [Butterchurn](https://github.com/jberg/butterchurn) to use it instead of its current EEL → JavaScript compiler.
 
 # Motivation
 
@@ -13,11 +13,11 @@ This project is fully functional according to its test suite, but has not yet be
 Milkdrop presets, user defined visualizations, consist of shader code as well as EEL code. EEL is a custom programing language made by Nullsoft. Currently Butterchurn handles EEL code by compiling it to JavaScript ahead of time (not in the browser). This works well, but it has a few downsides:
 
 1. In order to load a preset from an arbitrary source — such as the Internet Archive's [collection of ~40k presets](https://archive.org/details/milkdrops) — you must be willing to execute arbitrary JavaScript from that source in the same context as Webamp. This security risk is currently preventing us from enabling Dropbox integration on https://webamp.org.
-2. EEL at run time gets us closer to being able to build an in-browser preset editor where the user can edit their preset and see the changes in real time.
+2. Compiling EEL at run time gets us closer to being able to build an in-browser preset editor where the user can edit their preset and see the changes in real time.
 
 Finally, the compiled JavaScript is currently a performance bottleneck for Butterchurn. Some more-complicated presets struggle to render at a good frame rate. We suspect — but don’t know — that WebAssembly could run faster than JavaScript.
 
-In all honesty, this project has been a “solution in search of a problem”. I was curious to learn more about compilers and while thinking about potential projects I could build to teach myself, I came up with this idea.
+_In all honesty, this project has been a “solution in search of a problem”. I was curious to learn more about compilers and while thinking about potential projects I could build to teach myself, I came up with this idea._
 
 # Playground
 
@@ -98,23 +98,25 @@ If you are interested in contributing to the compiler, or just reading the sourc
 
 ## Preprocessor
 
-The **preprocessor** takes the raw source and strips out newlines and comments. It returns the stripped source as well as a `mapper` artifact which can be passed to `getLoc` to map a column in the stripped source (since new lines are removed, line numbers are not needed) back to the line/column in the raw source.
+The [**preprocessor**](./packages/compiler/src/preProcessor.ts) takes the raw source and strips out newlines and comments. It returns the stripped source as well as a `mapper` artifact which can be passed to `getLoc` to map a _column_ in the stripped source (since new lines are removed, line numbers are not needed) back to the line/column in the raw source.
 
 ## Parser
 
-The **parser**, written using `jison`, takes the stripped source emitted by the **preprocessor** and returns an AST.
+The [**parser**](./packages/compiler/src/parser.ts), written using [jison](https://zaa.ch/jison/), takes the stripped source emitted by the **preprocessor** and returns an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 
-The AST is annotated with line/column numbers for each node, but those refer to the stripped source, so before returning the AST to the caller, we walk the AST and map the location back to the raw source location using `getLoc`.
+The implemenatation of the parser lives in [buildParser.js](./packages/compiler/src/buildParser.js) which is a node script that uses jison to generate the actual parser code which is written to [build/parser.js](./packages/compiler/build/parser.js).
 
-The `jison` parser may throw an error if the source is malformed. In that case we catch the error, which has a `.loc` property indicating the location of the error in the stripped source, and map that location back to the location in the raw source.
+The AST returned by the jsion parser is annotated with line/column numbers for each node, but those refer to the stripped source, so before returning the AST to the caller, we walk the AST and map the location back to the raw source location using `getLoc`.
+
+The `jison` parser may throw an error if the source is malformed. In that case we catch the error, to which the jison generated parse has affixed a `.loc` property indicating the location of the error in the stripped source, and map that location back to the location in the raw source.
 
 ## Emitter
 
-The **emitter** takes a root AST node as well as a stateful `context` object and recursively builds up an array of integer Wasm instructions representing the [function body](https://webassembly.github.io/spec/core/syntax/modules.html#syntax-func) of this program.
+The [**emitter**](./packages/compiler/src/emitter.ts) takes a root AST node as well as a stateful `context` object and recursively builds up a array of bytes of Wasm instructions representing the [function body](https://webassembly.github.io/spec/core/syntax/modules.html#syntax-func) of this program.
 
 ## Compiler
 
-The **compiler** is the top level function which uses the above functions to build a Wasm module. It takes:
+The [**compiler**](./packages/compiler/src/compiler.ts) is the top level function which uses the above functions to build a Wasm module. It takes:
 
 - A collection of functions in the form of .eel source code
 - A set of variable names indicating which variables should be exposed as globals
@@ -126,17 +128,21 @@ The compiler has two large responsibilities:
 
 It returns a `Uint8Array` which is the binary representation of a Wasm module. When instantiated, the module expects to be passed a `WebAssembly.Global` for each global variable as well as as well as the `shims` object.
 
+The shims object is a collection of functions which the generated Wasm module expects to get passed. It implements a number of functions which would be too tedious to implement in Wasm directly. For example, trigonometric functions.
+
 ## Loader
 
-The **loader** is a nice wrapper around the compiler which will compile the Wasm module and then instantiate and return an instance. It has an API similar to the **compiler** expect that it expects a `WebAssembly.Global` instance for each variable that is exposed to the JavaScript environment.
+The [**loader**](./packages/compiler/src/loader.ts) is a nice wrapper around the compiler which will compile the Wasm module and then instantiate and return an instance. It has an API similar to the **compiler** expect that it expects a `WebAssembly.Global` instance for each variable that is exposed to the JavaScript environment.
 
 # Prior Art
+
 - [Milkdrop's EEL compiler](https://github.com/WACUP/vis_milk2/tree/master/ns-eel2), written in C
 - [WDL](https://www.cockos.com/wdl/) includes an [EEL2 compiler](https://github.com/justinfrankel/WDL/tree/master/WDL/eel2).
 - [Butterchun's existing EEL -> JavaScript compiler](https://github.com/jberg/milkdrop-eel-parser), written in Clojure.
 - WebVS includes an [EEL -> JavaScript compiler](https://github.com/azeem/webvs/tree/master/src/expr) written in TypeScript.
 
 # Related Documentation
+
 - Mikdrop Preset documentation: http://www.geisswerks.com/hosted/milkdrop2/milkdrop_preset_authoring.html
 - EEL2 Documentation (may vary from EEL): https://www.cockos.com/EEL2/
 - Web Assembly spec: https://webassembly.github.io/spec/core/index.html
