@@ -4,7 +4,7 @@ import { createUserError, createCompilerError } from "./errorUtils";
 import { Ast, CompilerContext, AssignmentExpressionAstNode } from "./types";
 import { localFuncMap } from "./wasmFunctions";
 import { flatten, arrayJoin } from "./utils";
-import { BUFFER_SIZE } from "./constants";
+import { BUFFER_SIZE, MAX_LOOP_COUNT } from "./constants";
 
 export function emit(ast: Ast, context: CompilerContext): number[] {
   switch (ast.type) {
@@ -394,10 +394,28 @@ function emitExpressionBlock(body: Ast[], context: CompilerContext) {
 
 function emitWhile(expression: Ast, context: CompilerContext): number[] {
   const body = emit(expression, context);
+  const iterationCount = context.resolveLocal(VAL_TYPE.i32);
   return [
+    ...op.i32_const(0),
+    ...op.local_set(iterationCount),
+
     ...op.loop(BLOCK.void),
+
+    // Increment and check loop count
+    ...op.local_get(iterationCount),
+    ...op.i32_const(1),
+    op.i32_add,
+    ...op.local_tee(iterationCount),
+    // STACK: [iteration count]
+    ...op.i32_const(MAX_LOOP_COUNT),
+    op.i32_lt_u,
+    // STACK: [loop in range]
+
     ...body,
     ...IS_NOT_ZEROISH,
+    // STACK: [loop in range, body is truthy]
+    op.i32_mul, // &&
+    // STACK: [can continue]
     ...op.br_if(0), // Return to the top of the loop
     op.end,
     ...op.f64_const(0), // Implicitly return zero

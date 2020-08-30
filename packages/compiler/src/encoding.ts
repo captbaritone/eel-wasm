@@ -105,7 +105,7 @@ export const op = {
   // i32_eq: 0x46,
   i32_ne: 0x47,
   i32_lt_s: 0x48,
-  // i32_lt_u: 0x49,
+  i32_lt_u: 0x49,
   i32_gt_s: 0x4a,
   // i32_gt_u: 0x4b,
   i32_le_s: 0x4c,
