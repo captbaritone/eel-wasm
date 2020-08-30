@@ -190,6 +190,8 @@ const testCases: [string, string, number][] = [
   ["% and ^ have the same precedence (% first)", "g = 2 % 5 ^ 2", 4],
   ["% and ^ have the same precedence (^ first)", "g = 2 ^ 5 % 2", 0],
   ["Loop limit", "g = 0; while(g = g + 1)", 1048576],
+  ["Divide by zero", "g = 100 / 0", 0],
+  ["Divide by less than epsilon", "g = 100 / 0.000001", 100000000],
 ];
 
 export default testCases;

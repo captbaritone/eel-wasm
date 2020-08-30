@@ -1,4 +1,4 @@
-import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON } from "./encoding";
+import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON, BLOCK } from "./encoding";
 import { FunctionDefinition } from "./types";
 import { BUFFER_SIZE } from "./constants";
 
@@ -85,6 +85,23 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       op.i64_trunc_s_f64,
       op.i64_and,
       op.f64_convert_i64_s,
+    ],
+  },
+  div: {
+    args: [VAL_TYPE.f64, VAL_TYPE.f64],
+    returns: [VAL_TYPE.f64],
+    localVariables: [VAL_TYPE.i32],
+    binary: [
+      ...op.local_get(1),
+      ...op.f64_const(0),
+      op.f64_ne,
+      ...op.if(BLOCK.f64),
+      ...op.local_get(0),
+      ...op.local_get(1),
+      op.f64_div,
+      op.else,
+      ...op.f64_const(0),
+      op.end,
     ],
   },
   // Takes a float buffer index and converts it to an int. Values out of range

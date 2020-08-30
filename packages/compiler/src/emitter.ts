@@ -25,7 +25,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         "+": [op.f64_add],
         "-": [op.f64_sub],
         "*": [op.f64_mul],
-        "/": [op.f64_div],
+        "/": context.resolveFunc("div"),
         "%": context.resolveFunc("mod"),
         "|": context.resolveFunc("bitwiseOr"),
         "&": context.resolveFunc("bitwiseAnd"),
