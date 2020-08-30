@@ -189,6 +189,7 @@ const testCases: [string, string, number][] = [
   ["% has lower precedence than * (left)", "g = 2 % 5 * 2", 4],
   ["% and ^ have the same precedence (% first)", "g = 2 % 5 ^ 2", 4],
   ["% and ^ have the same precedence (^ first)", "g = 2 ^ 5 % 2", 0],
+  ["Loop limit", "g = 0; while(g = g + 1)", 1048576],
 ];
 
 export default testCases;

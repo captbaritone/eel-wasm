@@ -4,109 +4,7 @@ import { createUserError, createCompilerError } from "./errorUtils";
 import { Ast, CompilerContext, AssignmentExpressionAstNode } from "./types";
 import { localFuncMap } from "./wasmFunctions";
 import { flatten, arrayJoin } from "./utils";
-import { BUFFER_SIZE } from "./constants";
-
-function emitExpressionBlock(body: Ast[], context: CompilerContext) {
-  const statements = body.map((statement, i) => {
-    return emit(statement, context);
-  });
-  return flatten(arrayJoin(statements, [op.drop]));
-}
-
-function emitWhile(expression: Ast, context: CompilerContext): number[] {
-  const body = emit(expression, context);
-  return [
-    ...op.loop(BLOCK.void),
-    ...body,
-    ...IS_NOT_ZEROISH,
-    ...op.br_if(0), // Return to the top of the loop
-    op.end,
-    ...op.f64_const(0), // Implicitly return zero
-  ];
-}
-
-function emitLoop(
-  count: Ast,
-  expression: Ast,
-  context: CompilerContext
-): number[] {
-  const body = emit(expression, context);
-  const localIndex = context.resolveLocal(VAL_TYPE.f64);
-
-  // TODO: This could probably be simplified
-  return [
-    // Assign the count to a variable
-    ...emit(count, context),
-    ...op.local_set(localIndex),
-    ...op.loop(BLOCK.void),
-    // Run the body
-    ...body,
-    op.drop,
-    // Decrement the count
-    ...op.local_get(localIndex),
-    ...op.f64_const(1),
-    op.f64_sub,
-    ...op.local_tee(localIndex),
-    // Test if we've reached the end
-    ...IS_NOT_ZEROISH,
-    ...op.br_if(0), // Return to the top of the loop
-    op.end,
-    ...op.f64_const(0), // Implicitly return zero
-  ];
-}
-
-function emitConditional(
-  test: Ast,
-  consiquent: Ast,
-  alternate: Ast,
-  context: CompilerContext
-): number[] {
-  // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
-  // Is that an optimization that we might want as well?
-  return [
-    ...emit(test, context),
-    ...IS_NOT_ZEROISH,
-    ...op.if(BLOCK.f64),
-    ...emit(consiquent, context),
-    op.else,
-    ...emit(alternate, context),
-    op.end,
-  ];
-}
-
-// There are two sections of memory. This function emits code to add the correct
-// offset to an i32 index already on the stack.
-function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number {
-  switch (name) {
-    case "gmegabuf":
-      return BUFFER_SIZE * 8;
-    case "megabuf":
-      return 0;
-  }
-}
-
-function getAssignmentOperatorMutation(
-  ast: AssignmentExpressionAstNode,
-  context: CompilerContext
-): number[] | null {
-  const operatorToCode = {
-    "+=": [op.f64_add],
-    "-=": [op.f64_sub],
-    "*=": [op.f64_mul],
-    "/=": [op.f64_div],
-    "%=": context.resolveFunc("mod"),
-    "=": null,
-  };
-  const operatorCode = operatorToCode[ast.operator];
-  if (operatorCode === undefined) {
-    throw createCompilerError(
-      `Unknown assignment operator "${ast.operator}"`,
-      ast.loc,
-      context.rawSource
-    );
-  }
-  return operatorCode;
-}
+import { BUFFER_SIZE, MAX_LOOP_COUNT } from "./constants";
 
 export function emit(ast: Ast, context: CompilerContext): number[] {
   switch (ast.type) {
@@ -485,4 +383,124 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         context.rawSource
       );
   }
+}
+
+function emitExpressionBlock(body: Ast[], context: CompilerContext) {
+  const statements = body.map((statement, i) => {
+    return emit(statement, context);
+  });
+  return flatten(arrayJoin(statements, [op.drop]));
+}
+
+function emitWhile(expression: Ast, context: CompilerContext): number[] {
+  const body = emit(expression, context);
+  const iterationCount = context.resolveLocal(VAL_TYPE.i32);
+  return [
+    ...op.i32_const(0),
+    ...op.local_set(iterationCount),
+
+    ...op.loop(BLOCK.void),
+
+    // Increment and check loop count
+    ...op.local_get(iterationCount),
+    ...op.i32_const(1),
+    op.i32_add,
+    ...op.local_tee(iterationCount),
+    // STACK: [iteration count]
+    ...op.i32_const(MAX_LOOP_COUNT),
+    op.i32_lt_u,
+    // STACK: [loop in range]
+
+    ...body,
+    ...IS_NOT_ZEROISH,
+    // STACK: [loop in range, body is truthy]
+    op.i32_mul, // &&
+    // STACK: [can continue]
+    ...op.br_if(0), // Return to the top of the loop
+    op.end,
+    ...op.f64_const(0), // Implicitly return zero
+  ];
+}
+
+function emitLoop(
+  count: Ast,
+  expression: Ast,
+  context: CompilerContext
+): number[] {
+  const body = emit(expression, context);
+  const localIndex = context.resolveLocal(VAL_TYPE.f64);
+
+  // TODO: This could probably be simplified
+  return [
+    // Assign the count to a variable
+    ...emit(count, context),
+    ...op.local_set(localIndex),
+    ...op.loop(BLOCK.void),
+    // Run the body
+    ...body,
+    op.drop,
+    // Decrement the count
+    ...op.local_get(localIndex),
+    ...op.f64_const(1),
+    op.f64_sub,
+    ...op.local_tee(localIndex),
+    // Test if we've reached the end
+    ...IS_NOT_ZEROISH,
+    ...op.br_if(0), // Return to the top of the loop
+    op.end,
+    ...op.f64_const(0), // Implicitly return zero
+  ];
+}
+
+function emitConditional(
+  test: Ast,
+  consiquent: Ast,
+  alternate: Ast,
+  context: CompilerContext
+): number[] {
+  // TODO: In some cases https://webassembly.studio/ compiles these to use `select`.
+  // Is that an optimization that we might want as well?
+  return [
+    ...emit(test, context),
+    ...IS_NOT_ZEROISH,
+    ...op.if(BLOCK.f64),
+    ...emit(consiquent, context),
+    op.else,
+    ...emit(alternate, context),
+    op.end,
+  ];
+}
+
+// There are two sections of memory. This function emits code to add the correct
+// offset to an i32 index already on the stack.
+function emitAddMemoryOffset(name: "gmegabuf" | "megabuf"): number {
+  switch (name) {
+    case "gmegabuf":
+      return BUFFER_SIZE * 8;
+    case "megabuf":
+      return 0;
+  }
+}
+
+function getAssignmentOperatorMutation(
+  ast: AssignmentExpressionAstNode,
+  context: CompilerContext
+): number[] | null {
+  const operatorToCode = {
+    "+=": [op.f64_add],
+    "-=": [op.f64_sub],
+    "*=": [op.f64_mul],
+    "/=": [op.f64_div],
+    "%=": context.resolveFunc("mod"),
+    "=": null,
+  };
+  const operatorCode = operatorToCode[ast.operator];
+  if (operatorCode === undefined) {
+    throw createCompilerError(
+      `Unknown assignment operator "${ast.operator}"`,
+      ast.loc,
+      context.rawSource
+    );
+  }
+  return operatorCode;
 }
