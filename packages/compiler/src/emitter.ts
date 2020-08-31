@@ -414,7 +414,7 @@ function emitWhile(expression: Ast, context: CompilerContext): number[] {
     ...body,
     ...IS_NOT_ZEROISH,
     // STACK: [loop in range, body is truthy]
-    op.i32_mul, // &&
+    op.i32_and,
     // STACK: [can continue]
     ...op.br_if(0), // Return to the top of the loop
     op.end,
