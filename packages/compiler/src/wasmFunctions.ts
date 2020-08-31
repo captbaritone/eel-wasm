@@ -55,12 +55,19 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     returns: [VAL_TYPE.f64],
     // TODO: Simplify all this type coersion
     binary: [
+      ...op.local_get(1),
+      ...op.f64_const(0),
+      op.f64_ne,
+      ...op.if(BLOCK.f64),
       ...op.local_get(0),
       op.i64_trunc_s_f64,
       ...op.local_get(1),
       op.i64_trunc_s_f64,
       op.i64_rem_s,
       op.f64_convert_i64_s,
+      op.else,
+      ...op.f64_const(0),
+      op.end,
     ],
   },
   bitwiseOr: {
