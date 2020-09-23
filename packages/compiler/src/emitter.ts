@@ -71,8 +71,6 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         }
       };
 
-      const args = flatten(ast.arguments.map(node => emit(node, context)));
-
       // Some functions have special behavior
       switch (functionName) {
         case "exec2":
@@ -125,7 +123,12 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             ...op.global_set(resolvedName),
             ...op.global_get(resolvedName),
           ];
-        // Function calls which can be linlined
+      }
+
+      // Function calls which can be linlined
+      const args = flatten(ast.arguments.map(node => emit(node, context)));
+      // This is just a continuation of the above switch statement, but it's for functions which all parse their args the same.
+      switch (functionName) {
         case "abs":
           assertArity(1);
           return [...args, op.f64_abs];
@@ -504,3 +507,6 @@ function getAssignmentOperatorMutation(
   }
   return operatorCode;
 }
+
+emit.emitCalls = 0;
+emit.nodeTypes = {};
