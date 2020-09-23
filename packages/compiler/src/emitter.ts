@@ -507,6 +507,3 @@ function getAssignmentOperatorMutation(
   }
   return operatorCode;
 }
-
-emit.emitCalls = 0;
-emit.nodeTypes = {};
