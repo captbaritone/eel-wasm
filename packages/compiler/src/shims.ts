@@ -11,7 +11,7 @@ const shims: Shims = {
   acos: Math.acos,
   atan: Math.atan,
   atan2: Math.atan2,
-  rand: a => Math.floor(Math.random() * a),
+  rand: a => Math.random() * a,
   pow: Math.pow,
   log: Math.log,
   log10: Math.log10,

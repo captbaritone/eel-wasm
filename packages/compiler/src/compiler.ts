@@ -19,7 +19,7 @@ import {
 import shims from "./shims";
 import * as Utils from "./utils";
 import { localFuncMap } from "./wasmFunctions";
-import { CompilerContext, TypedFunction } from "./types";
+import { CompilerContext, TypedFunction, EelVersion } from "./types";
 import { WASM_MEMORY_SIZE } from "./constants";
 
 type CompilerOptions = {
@@ -32,12 +32,14 @@ type CompilerOptions = {
       code: string;
     };
   };
+  eelVersion?: EelVersion;
   preParsed?: boolean;
 };
 
 export function compileModule({
   pools,
   functions: funcs,
+  eelVersion = 2,
   preParsed = false,
 }: CompilerOptions) {
   if (Object.keys(pools).includes("shims")) {
@@ -122,7 +124,11 @@ export function compileModule({
         // If this is a shim, return the shim index.
         const shimdex = functionImports.findIndex(func => func.name === name);
         if (shimdex !== -1) {
-          return op.call(shimdex);
+          const call = op.call(shimdex);
+          if (name === "rand" && eelVersion === 1) {
+            return [...call, op.f64_floor];
+          }
+          return call;
         }
 
         // If it's not a shim and it's not a defined function, return null.

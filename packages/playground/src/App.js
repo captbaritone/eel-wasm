@@ -39,9 +39,10 @@ const EDITOR_OPTIONS = {
 function App() {
   const { globals, addGlobal, removeGlobal } = useGlobals();
   const [eel, setEel] = useUrlState("eel", "foo = 1;");
+  const [eelVersion, setEelVersion] = useUrlState("eelVersion", "2");
   const [astString, setAstString] = useState(null);
   const [ast, astError] = useAst(eel);
-  const [wasm, wasmError] = useWasm(eel, globals);
+  const [wasm, wasmError] = useWasm(eel, globals, Number(eelVersion));
   const [wat] = useWat(wasm);
   const anyErrors = astError != null || wasmError != null;
   const [mod, modError] = useMod(anyErrors ? null : wasm, globals);
@@ -122,6 +123,17 @@ function App() {
           onChange={(ev, value) => setEel(value)}
           options={{ ...EDITOR_OPTIONS, lineNumbers: "on" }}
         />
+        <div>
+          Eel Version:{" "}
+          <select
+            style={{ display: "inline" }}
+            onChange={e => setEelVersion(e.target.value)}
+            value={eelVersion}
+          >
+            <option value="1">V1</option>
+            <option value="2">V2</option>
+          </select>
+        </div>
         <button onClick={run} disabled={run == null}>
           Run
         </button>

@@ -124,6 +124,8 @@ export interface FunctionDefinition extends TypedFunction {
   localVariables?: number[];
 }
 
+export type EelVersion = 1 | 2;
+
 export interface CompilerContext {
   resolveVar(name: string): number;
   resolveFunc(name: string): number[] | null;

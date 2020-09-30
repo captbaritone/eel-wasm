@@ -66,7 +66,7 @@ export function useAst(eel) {
   return [ast, astError];
 }
 
-export function useWasm(code, globals) {
+export function useWasm(code, globals, eelVersion) {
   const [wasm, setWasm] = useState(null);
   const [wasmError, setWasmError] = useState(null);
 
@@ -79,16 +79,17 @@ export function useWasm(code, globals) {
         functions: {
           main: { pool: "main", code }
         },
-        pools: { main: new Set(Object.keys(globals)) }
+        pools: { main: new Set(Object.keys(globals)) },
+        eelVersion
       });
       setWasm(wasm);
       setWasmError(null);
     } catch (e) {
       setWasmError(e);
     }
-  }, [code, globals]);
+  }, [code, eelVersion, globals]);
 
-  return [wasm, wasmError];
+  return [wasm, wasmError, eelVersion];
 }
 
 export function useWat(wasm) {
