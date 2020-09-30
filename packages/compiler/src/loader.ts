@@ -1,5 +1,6 @@
 import shims from "./shims";
 import { compileModule } from "./compiler";
+import { EelVersion } from "./types";
 
 type LoadModuleOptions = {
   pools: {
@@ -13,9 +14,14 @@ type LoadModuleOptions = {
       code: string;
     };
   };
+  eelVersion?: EelVersion;
 };
 
-export async function loadModule({ pools, functions }: LoadModuleOptions) {
+export async function loadModule({
+  pools,
+  functions,
+  eelVersion = 2,
+}: LoadModuleOptions) {
   let compilerPools: { [name: string]: Set<string> } = {};
   Object.entries(pools).forEach(([key, globals]) => {
     compilerPools[key] = new Set(Object.keys(globals));
@@ -23,6 +29,7 @@ export async function loadModule({ pools, functions }: LoadModuleOptions) {
   const buffer = compileModule({
     pools: compilerPools,
     functions,
+    eelVersion,
   });
   const mod = await WebAssembly.compile(buffer);
 

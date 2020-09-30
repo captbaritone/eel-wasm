@@ -55,8 +55,12 @@ const functions = {
   setXToY: { pool: 'poolA', code: "x = y;" }
 };
 
+
+// Eel v1 and Eel v2 only have one difference. Eel v1, `rand(n)` floors its return value, and Eel v2 leaves the decimal content.
+const eelVersion = 2; // 1 or 2
+
 // Build (compile/initialize) the Wasm module
-const mod = await loadModule({ pools, functions });
+const mod = await loadModule({ pools, functions, eelVersion });
 
 console.log(`x starts at 0. x:${globals.x.value}`);
 
