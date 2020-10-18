@@ -134,7 +134,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           return [...args, op.f64_abs];
         case "sqrt":
           assertArity(1);
-          return [...args, op.f64_sqrt];
+          return [...args, op.f64_abs, op.f64_sqrt];
         case "int":
           assertArity(1);
           return [...args, op.f64_floor];

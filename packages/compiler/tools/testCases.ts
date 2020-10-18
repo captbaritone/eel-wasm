@@ -32,6 +32,7 @@ const testCases: [string, string, number][] = [
   ["Max", "g = max(2, 10);", 10],
   ["Max reversed", "g = max(10, 2);", 10],
   ["Sqrt", "g = sqrt(4);", 2],
+  ["Sqrt (negative)", "g = sqrt(-4);", 2],
   ["Sqr", "g = sqr(10);", 100],
   ["Int", "g = int(4.5);", 4],
   ["Sin", "g = sin(10);", Math.sin(10)],
