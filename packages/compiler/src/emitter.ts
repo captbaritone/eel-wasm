@@ -431,26 +431,31 @@ function emitLoop(
   context: CompilerContext
 ): number[] {
   const body = emit(expression, context);
-  const localIndex = context.resolveLocal(VAL_TYPE.f64);
+  const localIndex = context.resolveLocal(VAL_TYPE.i32);
 
-  // TODO: This could probably be simplified
   return [
+    ...op.block(BLOCK.void),
     // Assign the count to a variable
     ...emit(count, context),
-    ...op.local_set(localIndex),
+    op.i32_trunc_f64_s,
+    ...op.local_tee(localIndex),
+    ...op.i32_const(0),
+    op.i32_le_s,
+    ...op.br_if(1),
     ...op.loop(BLOCK.void),
     // Run the body
     ...body,
     op.drop,
     // Decrement the count
     ...op.local_get(localIndex),
-    ...op.f64_const(1),
-    op.f64_sub,
+    ...op.i32_const(1),
+    op.i32_sub,
     ...op.local_tee(localIndex),
-    // Test if we've reached the end
-    ...IS_NOT_ZEROISH,
+    ...op.i32_const(0),
+    op.i32_ne,
     ...op.br_if(0), // Return to the top of the loop
-    op.end,
+    op.end, // End loop
+    op.end, // End block
     ...op.f64_const(0), // Implicitly return zero
   ];
 }

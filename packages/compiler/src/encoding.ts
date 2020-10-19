@@ -48,7 +48,7 @@ export const op = {
    */
   // unreachable: 0x00,
   // nop: 0x01,
-  // block: 0x02,
+  block: (blockType: BlockType) => [0x02, blockType],
   loop: (blockType: BlockType) => [0x03, blockType],
   if: (retType: BlockType) => [0x04, retType],
   else: 0x05,
