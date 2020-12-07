@@ -27,3 +27,43 @@ test("Can execute hand crafted binary Wasm", async () => {
   instance.exports.run();
   expect(importObject.main.g.value).toBe(100);
 });
+
+// Demonstrates using shared globals to establish a pool that contains values
+// from multiple other pools without namespace collisions.
+test("Can mix pools", async () => {
+  const buffer = compileModule({
+    pools: {
+      poolA: new Set(["x"]),
+      poolB: new Set(["x"]),
+      poolAB: new Set(["a_x", "b_x"]),
+    },
+    functions: {
+      setAX: { pool: "poolA", code: "x = 100;" },
+      setBX: { pool: "poolB", code: "x = 50;" },
+      setAXToBX: { pool: "poolAB", code: "a_x = b_x;" },
+    },
+  });
+
+  const mod = await WebAssembly.compile(buffer);
+
+  const aX = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+  const bX = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+
+  const instance = await WebAssembly.instantiate(mod, {
+    poolA: { x: aX },
+    poolB: { x: bX },
+    poolAB: { a_x: aX, b_x: bX },
+    shims,
+  });
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.setAX();
+  expect(aX.value).toBe(100);
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.setBX();
+  expect(bX.value).toBe(50);
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.setAXToBX();
+  expect(aX.value).toBe(50);
+});
