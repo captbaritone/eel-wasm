@@ -108,7 +108,7 @@ export function compileModule({
     const context: CompilerContext = {
       resolveVar: name => {
         // The `reg00`-`reg99` variables are special in that they are shared between all pools.
-        if (/reg\d\d/.test(name)) {
+        if (/^reg\d\d$/.test(name)) {
           return varResolver.get(null, name);
         }
         return varResolver.get(pool, name);
