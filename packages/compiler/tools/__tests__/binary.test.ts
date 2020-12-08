@@ -1,5 +1,6 @@
 import shims from "../../src/shims";
 import { compileModule } from "../../src/compiler";
+import asc from "assemblyscript/cli/asc";
 
 // An attempt at generating Wasm binary directly (without the help fo wabt)
 // TODO: We can probably delete this now.
@@ -98,6 +99,64 @@ test("Can mix pools via a second module", async () => {
   const glueModInstance = await WebAssembly.instantiate(glueMod, {
     poolAB: { a_x: aX, b_x: bX },
     shims,
+  });
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  modInstance.exports.setAX();
+  expect(aX.value).toBe(100);
+  // @ts-ignore Typescript does not know what shape our module is.
+  modInstance.exports.setBX();
+  expect(bX.value).toBe(50);
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  glueModInstance.exports.setAXToBX();
+  expect(aX.value).toBe(50);
+});
+
+test("assemblyScript", async () => {
+  const mod = await WebAssembly.compile(
+    compileModule({
+      pools: { poolA: new Set(["x"]), poolB: new Set(["x"]) },
+      functions: {
+        setAX: { pool: "poolA", code: "x = 100;" },
+        setBX: { pool: "poolB", code: "x = 50;" },
+      },
+    })
+  );
+
+  const aX = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+  const bX = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+
+  const modInstance = await WebAssembly.instantiate(mod, {
+    poolA: { x: aX },
+    poolB: { x: bX },
+    shims,
+  });
+
+  let script = `
+    @external("poolAB", "aX")
+    declare let aX: f64;
+
+    @external("poolAB", "bX")
+    declare let bX: f64;
+
+    export function setAXToBX(): void {
+      aX = bX;
+    }
+  `;
+  await asc.ready;
+  const { binary, text, stdout, stderr } = asc.compileString(script, {});
+  expect(stderr.toString()).toBe("");
+  const glueMod = await WebAssembly.compile(binary);
+
+  const glueModInstance = await WebAssembly.instantiate(glueMod, {
+    poolAB: { aX, bX },
+    env: {
+      abort: () => {
+        // No idea why we need this.
+        console.log("abort");
+      },
+    },
   });
 
   // @ts-ignore Typescript does not know what shape our module is.
