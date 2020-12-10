@@ -170,3 +170,147 @@ test("assemblyScript", async () => {
   glueModInstance.exports.setAXToBX();
   expect(aX.value).toBe(50);
 });
+
+test("Reset variables", async () => {
+  const buffer = compileModule({
+    pools: {
+      poolA: new Set(["x"]),
+      resetPool: new Set(["x"]),
+    },
+    functions: {
+      setX: { pool: "poolA", code: "x = 100;" },
+      save: { pool: "resetPool", code: "save_x = x;" },
+      restore: { pool: "resetPool", code: "x = save_x;" },
+    },
+  });
+
+  const mod = await WebAssembly.compile(buffer);
+
+  const x = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+
+  const instance = await WebAssembly.instantiate(mod, {
+    poolA: { x },
+    resetPool: { x },
+    shims,
+  });
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.save();
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.setX();
+  expect(x.value).toBe(100);
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.restore();
+  expect(x.value).toBe(0);
+});
+
+async function makeResetModule(pool) {
+  const resetBuffer = compileModule({
+    pools: {
+      resetPool: new Set(["x"]),
+    },
+    functions: {
+      save: { pool: "resetPool", code: "save_x = x;" },
+      restore: { pool: "resetPool", code: "x = save_x;" },
+    },
+  });
+
+  const resetMod = await WebAssembly.compile(resetBuffer);
+
+  return await WebAssembly.instantiate(resetMod, {
+    resetPool: pool,
+    shims,
+  });
+}
+
+test("Reset variables from second module", async () => {
+  const x = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+  const buffer = compileModule({
+    pools: {
+      poolA: new Set(["x"]),
+    },
+    functions: {
+      setX: { pool: "poolA", code: "x = 100;" },
+    },
+  });
+
+  const mod = await WebAssembly.compile(buffer);
+
+  const instance = await WebAssembly.instantiate(mod, {
+    poolA: { x },
+    resetPool: { x },
+    shims,
+  });
+
+  const resetInstance = await makeResetModule({ x });
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  resetInstance.exports.save();
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.setX();
+  expect(x.value).toBe(100);
+  // @ts-ignore Typescript does not know what shape our module is.
+  resetInstance.exports.restore();
+  expect(x.value).toBe(0);
+});
+
+async function makeAssemblyScriptResetModule(pool) {
+  let script = `
+    @external("resetPool", "x")
+    declare let x: f64;
+
+    let save_x: f64 = 0;
+
+    export function save(): void {
+      save_x = x;
+    }
+    export function restore(): void {
+      x = save_x;
+    }
+  `;
+  await asc.ready;
+  const { binary, text, stdout, stderr } = asc.compileString(script, {});
+  expect(stderr.toString()).toBe("");
+  const glueMod = await WebAssembly.compile(binary);
+
+  return await WebAssembly.instantiate(glueMod, {
+    resetPool: pool,
+    env: {
+      abort: () => {
+        // No idea why we need this.
+        console.log("abort");
+      },
+    },
+  });
+}
+
+test("Reset variables from second assembly script module", async () => {
+  const x = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
+  const buffer = compileModule({
+    pools: {
+      poolA: new Set(["x"]),
+    },
+    functions: {
+      setX: { pool: "poolA", code: "x = 100;" },
+    },
+  });
+
+  const mod = await WebAssembly.compile(buffer);
+
+  const instance = await WebAssembly.instantiate(mod, {
+    poolA: { x },
+    resetPool: { x },
+    shims,
+  });
+
+  const resetInstance = await makeAssemblyScriptResetModule({ x });
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  resetInstance.exports.save();
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.setX();
+  expect(x.value).toBe(100);
+  // @ts-ignore Typescript does not know what shape our module is.
+  resetInstance.exports.restore();
+  expect(x.value).toBe(0);
+});
