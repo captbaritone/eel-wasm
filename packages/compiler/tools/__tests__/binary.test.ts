@@ -314,3 +314,37 @@ test("Reset variables from second assembly script module", async () => {
   resetInstance.exports.restore();
   expect(x.value).toBe(0);
 });
+
+test("Read FloatArray out of Wasm (AssemblyScript)", async () => {
+  // Reserve 16 bytes of memory (starting at 0) for our program to use
+  const memoryBase = 16;
+  let script = `
+    export function set(): void {
+      store<f64>(0, .5);
+      store<f64>(8, 2.5);
+    }
+  `;
+  await asc.ready;
+  const { binary, text, stdout, stderr } = asc.compileString(script, {
+    memoryBase,
+  });
+  expect(stderr.toString()).toBe("");
+  const glueMod = await WebAssembly.compile(binary);
+
+  const instance = await WebAssembly.instantiate(glueMod, {
+    env: {
+      abort: () => {
+        // No idea why we need this.
+        console.log("abort");
+      },
+    },
+  });
+
+  // @ts-ignore Typescript does not know what shape our module is.
+  const mem = new Float64Array(instance.exports.memory.buffer, 0, memoryBase);
+  expect(mem[0]).toBe(0);
+  // @ts-ignore Typescript does not know what shape our module is.
+  instance.exports.set();
+  expect(mem[0]).toBe(0.5);
+  expect(mem[1]).toBe(2.5);
+});
