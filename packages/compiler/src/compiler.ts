@@ -104,6 +104,12 @@ export function compileModule({
         "Got passed unparsed code without setting the preParsed flag"
       );
     }
+    if (ast.type !== "SCRIPT") {
+      throw new Error("Invalid AST");
+    }
+    if (ast.body.length === 0) {
+      return;
+    }
     const localVariables: number[] = [];
     const context: CompilerContext = {
       resolveVar: name => {
