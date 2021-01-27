@@ -1,5 +1,4 @@
 const testCases: [string, string, number][] = [
-  ["Empty program", "", 0],
   ["Expressions", "g = ((6- -7)+ 3);", 16],
   ["Number", "g = 5;", 5],
   ["Number with decimal", "g = 5.5;", 5.5],

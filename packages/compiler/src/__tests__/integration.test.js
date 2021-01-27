@@ -82,6 +82,24 @@ describe("Small test cases", () => {
   });
 });
 
+// This
+test("Empty equations are not created", async () => {
+  const mod = await loadModule({
+    pools: { main: {} },
+    functions: {
+      empty: { pool: "main", code: "" },
+      whiteSpace: { pool: "main", code: "  \n\t " },
+      comment: { pool: "main", code: "// IGNORE THIS" },
+      hasCode: { pool: "main", code: "1" },
+    },
+  });
+
+  expect(mod.exports.empty).toBe(undefined);
+  expect(mod.exports.whiteSpace).toBe(undefined);
+  expect(mod.exports.comment).toBe(undefined);
+  expect(mod.exports.hasCode).not.toBe(undefined);
+});
+
 describe("Scopes", () => {
   test("isolate variables", async () => {
     const ax = new WebAssembly.Global({ value: "f64", mutable: true }, 0);
