@@ -65,6 +65,7 @@ const mod = await loadModule({ pools, functions, eelVersion });
 console.log(`x starts at 0. x:${globals.x.value}`);
 
 // Run a compiled EEL script and see that it ran
+// __NOTE:__ If the EEL program has no content (only whitespace/comments) the method will not be added.
 mod.exports.ten();
 console.log(`x Has been set to 10. x:${globals.x.value}`);
 
