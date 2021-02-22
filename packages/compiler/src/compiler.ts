@@ -36,12 +36,12 @@ type CompilerOptions = {
   preParsed?: boolean;
 };
 
-export function compileModule({
+export async function compileModule({
   pools,
   functions: funcs,
   eelVersion = 2,
   preParsed = false,
-}: CompilerOptions) {
+}: CompilerOptions): Promise<Uint8Array> {
   if (Object.keys(pools).includes("shims")) {
     throw new Error(
       'You may not name a pool "shims". "shims" is reserved for injected JavaScript functions.'
@@ -81,7 +81,7 @@ export function compileModule({
     localVariables: number[];
   }[] = [];
 
-  Object.entries(funcs).forEach(([name, { pool, code }]) => {
+  for (const [name, { pool, code }] of Object.entries(funcs)) {
     if (pools[pool] == null) {
       const poolsList = Object.keys(pools);
       if (poolsList.length === 0) {
@@ -108,7 +108,7 @@ export function compileModule({
       throw new Error("Invalid AST");
     }
     if (ast.body.length === 0) {
-      return;
+      continue;
     }
     const localVariables: number[] = [];
     const context: CompilerContext = {
@@ -160,7 +160,8 @@ export function compileModule({
       returns: [],
       localVariables,
     });
-  });
+    await Promise.resolve();
+  }
 
   const localFuncs = localFuncOrder.map(name => {
     const func = localFuncMap[name];

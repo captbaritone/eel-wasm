@@ -26,7 +26,7 @@ export async function loadModule({
   Object.entries(pools).forEach(([key, globals]) => {
     compilerPools[key] = new Set(Object.keys(globals));
   });
-  const buffer = compileModule({
+  const buffer = await compileModule({
     pools: compilerPools,
     functions,
     eelVersion,
