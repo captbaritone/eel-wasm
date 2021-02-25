@@ -1,0 +1,15 @@
+{
+  "name": "eel-wasm-benchmark",
+  "version": "0.0.1",
+  "license": "MIT",
+  "prettier": {
+    "trailingComma": "es5"
+  },
+  "scripts": {
+    "start": "node wrapper.js"
+  },
+  "dependencies": {
+    "butterchurn-presets": "3.0.0-beta.4",
+    "eel-wasm": "^0.0.13"
+  }
+}
