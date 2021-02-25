@@ -6,7 +6,8 @@
     "trailingComma": "es5"
   },
   "scripts": {
-    "start": "node wrapper.js"
+    "start": "node wrapper.js",
+    "test": "echo 1"
   },
   "dependencies": {
     "butterchurn-presets": "3.0.0-beta.4",
