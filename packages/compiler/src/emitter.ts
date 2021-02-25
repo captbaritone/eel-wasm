@@ -95,7 +95,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           const index = context.resolveLocal(VAL_TYPE.i32);
           return [
             ...emit(ast.arguments[0], context),
-            ...context.resolveFunc("_getBufferIndex"),
+            ...(context.resolveFunc("_getBufferIndex") ?? []),
             ...op.local_tee(index),
             ...op.i32_const(-1),
             op.i32_ne,
@@ -256,7 +256,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ...rightCode,
           ...op.local_set(rightValue),
           ...emit(left.arguments[0], context),
-          ...context.resolveFunc("_getBufferIndex"),
+          ...(context.resolveFunc("_getBufferIndex") ?? []),
           ...op.local_tee(unnormalizedIndex),
           ...op.i32_const(0),
           op.i32_lt_s,
@@ -287,7 +287,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         ...rightCode,
         ...op.local_set(rightValue),
         ...emit(left.arguments[0], context),
-        ...context.resolveFunc("_getBufferIndex"),
+        ...(context.resolveFunc("_getBufferIndex") ?? []),
         ...op.local_tee(index),
         // STACK: [index]
         ...op.i32_const(-1),

@@ -7,7 +7,9 @@
     "downlevelIteration": true,
     "sourceMap": true,
     "strictNullChecks": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "target": "ES2017",
+    "module": "commonjs"
   },
   "include": ["./src/**/*"]
 }
