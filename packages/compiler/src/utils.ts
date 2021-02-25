@@ -37,26 +37,23 @@ export function repeat(n: number, char: string): string {
 //
 // `null` may be passed for the namespace argument in order to get a global
 // variable that exists in all namespaces.
-//
-// TODO: We could improve this with a map to get constant time lookups, but I
-// suspect it's not worth the complexity.
 export class ScopedIdMap {
-  _list: [string | null, string][];
+  _map: Map<string, number>;
   constructor() {
-    this._list = [];
+    this._map = new Map();
   }
   // Get the index of a given namespace/key pair
   get(namespace: string | null, key: string): number {
-    const i = this._list.findIndex(([n, k]) => n === namespace && k === key);
-    if (i === -1) {
-      this._list.push([namespace, key]);
-      return this._list.length - 1;
+    const jointKey = namespace == null ? key : `${namespace}::${key}`;
+    if (!this._map.has(jointKey)) {
+      this._map.set(jointKey, this._map.size);
     }
-    return i;
+    // @ts-ignore We know the key is here.
+    return this._map.get(jointKey);
   }
 
   size(): number {
-    return this._list.length;
+    return this._map.size;
   }
 }
 
