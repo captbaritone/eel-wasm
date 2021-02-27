@@ -216,10 +216,8 @@ export function encodef64(num: number): Uint8Array {
   return arr;
 }
 
-export const encodeString = (str: string): number[] => [
-  str.length,
-  ...str.split("").map(s => s.charCodeAt(0)),
-];
+export const encodeString = (str: string): number[] =>
+  [str.length].concat(str.split("").map(s => s.charCodeAt(0)));
 
 export function unsignedLEB128(n: number): number[] {
   const buffer = [];
@@ -264,17 +262,14 @@ export function signedLEB128(value: number): number[] {
 
   return bytes;
 }
+
 // https://webassembly.github.io/spec/core/binary/conventions.html#binary-vec
 // Vectors are encoded with their length followed by their element sequence
-export const encodeFlatVector = (data: number[]): number[] => [
-  ...unsignedLEB128(data.length),
-  ...data,
-];
+export const encodeFlatVector = (data: number[]): number[] =>
+  unsignedLEB128(data.length).concat(data);
 
-export const encodeNestedVector = (data: number[][]): number[] => [
-  ...unsignedLEB128(data.length),
-  ...flatten(data),
-];
+export const encodeNestedVector = (data: number[][]): number[] =>
+  unsignedLEB128(data.length).concat(flatten(data));
 
 // subSections is an array of arrays
 export function encodeSection(type: number, subSections: number[][]) {
@@ -287,5 +282,7 @@ export function encodeSection(type: number, subSections: number[][]) {
   // The size of this vector is not needed for decoding, but can be
   // used to skip sections when navigating through a binary.
   // TODO: Remove this assertion once we are more confident in our output.
-  return [type, ...encodeFlatVector(encodeNestedVector(subSections))];
+  const vec = encodeFlatVector(encodeNestedVector(subSections));
+  vec.unshift(type);
+  return vec;
 }
