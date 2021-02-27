@@ -10,16 +10,9 @@ export function arrayJoin<T1, T2>(arr: T1[], joiner: T2): Array<T1 | T2> {
   return newArr;
 }
 
-export function flatten<T>(arr: Array<T[]>): T[] {
-  const newArr: T[] = [];
-  arr.forEach(subArr => {
-    newArr.push(...subArr);
-  });
-  return newArr;
+export function flatten<T>(arr: T[][]): T[] {
+  return [].concat.apply([], arr);
 }
-
-export const flattenTwice = (arr: Array<number[] | number>): number[] =>
-  [].concat.apply([], arr);
 
 export function times<T>(n: number, cb: (i: number) => T): T[] {
   return new Array(n).fill(null).map((_, i) => cb(i));

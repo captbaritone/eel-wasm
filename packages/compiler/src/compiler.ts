@@ -2,7 +2,7 @@ import { parse } from "./parser";
 import { emit } from "./emitter";
 import {
   encodeString,
-  encodeVector,
+  encodeNestedVector,
   encodeSection,
   op,
   unsignedLEB128,
@@ -15,6 +15,7 @@ import {
   SECTION,
   MAGIC,
   WASM_VERSION,
+  encodeFlatVector,
 } from "./encoding";
 import shims from "./shims";
 import * as Utils from "./utils";
@@ -187,8 +188,8 @@ export function compileModule({
     }
     types.push([
       FUNCTION_TYPE,
-      ...encodeVector(func.args),
-      ...encodeVector(func.returns),
+      ...encodeFlatVector(func.args),
+      ...encodeFlatVector(func.returns),
     ]);
     typeIndexByKey.set(key, types.length - 1);
   });
@@ -278,7 +279,11 @@ export function compileModule({
     // It's a bit odd that every other section is an array of arrays and this
     // one is an array of vectors. The spec says this is so that when navigating
     // the binary functions can be skipped efficiently.
-    return encodeVector([...encodeVector(localTypes), ...func.binary, op.end]);
+    return encodeFlatVector([
+      ...encodeNestedVector(localTypes),
+      ...func.binary,
+      op.end,
+    ]);
   });
   return new Uint8Array([
     // Magic module header

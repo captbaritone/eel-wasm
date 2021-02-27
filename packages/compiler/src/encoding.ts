@@ -1,5 +1,5 @@
 import * as ieee754 from "./ieee754";
-import { flattenTwice } from "./utils";
+import { flatten } from "./utils";
 
 export const MAGIC = [0x00, 0x61, 0x73, 0x6d];
 export const WASM_VERSION = [0x01, 0x00, 0x00, 0x00];
@@ -266,13 +266,18 @@ export function signedLEB128(value: number): number[] {
 }
 // https://webassembly.github.io/spec/core/binary/conventions.html#binary-vec
 // Vectors are encoded with their length followed by their element sequence
-export const encodeVector = (data: Array<number[] | number>): number[] => [
+export const encodeFlatVector = (data: number[]): number[] => [
   ...unsignedLEB128(data.length),
-  ...flattenTwice(data),
+  ...data,
+];
+
+export const encodeNestedVector = (data: number[][]): number[] => [
+  ...unsignedLEB128(data.length),
+  ...flatten(data),
 ];
 
 // subSections is an array of arrays
-export function encodeSection(type: number, subSections: Array<number[]>) {
+export function encodeSection(type: number, subSections: number[][]) {
   // Sections are all optional, so if we get an empty vector of subSections, we
   // can omit the whole section.
   if (subSections.length === 0) {
@@ -282,5 +287,5 @@ export function encodeSection(type: number, subSections: Array<number[]>) {
   // The size of this vector is not needed for decoding, but can be
   // used to skip sections when navigating through a binary.
   // TODO: Remove this assertion once we are more confident in our output.
-  return [type, ...encodeVector(encodeVector(subSections))];
+  return [type, ...encodeFlatVector(encodeNestedVector(subSections))];
 }
