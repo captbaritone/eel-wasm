@@ -2,9 +2,7 @@
 
 EEL-Wasm is a compiler, written in TypeScript, that can convert Milkdrop EEL source code into a WebAssembly module in the browser. If this makes no sense to you, see the "Motivation" section below.
 
-# Project Status (Alpha)
-
-This project is fully functional according to its test suite, but has not yet been shipped to any real users. We are [currently working](https://github.com/jberg/butterchurn/pull/35) on getting [Butterchurn](https://github.com/jberg/butterchurn) to use it instead of its current EEL → JavaScript compiler.
+**Read the blog post, [Speeding Up Webamp's Music Visualizer with WebAssembly](https://jordaneldredge.com/blog/speeding-up-winamps-music-visualizer-with-webassembly/)**, to see how this project is used.
 
 # Motivation
 
@@ -21,7 +19,7 @@ _In all honesty, this project has been a “solution in search of a problem”. 
 
 # Playground
 
-In order to try out the compiler before it’s been integrated into Butterchurn, this repository includes a “playground” website (`packages/playground`) where you can write EEL code in your browser and see/run the compiled Wasm output by the compiler. You can play with it here: https://eel.capt.dev/
+To try out the compiler during development, this repository includes a “playground” website (`packages/playground`) where you can write EEL code in your browser and see/run the compiled Wasm output by the compiler. You can play with it here: https://eel.capt.dev/
 
 # Usage
 
@@ -62,17 +60,17 @@ const eelVersion = 2; // 1 or 2
 // Build (compile/initialize) the Wasm module
 const mod = await loadModule({ pools, functions, eelVersion });
 
-console.log(`x starts at 0. x:${globals.x.value}`);
+console.log(`x starts at 0. x:${pools.poolA.x.value}`);
 
 // Run a compiled EEL script and see that it ran
 // __NOTE:__ If the EEL program has no content (only whitespace/comments) the method will not be added.
 mod.exports.ten();
-console.log(`x Has been set to 10. x:${globals.x.value}`);
+console.log(`x Has been set to 10. x:${pools.poolA.x.value}`);
 
 // Change a global value from JS, and see that EEL code uses the new value
-globals.y.value = 5;
+pools.poolA.y.value = 5;
 mod.exports.setXToY();
-console.log(`x Has been set to 5. x:${globals.x.value}`);
+console.log(`x Has been set to 5. x:${pools.poolA.x.value}`);
 ```
 
 # Tools
@@ -95,7 +93,7 @@ If the assertions all pass, the preset will render a green background. If they d
 
 ## Performance Benchmark
 
-One outstanding question about the compiler is how its performance compares to Butterchurn’s existing JavaScript compiler. The performance benchmark attempts to measure the performance of our generated Wasm module relative to the compiled JS of Butterchurn. Performance benchmarking is hard as I don’t currently have high confidence in the accuracy of the numbers this generates.
+`packages/benchmark` is a tool intended to measure how fast the compiler runs. During preset transitions, the compiler runs at the same time as the visualizer, so it's important to ensure the compiler will not cause us to drop frames. This tool was built to help guide performance optimizations.
 
 # Architecture
 
@@ -109,15 +107,15 @@ The [**preprocessor**](./packages/compiler/src/preProcessor.ts) takes the raw so
 
 The [**parser**](./packages/compiler/src/parser.ts), written using [jison](https://zaa.ch/jison/), takes the stripped source emitted by the **preprocessor** and returns an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 
-The implemenatation of the parser lives in [buildParser.js](./packages/compiler/src/buildParser.js) which is a node script that uses jison to generate the actual parser code which is written to [build/parser.js](./packages/compiler/build/parser.js).
+The implemenatation of the parser lives in [buildParser.js](./packages/compiler/tools/buildParser.js) which is a node script that uses jison to generate the actual parser code which is written to [build/parser.js](./packages/compiler/build/parser.js).
 
-The AST returned by the jsion parser is annotated with line/column numbers for each node, but those refer to the stripped source, so before returning the AST to the caller, we walk the AST and map the location back to the raw source location using `getLoc`.
+The AST returned by the jison parser is annotated with line/column numbers for each node, but those refer to the stripped source, so before returning the AST to the caller, we walk the AST and map the location back to the raw source location using `getLoc`.
 
 The `jison` parser may throw an error if the source is malformed. In that case we catch the error, to which the jison generated parse has affixed a `.loc` property indicating the location of the error in the stripped source, and map that location back to the location in the raw source.
 
 ## Emitter
 
-The [**emitter**](./packages/compiler/src/emitter.ts) takes a root AST node as well as a stateful `context` object and recursively builds up a array of bytes of Wasm instructions representing the [function body](https://webassembly.github.io/spec/core/syntax/modules.html#syntax-func) of this program.
+The [**emitter**](./packages/compiler/src/emitter.ts) takes a root AST node as well as a stateful `context` object and recursively builds up a array of bytes of Wasm instructions representing the [function body](https://webassembly.github.io/spec/core/syntax/modules.html#syntax-func) of this program. As it does so, it collects up the variables that have been seen as well as the internal functions which will need to be included.
 
 ## Compiler
 
