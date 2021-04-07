@@ -22,6 +22,7 @@ use module_emitter::emit_module;
 pub use lexer::Lexer;
 use parity_wasm::elements::FunctionType;
 pub use parser::parse;
+pub use shim::Shim;
 pub use tokens::Token;
 pub use tokens::TokenKind;
 

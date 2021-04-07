@@ -1,4 +1,4 @@
-g = 100 / 0
+g = 5 ^ 2;
 ========================================================================
 (module
   (type (;0;) (func (param f64) (result f64)))
@@ -7,24 +7,12 @@ g = 100 / 0
   (import "shims" "sin" (func (;0;) (type 0)))
   (import "shims" "pow" (func (;1;) (type 1)))
   (func (;2;) (type 2)
-    f64.const 0x1.9p+6 (;=100;)
-    f64.const 0x0p+0 (;=0;)
-    call 3
+    f64.const 0x1.4p+2 (;=5;)
+    f64.const 0x1p+1 (;=2;)
+    call 1
     global.set 0
     global.get 0
     drop)
-  (func (;3;) (type 1) (param f64 f64) (result f64)
-    (local i32)
-    local.get 1
-    f64.const 0x0p+0 (;=0;)
-    f64.ne
-    if (result f64)  ;; label = @1
-      local.get 0
-      local.get 1
-      f64.div
-    else
-      f64.const 0x0p+0 (;=0;)
-    end)
   (memory (;0;) 2048 2048)
   (global (;0;) (mut f64) (f64.const 0x0p+0 (;=0;)))
   (export "test" (func 2)))

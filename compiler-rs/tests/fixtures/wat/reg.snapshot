@@ -2,13 +2,15 @@ reg00=10
 ========================================================================
 (module
   (type (;0;) (func (param f64) (result f64)))
-  (type (;1;) (func))
+  (type (;1;) (func (param f64 f64) (result f64)))
+  (type (;2;) (func))
   (import "shims" "sin" (func (;0;) (type 0)))
-  (func (;1;) (type 1)
+  (import "shims" "pow" (func (;1;) (type 1)))
+  (func (;2;) (type 2)
     f64.const 0x1.4p+3 (;=10;)
     global.set 0
     global.get 0
     drop)
   (memory (;0;) 2048 2048)
   (global (;0;) (mut f64) (f64.const 0x0p+0 (;=0;)))
-  (export "test" (func 1)))
+  (export "test" (func 2)))

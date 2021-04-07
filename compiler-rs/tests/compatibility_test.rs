@@ -78,7 +78,6 @@ fn compatibility_tests() {
         ("Line comments (\\\\)", "g = 10; \\\\ g = 20;", 10.0),
         ("Equal (false)", "g = equal(10, 5.0);", 0.0),
         ("Equal (true)", "g = equal(10, 10.0);", 1.0),
-        ("Pow", "g = pow(2, 10.0);", 1024.0),
         ("Log", "g = log(10);", 10_f64.log(std::f64::consts::E)),
         ("Log10", "g = log10(10);", 10_f64.log10()),
         ("Sign (10)", "g = sign(10);", 1.0),
@@ -334,7 +333,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "To the power",
         "Absolute value negative",
         "Absolute value positive",
         "Function used as expression",
@@ -460,11 +458,6 @@ fn compatibility_tests() {
         "gmegabuf does not write megabuf",
         "megabuf does not write gmegabuf",
         "Adjacent buf indicies don\'t collide",
-        "Exponentiation associativity",
-        "^ has lower precedence than * (left)",
-        "^ has lower precedence than * (right)",
-        "% and ^ have the same precedence (% first)",
-        "% and ^ have the same precedence (^ first)",
         "Loop limit",
     ];
 

@@ -18,6 +18,7 @@ static SUM_PRECEDENCE: u8 = 3;
 static DIFFERENCE_PRECEDENCE: u8 = 3;
 static PRODUCT_PRECEDENCE: u8 = 4;
 static QUOTIENT_PRECEDENCE: u8 = 4;
+static EXPONENTIATION_PRECEDENCE: u8 = 5;
 static MOD_PRECEDENCE: u8 = 5; // A little strange, in JS this would match product/quotient
 static PREFIX_PRECEDENCE: u8 = 6;
 // static POSTFIX_PRECEDENCE: u8 = 7;
@@ -178,6 +179,10 @@ impl<'a> Parser<'a> {
                 }
                 TokenKind::And => (0, BinaryOperator::BitwiseAnd),
                 TokenKind::Pipe => (0, BinaryOperator::BitwiseOr),
+                TokenKind::Caret if precedence < EXPONENTIATION_PRECEDENCE => (
+                    left_associative(EXPONENTIATION_PRECEDENCE),
+                    BinaryOperator::Pow,
+                ),
                 _ => return Ok(next),
             };
 

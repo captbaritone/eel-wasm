@@ -166,6 +166,10 @@ impl<'a> FunctionEmitter<'a> {
                 let func_index = self.resolve_builtin_function(BuiltinFunction::BitwiseOr);
                 self.push(Instruction::Call(func_index))
             }
+            BinaryOperator::Pow => {
+                let shim_index = self.shims.get(Shim::Pow);
+                self.push(Instruction::Call(shim_index))
+            }
         };
         Ok(())
     }

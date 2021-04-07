@@ -5,27 +5,40 @@ use parity_wasm::elements::{FunctionType, ValueType};
 #[derive(PartialEq, Eq, Hash)]
 pub enum Shim {
     Sin,
+    Pow,
 }
 
 impl Shim {
     pub fn get_type(&self) -> EelFunctionType {
+        FunctionType::new(self.get_args(), self.get_return())
+    }
+
+    pub fn get_args(&self) -> Vec<ValueType> {
+        vec![ValueType::F64; self.arity()]
+    }
+
+    pub fn get_return(&self) -> Vec<ValueType> {
         match self {
-            Shim::Sin => FunctionType::new(vec![ValueType::F64], vec![ValueType::F64]),
+            Shim::Sin => vec![ValueType::F64],
+            Shim::Pow => vec![ValueType::F64],
         }
     }
     pub fn arity(&self) -> usize {
         match self {
             Shim::Sin => 1,
+            Shim::Pow => 2,
         }
     }
     pub fn as_str(&self) -> &str {
         match self {
             Shim::Sin => "sin",
+            Shim::Pow => "pow",
         }
     }
     pub fn from_str(name: &str) -> Option<Self> {
         match name {
             "sin" => Some(Shim::Sin),
+            "pow" => Some(Shim::Pow),
             _ => None,
         }
     }
