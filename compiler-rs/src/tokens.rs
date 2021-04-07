@@ -13,6 +13,7 @@ pub enum TokenKind {
     OpenParen,
     CloseParen,
     Comma,
+    Semi,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }

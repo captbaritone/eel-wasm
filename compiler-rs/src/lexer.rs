@@ -39,6 +39,7 @@ impl<'a> Lexer<'a> {
             '(' => self.read_char_as_kind(TokenKind::OpenParen),
             ')' => self.read_char_as_kind(TokenKind::CloseParen),
             ',' => self.read_char_as_kind(TokenKind::Comma),
+            ';' => self.read_char_as_kind(TokenKind::Semi),
             c if is_whitepsace(c) => {
                 self.chars.eat_while(is_whitepsace);
                 return self.next_token();
