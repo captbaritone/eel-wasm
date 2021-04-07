@@ -1,5 +1,5 @@
-use std::collections::{hash_map::Entry, HashMap};
-
+use super::ast::{Expression, Program};
+use crate::ast::{Assignment, BinaryExpression, BinaryOperator, FunctionCall};
 use parity_wasm::elements::Module;
 use parity_wasm::elements::{
     CodeSection, ExportEntry, ExportSection, Func, FuncBody, FunctionSection, FunctionType,
@@ -7,10 +7,9 @@ use parity_wasm::elements::{
     Section, Serialize, Type, TypeSection, ValueType,
 };
 use parity_wasm::elements::{External, Instruction, Instructions};
+use std::collections::{hash_map::Entry, HashMap};
 
-use crate::ast::{Assignment, BinaryExpression, BinaryOperator, FunctionCall};
-
-use super::ast::{Expression, Program};
+type EmitterResult<T> = Result<T, String>;
 
 pub fn emit(programs: Vec<(String, Program)>, globals: Vec<String>) -> Result<Vec<u8>, String> {
     let mut emitter = Emitter::new();
@@ -33,7 +32,7 @@ impl Emitter {
         &mut self,
         programs: Vec<(String, Program)>,
         globals: Vec<String>,
-    ) -> Result<Vec<u8>, String> {
+    ) -> EmitterResult<Vec<u8>> {
         let mut imports = Vec::new();
 
         self.current_pool = "pool".to_string();
@@ -108,7 +107,7 @@ impl Emitter {
     fn emit_programs(
         &mut self,
         programs: Vec<(String, Program)>,
-    ) -> Result<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>), String> {
+    ) -> EmitterResult<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>)> {
         let mut names = Vec::new();
         let mut instructions = Vec::new();
         let mut funcs = Vec::new();
@@ -123,7 +122,7 @@ impl Emitter {
         Ok((names, instructions, funcs))
     }
 
-    fn emit_program(&mut self, program: Program) -> Result<Instructions, String> {
+    fn emit_program(&mut self, program: Program) -> EmitterResult<Instructions> {
         let mut instructions: Vec<Instruction> = Vec::new();
         for expression in program.expressions {
             let expression_instructions = self.emit_expression(expression)?;
@@ -136,7 +135,7 @@ impl Emitter {
         Ok(Instructions::new(new))
     }
 
-    fn emit_expression(&mut self, expression: Expression) -> Result<Vec<Instruction>, String> {
+    fn emit_expression(&mut self, expression: Expression) -> EmitterResult<Vec<Instruction>> {
         match expression {
             Expression::BinaryExpression(binary_expression) => {
                 self.emit_binary_expression(binary_expression)
@@ -154,7 +153,7 @@ impl Emitter {
     fn emit_binary_expression(
         &mut self,
         binary_expression: BinaryExpression,
-    ) -> Result<Vec<Instruction>, String> {
+    ) -> EmitterResult<Vec<Instruction>> {
         let left = self.emit_expression(*binary_expression.left)?;
         let right = self.emit_expression(*binary_expression.right)?;
         let op = match binary_expression.op {
@@ -173,7 +172,7 @@ impl Emitter {
     fn emit_assignment(
         &mut self,
         assignment_expression: Assignment,
-    ) -> Result<Vec<Instruction>, String> {
+    ) -> EmitterResult<Vec<Instruction>> {
         let mut instructions: Vec<Instruction> = Vec::new();
         let resolved_name = self.resolve_variable(assignment_expression.left.name);
         let right_expression = self.emit_expression(*assignment_expression.right)?;
@@ -188,7 +187,7 @@ impl Emitter {
     fn emit_function_call(
         &mut self,
         function_call: FunctionCall,
-    ) -> Result<Vec<Instruction>, String> {
+    ) -> EmitterResult<Vec<Instruction>> {
         match &function_call.name.name[..] {
             "int" => {
                 let mut instructions = vec![];

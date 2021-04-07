@@ -17,6 +17,8 @@ pub struct Parser<'a> {
     token: Token<'a>,
 }
 
+type ParseResult<T> = Result<T, String>;
+
 impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Self {
         Parser {
@@ -28,12 +30,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn advance(&mut self) -> Result<(), String> {
+    fn advance(&mut self) -> ParseResult<()> {
         self.token = self.lexer.next_token()?;
         Ok(())
     }
 
-    fn expect_kind(&mut self, expected: TokenKind) -> Result<(), String> {
+    fn expect_kind(&mut self, expected: TokenKind) -> ParseResult<()> {
         let token = self.peek();
         if token.kind == expected {
             self.advance()?;
@@ -47,20 +49,20 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Program, String> {
+    pub fn parse(&mut self) -> ParseResult<Program> {
         self.expect_kind(TokenKind::SOF)?;
         let program = self.parse_program()?;
         self.expect_kind(TokenKind::EOF)?;
         Ok(program)
     }
 
-    pub fn parse_program(&mut self) -> Result<Program, String> {
+    pub fn parse_program(&mut self) -> ParseResult<Program> {
         Ok(Program {
             expressions: self.parse_expression_block()?,
         })
     }
 
-    pub fn parse_expression_block(&mut self) -> Result<Vec<Expression>, String> {
+    pub fn parse_expression_block(&mut self) -> ParseResult<Vec<Expression>> {
         let mut expressions = vec![];
         while self.peek_expression() {
             expressions.push(self.parse_expression(0)?);
@@ -78,7 +80,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_expression(&mut self, precedence: u8) -> Result<Expression, String> {
+    fn parse_expression(&mut self, precedence: u8) -> ParseResult<Expression> {
         match self.peek().kind {
             // TODO: Handle unary
             TokenKind::Int => {
@@ -93,7 +95,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_prefix(&mut self) -> Result<Expression, String> {
+    fn parse_prefix(&mut self) -> ParseResult<Expression> {
         match self.token.kind {
             TokenKind::Int => Ok(Expression::NumberLiteral(self.parse_int()?)),
             // TokenKind::OpenParen => self.parse_parenthesized_expression(),
@@ -102,11 +104,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn maybe_parse_infix(
-        &mut self,
-        left: Expression,
-        precedence: u8,
-    ) -> Result<Expression, String> {
+    fn maybe_parse_infix(&mut self, left: Expression, precedence: u8) -> ParseResult<Expression> {
         let mut next = left;
         loop {
             next = match self.token.kind {
@@ -125,7 +123,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_sum(&mut self, left: Expression) -> Result<Expression, String> {
+    fn parse_sum(&mut self, left: Expression) -> ParseResult<Expression> {
         self.expect_kind(TokenKind::Plus)?;
         let right = self.parse_expression(left_associative(SUM_PRECEDENCE))?;
         Ok(Expression::BinaryExpression(BinaryExpression {
@@ -135,7 +133,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    fn parse_difference(&mut self, left: Expression) -> Result<Expression, String> {
+    fn parse_difference(&mut self, left: Expression) -> ParseResult<Expression> {
         self.expect_kind(TokenKind::Minus)?;
         let right = self.parse_expression(left_associative(DIFFERENCE_PRECEDENCE))?;
         Ok(Expression::BinaryExpression(BinaryExpression {
@@ -145,7 +143,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    fn parse_product(&mut self, left: Expression) -> Result<Expression, String> {
+    fn parse_product(&mut self, left: Expression) -> ParseResult<Expression> {
         self.expect_kind(TokenKind::Asterisk)?;
         let right = self.parse_expression(left_associative(PRODUCT_PRECEDENCE))?;
         Ok(Expression::BinaryExpression(BinaryExpression {
@@ -155,7 +153,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    fn parse_quotient(&mut self, left: Expression) -> Result<Expression, String> {
+    fn parse_quotient(&mut self, left: Expression) -> ParseResult<Expression> {
         self.expect_kind(TokenKind::Slash)?;
         let right = self.parse_expression(left_associative(QUOTIENT_PRECEDENCE))?;
         Ok(Expression::BinaryExpression(BinaryExpression {
@@ -165,7 +163,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    fn parse_int(&mut self) -> Result<NumberLiteral, String> {
+    fn parse_int(&mut self) -> ParseResult<NumberLiteral> {
         if let TokenKind::Int = self.token.kind {
             let value = self.token.span.str_from_source();
             match value.parse::<f64>() {
@@ -181,7 +179,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_identifier(&mut self) -> Result<Expression, String> {
+    fn parse_identifier(&mut self) -> ParseResult<Expression> {
         // TODO: A little odd that we get the identifier before we check the
         // kind. (lifetimes...)
         let identifier = self.token.text().to_string();

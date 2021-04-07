@@ -8,6 +8,8 @@ use super::tokens::{Token, TokenKind};
  * - Returns EOF forever once it reaches the end
  */
 
+type LexerResult<T> = Result<T, String>;
+
 pub struct Lexer<'a> {
     source: &'a str,
     chars: FileChars<'a>,
@@ -21,7 +23,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn next_token(&mut self) -> Result<Token<'a>, String> {
+    pub fn next_token(&mut self) -> LexerResult<Token<'a>> {
         let start = self.chars.pos;
         let kind = match self.chars.peek() {
             c if is_int(c) => self.read_int(),
