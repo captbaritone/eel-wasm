@@ -10,7 +10,11 @@ mod tokens;
 use ast::Program;
 use emitter::emit;
 use error::CompilerError;
+// Only exported for tests
+pub use lexer::Lexer;
 pub use parser::parse;
+pub use tokens::Token;
+pub use tokens::TokenKind;
 
 use wasm_bindgen::prelude::*;
 

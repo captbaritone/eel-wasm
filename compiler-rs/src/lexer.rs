@@ -17,6 +17,7 @@ pub struct Lexer<'a> {
     chars: FileChars<'a>,
 }
 
+// TODO: Consider https://github.com/maciejhirsz/logos
 impl<'a> Lexer<'a> {
     pub fn new(source: &'a str) -> Self {
         Lexer {

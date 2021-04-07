@@ -5,8 +5,8 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use eel_wasm::compile;
-use eel_wasm::parse;
+use eel_wasm::{compile, Lexer, TokenKind};
+use eel_wasm::{parse, Token};
 
 fn get_fixture_dir_path(dir: &str) -> io::Result<PathBuf> {
     let mut fixture_dir = env::current_dir()?;
@@ -18,6 +18,7 @@ fn get_fixture_dir_path(dir: &str) -> io::Result<PathBuf> {
 fn run_snapshots() -> io::Result<()> {
     run_snapshots_impl("tests/fixtures/wat", compiler_transform)?;
     run_snapshots_impl("tests/fixtures/ast", ast_transform)?;
+    run_snapshots_impl("tests/fixtures/tokens", lexer_transform)?;
     Ok(())
 }
 
@@ -90,4 +91,30 @@ fn ast_transform(src: &str) -> (String, bool) {
         Err(err) => err.pretty_print(src),
     };
     (output_str, actual_invaid)
+}
+
+fn lexer_transform(src: &str) -> (String, bool) {
+    let mut lexer = Lexer::new(src);
+    let mut tokens = vec![];
+    let mut error = None;
+    loop {
+        match lexer.next_token() {
+            Err(err) => {
+                error = Some(err);
+                break;
+            }
+            Ok(Token {
+                kind: TokenKind::EOF,
+                ..
+            }) => break,
+            Ok(Token { kind, .. }) => tokens.push(kind),
+        }
+    }
+
+    let actual_invalid = error.is_some();
+    let output_str = match error {
+        Some(err) => err.pretty_print(src),
+        None => format!("{:#?}", tokens),
+    };
+    (output_str, actual_invalid)
 }
