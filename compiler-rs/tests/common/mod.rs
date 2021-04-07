@@ -10,9 +10,16 @@ use wasmi::{
 };
 use wasmi::{ModuleInstance, RuntimeValue};
 
-pub struct GlobalPool {}
+pub struct GlobalPool {
+    g: GlobalRef,
+}
 
 impl GlobalPool {
+    pub fn new() -> Self {
+        Self {
+            g: GlobalInstance::alloc(RuntimeValue::F64(0.0.into()), true),
+        }
+    }
     fn check_signature(&self, index: usize, signature: &Signature) -> bool {
         let (params, ret_ty): (&[ValueType], Option<ValueType>) = match index {
             SIN_FUNC_INDEX => (&[ValueType::F64], Some(ValueType::F64)),
@@ -25,10 +32,13 @@ impl GlobalPool {
 impl ModuleImportResolver for GlobalPool {
     fn resolve_global(
         &self,
-        _field_name: &str,
+        field_name: &str,
         _global_type: &GlobalDescriptor,
     ) -> Result<GlobalRef, WasmiError> {
-        let global = GlobalInstance::alloc(RuntimeValue::F64(F64::from_float(0.0)), true);
+        let global = match field_name {
+            "g" => self.g.clone(),
+            _ => GlobalInstance::alloc(RuntimeValue::F64(F64::from_float(0.0)), true),
+        };
         Ok(global)
     }
     fn resolve_func(&self, field_name: &str, signature: &Signature) -> Result<FuncRef, WasmiError> {
@@ -86,10 +96,13 @@ pub fn eval_eel(
     let wasm_binary = compile(sources, globals_map.clone())
         .map_err(|err| format!("Compiler Error: {:?}", err))?;
 
-    let module = wasmi::Module::from_buffer(&wasm_binary)
-        .map_err(|err| format!("Error parsing binary Wasm: {}", err))?;
+    let module = wasmi::Module::from_buffer(&wasm_binary).map_err(|err| {
+        // TODO: Print out the wat?
+        println!("Wat: {}", wasmprinter::print_bytes(&wasm_binary).unwrap());
+        format!("Error parsing binary Wasm: {}", err)
+    })?;
 
-    let mut global_imports = GlobalPool {};
+    let mut global_imports = GlobalPool::new();
     let mut imports = ImportsBuilder::default();
 
     for (pool, _) in globals_map {
@@ -104,12 +117,14 @@ pub fn eval_eel(
 
     // TODO: Instead of returning return value, return value of globals
     match instance.invoke_export(function_to_run, &[], &mut global_imports) {
-        Ok(Some(RuntimeValue::F64(val))) => Ok(val.into()),
+        Ok(Some(RuntimeValue::F64(_val))) => Ok(()),
         Ok(Some(val)) => Err(format!("Unexpected return type: {:?}", val)),
         Ok(None) => Err("No Result".to_string()),
         Err(err) => Err(format!(
             "Error invoking exported function {}: {}",
             function_to_run, err
         )),
-    }
+    }?;
+    let g = global_imports.g.get().try_into::<F64>().unwrap();
+    Ok(g.into())
 }

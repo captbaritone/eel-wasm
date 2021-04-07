@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use common::eval_eel;
 
@@ -7,9 +7,6 @@ mod common;
 #[test]
 fn compatibility_tests() {
     let test_cases: &[(&'static str, &'static str, f64)] = &[
-        ("[REMOVE] Integer", "1", 1.0),
-        ("[REMOVE] Assignment", "g=1", 1.0),
-        ("[REMOVE] Call", "int(4)", 4.0),
         ("Expressions", "g = ((6- -7.0)+ 3.0);", 16.0),
         ("Number", "g = 5;", 5.0),
         ("Number with decimal", "g = 5.5;", 5.5),
@@ -523,9 +520,13 @@ fn compatibility_tests() {
     ];
 
     for (name, code, expected) in test_cases {
+        let mut globals = HashMap::default();
+        let mut pool_globals = HashSet::new();
+        pool_globals.insert("g".to_string());
+        globals.insert("pool".to_string(), pool_globals);
         match eval_eel(
             vec![("test".to_string(), code, "pool".to_string())],
-            HashMap::new(),
+            globals,
             "test",
         ) {
             Ok(actual) => {

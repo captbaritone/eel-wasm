@@ -67,6 +67,7 @@ impl Emitter {
         }
 
         let shims: Vec<Shim> = vec![Shim::Sin];
+        let shim_offset = shims.len() as u32;
         for shim in shims {
             let field_str = shim.as_str().to_string();
             let type_ = shim.get_type();
@@ -78,10 +79,10 @@ impl Emitter {
             ));
         }
 
-        self.builtin_offset = Some(eel_functions.len() as u32 + imports.len() as u32);
+        self.builtin_offset = Some(eel_functions.len() as u32 + shim_offset);
 
         let (function_exports, function_bodies, funcs) =
-            self.emit_eel_functions(eel_functions, imports.len() as u32)?;
+            self.emit_eel_functions(eel_functions, shim_offset)?;
 
         let mut sections = vec![];
         sections.push(Section::Type(self.emit_type_section()));
@@ -359,10 +360,7 @@ fn make_empty_global() -> GlobalEntry {
     GlobalEntry::new(
         GlobalType::new(ValueType::F64, true),
         InitExpr::new(vec![
-            Instruction::F64Const(
-                // TODO: Get the correct bits here
-                0,
-            ),
+            Instruction::F64Const(f64_const(0.0)),
             Instruction::End,
         ]),
     )
