@@ -334,8 +334,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Bitwise and",
-        "Bitwise or",
         "To the power",
         "Absolute value negative",
         "Absolute value positive",

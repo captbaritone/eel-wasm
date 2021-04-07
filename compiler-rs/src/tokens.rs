@@ -16,6 +16,8 @@ pub enum TokenKind {
     Semi,
     DoubleEqual,
     Percent,
+    And,
+    Pipe,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }

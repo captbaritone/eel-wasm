@@ -11,12 +11,17 @@ use super::lexer::Lexer;
 use super::span::Span;
 use super::tokens::{Token, TokenKind};
 
-static SUM_PRECEDENCE: u8 = 1;
-static DIFFERENCE_PRECEDENCE: u8 = 1;
-static PRODUCT_PRECEDENCE: u8 = 2;
-static QUOTIENT_PRECEDENCE: u8 = 2;
-static MOD_PRECEDENCE: u8 = 3; // TODO: What should this be?
+// https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
+static ASSIGNMENT_PRECEDENCE: u8 = 1;
+// static CONDITIONAL_PRECEDENCE: u8 = 2;
+static SUM_PRECEDENCE: u8 = 3;
+static DIFFERENCE_PRECEDENCE: u8 = 3;
+static PRODUCT_PRECEDENCE: u8 = 4;
+static QUOTIENT_PRECEDENCE: u8 = 4;
+static MOD_PRECEDENCE: u8 = 5; // A little strange, in JS this would match product/quotient
 static PREFIX_PRECEDENCE: u8 = 6;
+// static POSTFIX_PRECEDENCE: u8 = 7;
+// static CALL_PRECEDENCE: u8 = 8;
 
 struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -149,83 +154,42 @@ impl<'a> Parser<'a> {
     fn maybe_parse_infix(&mut self, left: Expression, precedence: u8) -> ParseResult<Expression> {
         let mut next = left;
         loop {
-            next = match self.token.kind {
-                TokenKind::Plus if precedence < SUM_PRECEDENCE => self.parse_sum(next)?,
-                TokenKind::Minus if precedence < DIFFERENCE_PRECEDENCE => {
-                    self.parse_difference(next)?
+            let (precedence, op) = match self.token.kind {
+                TokenKind::Plus if precedence < SUM_PRECEDENCE => {
+                    (left_associative(SUM_PRECEDENCE), BinaryOperator::Add)
                 }
-                TokenKind::Asterisk if precedence < PRODUCT_PRECEDENCE => {
-                    self.parse_product(next)?
+                TokenKind::Minus if precedence < DIFFERENCE_PRECEDENCE => (
+                    left_associative(DIFFERENCE_PRECEDENCE),
+                    BinaryOperator::Subtract,
+                ),
+                TokenKind::Asterisk if precedence < PRODUCT_PRECEDENCE => (
+                    left_associative(PRODUCT_PRECEDENCE),
+                    BinaryOperator::Multiply,
+                ),
+                TokenKind::Slash if precedence < QUOTIENT_PRECEDENCE => (
+                    left_associative(QUOTIENT_PRECEDENCE),
+                    BinaryOperator::Divide,
+                ),
+                TokenKind::Percent if precedence < MOD_PRECEDENCE => {
+                    (left_associative(MOD_PRECEDENCE), BinaryOperator::Mod)
                 }
-                TokenKind::Slash if precedence < QUOTIENT_PRECEDENCE => {
-                    self.parse_quotient(next)?
+                TokenKind::DoubleEqual if precedence < ASSIGNMENT_PRECEDENCE => {
+                    (left_associative(ASSIGNMENT_PRECEDENCE), BinaryOperator::Eq)
                 }
-                TokenKind::Percent if precedence < MOD_PRECEDENCE => self.parse_mod(next)?,
-                TokenKind::DoubleEqual => self.parse_comparison(next)?,
+                TokenKind::And => (0, BinaryOperator::BitwiseAnd),
+                TokenKind::Pipe => (0, BinaryOperator::BitwiseOr),
                 _ => return Ok(next),
-            }
+            };
+
+            self.advance()?;
+
+            let right = self.parse_expression(precedence)?;
+            next = Expression::BinaryExpression(BinaryExpression {
+                left: Box::new(next),
+                right: Box::new(right),
+                op,
+            });
         }
-    }
-
-    fn parse_comparison(&mut self, left: Expression) -> ParseResult<Expression> {
-        self.expect_kind(TokenKind::DoubleEqual)?;
-        // TODO: What precedence?
-        let right = self.parse_expression(0)?;
-        Ok(Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            right: Box::new(right),
-            op: BinaryOperator::Eq,
-        }))
-    }
-
-    fn parse_sum(&mut self, left: Expression) -> ParseResult<Expression> {
-        self.expect_kind(TokenKind::Plus)?;
-        let right = self.parse_expression(left_associative(SUM_PRECEDENCE))?;
-        Ok(Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            right: Box::new(right),
-            op: BinaryOperator::Add,
-        }))
-    }
-
-    fn parse_difference(&mut self, left: Expression) -> ParseResult<Expression> {
-        self.expect_kind(TokenKind::Minus)?;
-        let right = self.parse_expression(left_associative(DIFFERENCE_PRECEDENCE))?;
-        Ok(Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            right: Box::new(right),
-            op: BinaryOperator::Subtract,
-        }))
-    }
-
-    fn parse_product(&mut self, left: Expression) -> ParseResult<Expression> {
-        self.expect_kind(TokenKind::Asterisk)?;
-        let right = self.parse_expression(left_associative(PRODUCT_PRECEDENCE))?;
-        Ok(Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            right: Box::new(right),
-            op: BinaryOperator::Multiply,
-        }))
-    }
-
-    fn parse_quotient(&mut self, left: Expression) -> ParseResult<Expression> {
-        self.expect_kind(TokenKind::Slash)?;
-        let right = self.parse_expression(left_associative(QUOTIENT_PRECEDENCE))?;
-        Ok(Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            right: Box::new(right),
-            op: BinaryOperator::Divide,
-        }))
-    }
-
-    fn parse_mod(&mut self, left: Expression) -> ParseResult<Expression> {
-        self.expect_kind(TokenKind::Percent)?;
-        let right = self.parse_expression(left_associative(MOD_PRECEDENCE))?;
-        Ok(Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            right: Box::new(right),
-            op: BinaryOperator::Mod,
-        }))
     }
 
     fn parse_int(&mut self) -> ParseResult<NumberLiteral> {

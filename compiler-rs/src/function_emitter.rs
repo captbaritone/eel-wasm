@@ -158,6 +158,14 @@ impl<'a> FunctionEmitter<'a> {
                 self.emit_is_zeroish();
                 self.push(Instruction::F64ConvertSI32)
             }
+            BinaryOperator::BitwiseAnd => {
+                let func_index = self.resolve_builtin_function(BuiltinFunction::BitwiseAnd);
+                self.push(Instruction::Call(func_index))
+            }
+            BinaryOperator::BitwiseOr => {
+                let func_index = self.resolve_builtin_function(BuiltinFunction::BitwiseOr);
+                self.push(Instruction::Call(func_index))
+            }
         };
         Ok(())
     }

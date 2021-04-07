@@ -47,6 +47,8 @@ pub enum BinaryOperator {
     Divide,
     Mod,
     Eq,
+    BitwiseAnd,
+    BitwiseOr,
 }
 
 #[derive(Debug, PartialEq)]

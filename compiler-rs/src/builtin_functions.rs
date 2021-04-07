@@ -11,6 +11,8 @@ pub enum BuiltinFunction {
     Div,
     Mod,
     GetBufferIndex,
+    BitwiseAnd,
+    BitwiseOr,
 }
 
 impl BuiltinFunction {
@@ -21,6 +23,12 @@ impl BuiltinFunction {
             }
             Self::GetBufferIndex => FunctionType::new(vec![ValueType::F64], vec![ValueType::I32]),
             Self::Mod => {
+                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
+            }
+            Self::BitwiseAnd => {
+                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
+            }
+            Self::BitwiseOr => {
                 FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
             }
         }
@@ -104,6 +112,32 @@ impl BuiltinFunction {
                     Instruction::Else,
                     Instruction::F64Const(f64_const(0.0)),
                     Instruction::End,
+                    Instruction::End,
+                ]),
+            ),
+            // TODO: This could probably be inlined
+            Self::BitwiseAnd => FuncBody::new(
+                vec![],
+                Instructions::new(vec![
+                    Instruction::GetLocal(0),
+                    Instruction::I64TruncSF64,
+                    Instruction::GetLocal(1),
+                    Instruction::I64TruncSF64,
+                    Instruction::I64And,
+                    Instruction::F64ConvertSI64,
+                    Instruction::End,
+                ]),
+            ),
+            // TODO: This could probably be inlined
+            Self::BitwiseOr => FuncBody::new(
+                vec![],
+                Instructions::new(vec![
+                    Instruction::GetLocal(0),
+                    Instruction::I64TruncSF64,
+                    Instruction::GetLocal(1),
+                    Instruction::I64TruncSF64,
+                    Instruction::I64Or,
+                    Instruction::F64ConvertSI64,
                     Instruction::End,
                 ]),
             ),
