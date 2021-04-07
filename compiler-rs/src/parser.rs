@@ -237,9 +237,9 @@ impl<'a> Parser<'a> {
     fn parse_identifier_expression(&mut self) -> ParseResult<Expression> {
         let identifier = self.parse_identifier()?;
 
-        match self.token.kind {
+        match &self.token.kind {
             TokenKind::Equal => {
-                let _operator_token = self.expect_kind(TokenKind::Equal)?;
+                self.advance()?;
                 let right = self.parse_expression(0)?;
                 Ok(Expression::Assignment(Assignment {
                     left: identifier,
@@ -271,10 +271,7 @@ impl<'a> Parser<'a> {
                     arguments,
                 }))
             }
-            _ => Err(CompilerError::new(
-                "Expected = or (".to_string(),
-                self.token.span,
-            )),
+            _ => Ok(Expression::Identifier(identifier)),
         }
         // TODO: Support other operator types
     }

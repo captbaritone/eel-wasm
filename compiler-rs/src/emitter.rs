@@ -241,6 +241,11 @@ impl Emitter {
             Expression::ExpressionBlock(expression_block) => {
                 self.emit_expression_block(expression_block, instructions)
             }
+            Expression::Identifier(identifier) => {
+                let index = self.resolve_variable(identifier.name);
+                instructions.push(Instruction::GetGlobal(index));
+                Ok(())
+            }
         }
     }
 

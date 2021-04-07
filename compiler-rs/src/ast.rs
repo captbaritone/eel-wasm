@@ -18,6 +18,7 @@ pub enum Expression {
     Assignment(Assignment),
     FunctionCall(FunctionCall),
     ExpressionBlock(ExpressionBlock),
+    Identifier(Identifier),
 }
 
 #[derive(Debug, PartialEq)]
