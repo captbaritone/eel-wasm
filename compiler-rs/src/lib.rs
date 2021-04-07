@@ -10,7 +10,7 @@ mod tokens;
 use ast::Program;
 use emitter::emit;
 use error::CompilerError;
-use parser::Parser;
+pub use parser::parse;
 
 use wasm_bindgen::prelude::*;
 
@@ -32,8 +32,8 @@ pub fn compile(
     let programs: Result<Vec<(String, Program)>, CompilerError> = sources
         .into_iter()
         .map(|(name, source)| {
-            let mut parser = Parser::new(&source);
-            Ok((name, parser.parse()?))
+            let program = parse(&source)?;
+            Ok((name, program))
         })
         .collect();
     emit(programs?, globals)

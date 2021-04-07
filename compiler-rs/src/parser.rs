@@ -13,12 +13,17 @@ static DIFFERENCE_PRECEDENCE: u8 = 1;
 static PRODUCT_PRECEDENCE: u8 = 2;
 static QUOTIENT_PRECEDENCE: u8 = 2;
 
-pub struct Parser<'a> {
+struct Parser<'a> {
     lexer: Lexer<'a>,
     token: Token,
 }
 
 type ParseResult<T> = Result<T, CompilerError>;
+
+pub fn parse(src: &str) -> ParseResult<Program> {
+    let mut parser = Parser::new(&src);
+    parser.parse()
+}
 
 impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Self {

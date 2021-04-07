@@ -6,17 +6,27 @@ use std::io;
 use std::path::PathBuf;
 
 use eel_wasm::compile;
+use eel_wasm::parse;
 
-fn get_fixture_dir_path() -> io::Result<PathBuf> {
+fn get_fixture_dir_path(dir: &str) -> io::Result<PathBuf> {
     let mut fixture_dir = env::current_dir()?;
-    fixture_dir.push("tests/fixtures");
+    fixture_dir.push(dir);
     Ok(fixture_dir)
 }
 
 #[test]
 fn run_snapshots() -> io::Result<()> {
+    run_snapshots_impl("tests/fixtures/wat", compiler_transform)?;
+    run_snapshots_impl("tests/fixtures/ast", ast_transform)?;
+    Ok(())
+}
+
+fn run_snapshots_impl<F>(dir: &str, transform: F) -> io::Result<()>
+where
+    F: Fn(&str) -> (String, bool),
+{
     let line = "========================================================================";
-    for entry in fs::read_dir(get_fixture_dir_path()?)? {
+    for entry in fs::read_dir(get_fixture_dir_path(dir)?)? {
         let entry = entry?;
         let path = &entry.path();
         if let Some(ext) = path.extension() {
@@ -32,14 +42,7 @@ fn run_snapshots() -> io::Result<()> {
 
         let source = fs::read_to_string(path)?;
 
-        let output = compile(vec![("test".to_string(), &source)], vec![]);
-
-        let actual_invaid = output.is_err();
-
-        let output_str: String = match output {
-            Ok(binary) => wasmprinter::print_bytes(&binary).unwrap(),
-            Err(err) => err.pretty_print(&source),
-        };
+        let (output_str, actual_invalid) = transform(&source);
 
         let snapshot = format!("{}\n{}\n{}\n", source, line, output_str);
 
@@ -52,15 +55,39 @@ fn run_snapshots() -> io::Result<()> {
             assert_eq!(snapshot, actual_snapshot, "Expected snapshot for {} to match, but it did not.\nRerun with `UPDATE_SNAPSHOTS=1 to update.`", source_path);
         }
 
-        let actual_str = if actual_invaid { "invalid" } else { "valid" };
+        let actual_str = if actual_invalid { "invalid" } else { "valid" };
         let expected_str = if expected_invalid { "invalid" } else { "valid" };
 
         assert_eq!(
-            actual_invaid, expected_invalid,
+            actual_invalid, expected_invalid,
             "Expected file \"{}\" to be {} but it was {}",
             source_path, actual_str, expected_str
         );
     }
 
     Ok(())
+}
+
+fn compiler_transform(src: &str) -> (String, bool) {
+    let output = compile(vec![("test".to_string(), src)], vec![]);
+
+    let actual_invaid = output.is_err();
+
+    let output_str: String = match output {
+        Ok(binary) => wasmprinter::print_bytes(&binary).unwrap(),
+        Err(err) => err.pretty_print(src),
+    };
+    (output_str, actual_invaid)
+}
+
+fn ast_transform(src: &str) -> (String, bool) {
+    let output = parse(src);
+
+    let actual_invaid = output.is_err();
+
+    let output_str: String = match output {
+        Ok(ast) => format!("{:#?}", ast),
+        Err(err) => err.pretty_print(src),
+    };
+    (output_str, actual_invaid)
 }
