@@ -3,6 +3,7 @@ use crate::ast::{
 };
 
 use super::ast::{Expression, NumberLiteral, Program};
+use super::error::CompilerError;
 use super::lexer::Lexer;
 use super::span::Span;
 use super::tokens::{Token, TokenKind};
@@ -14,10 +15,10 @@ static QUOTIENT_PRECEDENCE: u8 = 2;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    token: Token<'a>,
+    token: Token,
 }
 
-type ParseResult<T> = Result<T, String>;
+type ParseResult<T> = Result<T, CompilerError>;
 
 impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Self {
@@ -25,7 +26,7 @@ impl<'a> Parser<'a> {
             lexer: Lexer::new(source),
             token: Token {
                 kind: TokenKind::SOF,
-                span: Span::start_of_file(source),
+                span: Span::empty(),
             },
         }
     }
@@ -41,10 +42,9 @@ impl<'a> Parser<'a> {
             self.advance()?;
             Ok(())
         } else {
-            // TODO: Improve error message and improve source location.
-            Err(format!(
-                "Expected a {:?} but found {:?}",
-                expected, self.token.kind
+            Err(CompilerError::new(
+                format!("Expected a {:?} but found {:?}", expected, self.token.kind),
+                token.span,
             ))
         }
     }
@@ -81,16 +81,17 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression(&mut self, precedence: u8) -> ParseResult<Expression> {
-        match self.peek().kind {
+        let token = self.peek();
+        match &token.kind {
             // TODO: Handle unary
             TokenKind::Int => {
                 let left = self.parse_prefix()?;
                 self.maybe_parse_infix(left, precedence)
             }
-            TokenKind::Identifier => self.parse_identifier(),
-            _ => Err(format!(
-                "Expected Int or Identifier but got {:?}",
-                self.token.kind
+            TokenKind::Identifier => self.parse_identifier_expression(),
+            kind => Err(CompilerError::new(
+                format!("Expected Int or Identifier but got {:?}", kind),
+                token.span,
             )),
         }
     }
@@ -100,7 +101,10 @@ impl<'a> Parser<'a> {
             TokenKind::Int => Ok(Expression::NumberLiteral(self.parse_int()?)),
             // TokenKind::OpenParen => self.parse_parenthesized_expression(),
             // Once we have other prefix operators: `+-!` they  will go here.
-            _ => Err(format!("Expected an Int but found {:?}", self.token.kind)),
+            _ => Err(CompilerError::new(
+                format!("Expected Int but got {:?}", self.token.kind),
+                self.token.span,
+            )),
         }
     }
 
@@ -165,32 +169,46 @@ impl<'a> Parser<'a> {
 
     fn parse_int(&mut self) -> ParseResult<NumberLiteral> {
         if let TokenKind::Int = self.token.kind {
-            let value = self.token.span.str_from_source();
+            let value = self.lexer.source(self.token.span);
             match value.parse::<f64>() {
                 Ok(value) => {
                     self.advance()?;
                     // TODO: This is not quite right
                     Ok(NumberLiteral { value })
                 }
-                Err(_) => Err(format!("Could not parse \"{}\" to a number", value)),
+                Err(_) => Err(CompilerError::new(
+                    format!("Could not parse \"{}\" to a number", value),
+                    self.token.span,
+                )),
             }
         } else {
-            Err(format!("Expected an Int but found {:?}", self.token.kind))
+            Err(CompilerError::new(
+                format!("Expected an Int but found {:?}", self.token.kind),
+                self.token.span,
+            ))
         }
     }
 
-    fn parse_identifier(&mut self) -> ParseResult<Expression> {
+    fn parse_identifier(&mut self) -> ParseResult<Identifier> {
+        let span = self.token.span;
+        self.expect_kind(TokenKind::Identifier)?;
+        Ok(Identifier {
+            name: self.lexer.source(span).to_string(),
+            span,
+        })
+    }
+
+    fn parse_identifier_expression(&mut self) -> ParseResult<Expression> {
         // TODO: A little odd that we get the identifier before we check the
         // kind. (lifetimes...)
-        let identifier = self.token.text().to_string();
-        self.expect_kind(TokenKind::Identifier)?;
+        let identifier = self.parse_identifier()?;
 
-        match self.peek().kind {
+        match self.token.kind {
             TokenKind::Equal => {
                 let _operator_token = self.expect_kind(TokenKind::Equal)?;
                 let right = self.parse_expression(0)?;
                 Ok(Expression::Assignment(Assignment {
-                    left: Identifier { name: identifier },
+                    left: identifier,
                     operator: AssignmentOperator::Equal,
                     right: Box::new(right),
                 }))
@@ -206,15 +224,23 @@ impl<'a> Parser<'a> {
                             self.advance()?;
                             break;
                         }
-                        _ => return Err("Expected , or )".to_string()),
+                        _ => {
+                            return Err(CompilerError::new(
+                                "Expected , or )".to_string(),
+                                self.token.span,
+                            ))
+                        }
                     }
                 }
                 Ok(Expression::FunctionCall(FunctionCall {
-                    name: Identifier { name: identifier },
+                    name: identifier,
                     arguments,
                 }))
             }
-            _ => Err(format!("Expected = or (")),
+            _ => Err(CompilerError::new(
+                "Expected = or (".to_string(),
+                self.token.span,
+            )),
         }
         // TODO: Support other operator types
     }

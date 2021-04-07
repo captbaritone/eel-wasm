@@ -1,3 +1,5 @@
+use crate::error::CompilerError;
+
 use super::file_chars::{FileChars, NULL};
 use super::span::Span;
 use super::tokens::{Token, TokenKind};
@@ -8,7 +10,7 @@ use super::tokens::{Token, TokenKind};
  * - Returns EOF forever once it reaches the end
  */
 
-type LexerResult<T> = Result<T, String>;
+type LexerResult<T> = Result<T, CompilerError>;
 
 pub struct Lexer<'a> {
     source: &'a str,
@@ -23,7 +25,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn next_token(&mut self) -> LexerResult<Token<'a>> {
+    pub fn next_token(&mut self) -> LexerResult<Token> {
         let start = self.chars.pos;
         let kind = match self.chars.peek() {
             c if is_int(c) => self.read_int(),
@@ -37,10 +39,15 @@ impl<'a> Lexer<'a> {
             ')' => self.read_char_as_kind(TokenKind::CloseParen),
             ',' => self.read_char_as_kind(TokenKind::Comma),
             NULL => TokenKind::EOF,
-            c => return Err(format!("Unexpected character {}", c)),
+            c => {
+                return Err(CompilerError::new(
+                    format!("Parse Error: Unexpected character '{}'.", c),
+                    Span::new(start, start),
+                ))
+            }
         };
         let end = self.chars.pos;
-        Ok(Token::new(kind, Span::new(self.source, start, end)))
+        Ok(Token::new(kind, Span::new(start, end)))
     }
 
     fn read_char_as_kind(&mut self, kind: TokenKind) -> TokenKind {
@@ -58,6 +65,10 @@ impl<'a> Lexer<'a> {
         self.chars.next();
         self.chars.eat_while(is_identifier_tail);
         TokenKind::Identifier
+    }
+
+    pub fn source(&self, span: Span) -> &str {
+        &self.source[span.start as usize..span.end as usize]
     }
 }
 

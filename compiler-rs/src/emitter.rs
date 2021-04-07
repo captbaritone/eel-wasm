@@ -1,5 +1,9 @@
-use super::ast::{Expression, Program};
-use crate::ast::{Assignment, BinaryExpression, BinaryOperator, FunctionCall};
+use crate::ast::{Expression, Program};
+use crate::span::Span;
+use crate::{
+    ast::{Assignment, BinaryExpression, BinaryOperator, FunctionCall},
+    error::CompilerError,
+};
 use parity_wasm::elements::Module;
 use parity_wasm::elements::{
     CodeSection, ExportEntry, ExportSection, Func, FuncBody, FunctionSection, FunctionType,
@@ -9,9 +13,9 @@ use parity_wasm::elements::{
 use parity_wasm::elements::{External, Instruction, Instructions};
 use std::collections::{hash_map::Entry, HashMap};
 
-type EmitterResult<T> = Result<T, String>;
+type EmitterResult<T> = Result<T, CompilerError>;
 
-pub fn emit(programs: Vec<(String, Program)>, globals: Vec<String>) -> Result<Vec<u8>, String> {
+pub fn emit(programs: Vec<(String, Program)>, globals: Vec<String>) -> EmitterResult<Vec<u8>> {
     let mut emitter = Emitter::new();
     emitter.emit(programs, globals)
 }
@@ -59,7 +63,12 @@ impl Emitter {
         let mut binary: Vec<u8> = Vec::new();
         Module::new(sections)
             .serialize(&mut binary)
-            .map_err(|err| format!("Module serialization error: {}", err))?;
+            .map_err(|err| {
+                CompilerError::new(
+                    format!("Module serialization error: {}", err),
+                    Span::empty(),
+                )
+            })?;
 
         Ok(binary)
     }
@@ -197,7 +206,10 @@ impl Emitter {
                 instructions.push(Instruction::F64Floor);
                 Ok(instructions)
             }
-            _ => Err(format!("Unknown function `{}`", function_call.name.name)),
+            _ => Err(CompilerError::new(
+                format!("Unknown function `{}`", function_call.name.name),
+                function_call.name.span,
+            )),
         }
     }
 

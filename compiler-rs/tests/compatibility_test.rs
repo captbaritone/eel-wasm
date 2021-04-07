@@ -551,7 +551,7 @@ fn compatibility_tests() {
             Err(err) => {
                 if !expected_failing.contains(name) {
                     panic!(format!(
-                        "Didn't expect \"{}\" to fail. Failed with {}",
+                        "Didn't expect \"{}\" to fail. Failed with {:?}",
                         name, err
                     ));
                 }

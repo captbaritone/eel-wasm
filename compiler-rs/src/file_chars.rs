@@ -1,4 +1,3 @@
-use super::span::Position;
 use std::mem;
 use std::str::Chars;
 
@@ -7,7 +6,7 @@ pub const NULL: char = '!';
 pub struct FileChars<'a> {
     chars: Chars<'a>,
     next_char: char,
-    pub pos: Position,
+    pub pos: u32,
 }
 
 impl<'a> FileChars<'a> {
@@ -17,20 +16,13 @@ impl<'a> FileChars<'a> {
         FileChars {
             chars,
             next_char,
-            pos: Position::new(),
+            pos: 0,
         }
     }
 
     pub fn next(&mut self) -> char {
         let c = self.next_char;
-        self.pos.byte_offset += c.len_utf8();
-        if c == '\n' {
-            self.pos.column = 0;
-            self.pos.line += 1;
-        } else {
-            self.pos.column += 1
-        }
-
+        self.pos += c.len_utf8() as u32;
         mem::replace(&mut self.next_char, self.chars.next().unwrap_or(NULL))
     }
 

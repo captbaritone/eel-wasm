@@ -1,3 +1,5 @@
+use crate::span::Span;
+
 #[derive(Debug, PartialEq)]
 pub struct Program {
     pub expressions: Vec<Expression>,
@@ -34,6 +36,7 @@ pub enum BinaryOperator {
 #[derive(Debug, PartialEq)]
 pub struct Identifier {
     pub name: String,
+    pub span: Span,
 }
 
 #[derive(Debug, PartialEq)]

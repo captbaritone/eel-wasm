@@ -17,17 +17,13 @@ pub enum TokenKind {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Token<'a> {
+pub struct Token {
     pub kind: TokenKind,
-    pub span: Span<'a>,
+    pub span: Span,
 }
 
-impl<'a> Token<'a> {
-    pub fn new(kind: TokenKind, span: Span<'a>) -> Self {
+impl Token {
+    pub fn new(kind: TokenKind, span: Span) -> Self {
         Token { kind, span }
-    }
-
-    pub fn text(&self) -> &str {
-        self.span.str_from_source()
     }
 }
