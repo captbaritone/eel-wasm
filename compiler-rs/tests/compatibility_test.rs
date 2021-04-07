@@ -231,6 +231,7 @@ fn compatibility_tests() {
         ("Equality (< epsilon)", "g = 0.000009 == 0;", 1.0),
         ("Equality (< -epsilon)", "g = -0.000009 == 0;", 1.0),
         ("Variables don't collide", "g = 1; not_g = 2;", 1.0),
+        ("Simple block comment", "g = 1; /* g = 10 */", 1.0),
         ("Block comment", "g = 1; /* g = 10 */ g = g * 2;", 2.0),
         ("Sigmoid 1, 2", "g = sigmoid(1, 2.0);", 0.8807970779778823),
         ("Sigmoid 2, 1", "g = sigmoid(2, 1.0);", 0.8807970779778823),
@@ -366,7 +367,6 @@ fn compatibility_tests() {
         "above (false)",
         "below (true)",
         "below (false)",
-        "Line comments",
         "Line comments (\\\\)",
         "Equal (false)",
         "Equal (true)",
@@ -497,6 +497,7 @@ fn compatibility_tests() {
         let mut globals = HashMap::default();
         let mut pool_globals = HashSet::new();
         pool_globals.insert("g".to_string());
+        // TODO: We should set x = 10
         globals.insert("pool".to_string(), pool_globals);
         match eval_eel(
             vec![("test".to_string(), code, "pool".to_string())],
