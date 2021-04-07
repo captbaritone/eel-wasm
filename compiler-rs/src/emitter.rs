@@ -144,22 +144,21 @@ impl Emitter {
         &mut self,
         programs: Vec<(String, Program, String)>,
     ) -> EmitterResult<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>)> {
-        let mut names = Vec::new();
-        let mut instructions = Vec::new();
-        let mut funcs = Vec::new();
+        let mut exports = Vec::new();
+        let mut function_bodies = Vec::new();
+        let mut function_definitions = Vec::new();
         for (i, (name, program, pool_name)) in programs.into_iter().enumerate() {
             self.current_pool = pool_name;
-            names.push(ExportEntry::new(name, Internal::Function(i as u32)));
+            exports.push(ExportEntry::new(name, Internal::Function(i as u32)));
             let locals = Vec::new();
-            let func_body = FuncBody::new(locals, self.emit_program(program)?);
-            instructions.push(func_body);
+            function_bodies.push(FuncBody::new(locals, self.emit_program(program)?));
 
             // TODO: In the future functions should not return any values
             let function_type = self.function_types.get((0, 1));
 
-            funcs.push(Func::new(function_type))
+            function_definitions.push(Func::new(function_type))
         }
-        Ok((names, instructions, funcs))
+        Ok((exports, function_bodies, function_definitions))
     }
 
     fn emit_program(&mut self, program: Program) -> EmitterResult<Instructions> {
