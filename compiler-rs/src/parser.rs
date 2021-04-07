@@ -218,7 +218,7 @@ impl<'a> Parser<'a> {
         let span = self.token.span;
         self.expect_kind(TokenKind::Identifier)?;
         Ok(Identifier {
-            name: self.lexer.source(span).to_string(),
+            name: self.lexer.source(span).to_lowercase(),
             span,
         })
     }
