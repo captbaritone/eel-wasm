@@ -1,4 +1,4 @@
-use super::file_chars::FileChars;
+use super::file_chars::{FileChars, NULL};
 use super::span::Span;
 use super::tokens::{Token, TokenKind};
 
@@ -24,15 +24,13 @@ impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> Result<Token<'a>, String> {
         let start = self.chars.pos;
         let kind = match self.chars.peek() {
-            Some(c) => match c {
-                _ if is_int(c) => self.read_int(),
-                '+' => self.read_char_as_kind(TokenKind::Plus),
-                '-' => self.read_char_as_kind(TokenKind::Minus),
-                '*' => self.read_char_as_kind(TokenKind::Asterisk),
-                '/' => self.read_char_as_kind(TokenKind::Slash),
-                _ => return Err(format!("Unexpected token {}", c)),
-            },
-            None => TokenKind::EOF,
+            c if is_int(c) => self.read_int(),
+            '+' => self.read_char_as_kind(TokenKind::Plus),
+            '-' => self.read_char_as_kind(TokenKind::Minus),
+            '*' => self.read_char_as_kind(TokenKind::Asterisk),
+            '/' => self.read_char_as_kind(TokenKind::Slash),
+            NULL => TokenKind::EOF,
+            c => return Err(format!("Unexpected token {}", c)),
         };
         let end = self.chars.pos;
         Ok(Token::new(kind, Span::new(self.source, start, end)))

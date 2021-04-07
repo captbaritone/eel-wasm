@@ -137,9 +137,10 @@ impl<'a> Parser<'a> {
     fn parse_int(&mut self) -> Result<NumberLiteral, String> {
         if let TokenKind::Int = self.token.kind {
             let value = self.token.span.str_from_source();
-            match value.parse() {
+            match value.parse::<f64>() {
                 Ok(value) => {
                     self.advance()?;
+                    // TODO: This is not quite right
                     Ok(NumberLiteral { value })
                 }
                 Err(_) => Err(format!("Could not parse \"{}\" to a number", value)),
@@ -167,7 +168,7 @@ fn can_parse_integer() {
     assert_eq!(
         Parser::new("1").parse(),
         Ok(Program {
-            expression: Expression::NumberLiteral(NumberLiteral { value: 1 })
+            expression: Expression::NumberLiteral(NumberLiteral { value: 1.0 })
         })
     );
 }
@@ -177,7 +178,7 @@ fn can_parse_integer_2() {
     assert_eq!(
         Parser::new("2").parse(),
         Ok(Program {
-            expression: Expression::NumberLiteral(NumberLiteral { value: 2 })
+            expression: Expression::NumberLiteral(NumberLiteral { value: 2.0 })
         })
     );
 }

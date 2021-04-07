@@ -18,7 +18,7 @@ pub struct BinaryExpression {
 
 #[derive(Debug, PartialEq)]
 pub struct NumberLiteral {
-    pub value: u64,
+    pub value: f64,
 }
 
 #[derive(Debug, PartialEq)]

@@ -1,30 +1,93 @@
-use std::io;
-
-use crate::{
-    ast::{BinaryExpression, BinaryOperator, NumberLiteral},
-    ops::opcodes,
+use parity_wasm::elements::{
+    CodeSection, ExportEntry, ExportSection, Func, FuncBody, FunctionSection, FunctionType,
+    Internal, Module, Section, Serialize, Type, TypeSection, ValueType,
 };
+use parity_wasm::elements::{Instruction, Instructions};
+
+use crate::ast::{BinaryExpression, BinaryOperator};
 
 use super::ast::{Expression, Program};
 
-#[derive(Debug, Clone)]
-pub enum Error {
-    HeapOther(String),
+pub fn emit(program: Program) -> Result<Vec<u8>, String> {
+    let emitter = Emitter {};
+    emitter.emit(program)
 }
 
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Error::HeapOther(format!("I/O Error: {:?}", err))
+struct Emitter {}
+
+impl Emitter {
+    fn emit(&self, program: Program) -> Result<Vec<u8>, String> {
+        let mut binary: Vec<u8> = Vec::new();
+        let locals = vec![];
+        let instructions = self.emit_program(program)?;
+        let func_body = FuncBody::new(locals, instructions);
+        let code_section = CodeSection::with_bodies(vec![func_body]);
+
+        let export_section = ExportSection::with_entries(vec![ExportEntry::new(
+            "test".to_string(),
+            Internal::Function(0),
+        )]);
+
+        let params = vec![];
+        let results = vec![ValueType::F64];
+
+        let type_section =
+            TypeSection::with_types(vec![Type::Function(FunctionType::new(params, results))]);
+        let function_section = FunctionSection::with_entries(vec![Func::new(0)]);
+
+        let module = Module::new(vec![
+            Section::Type(type_section),
+            Section::Function(function_section),
+            Section::Export(export_section),
+            Section::Code(code_section),
+        ]);
+        module
+            .serialize(&mut binary)
+            .map_err(|err| format!("Serialization Error: {}", err))?;
+
+        Ok(binary)
+    }
+
+    fn emit_program(&self, program: Program) -> Result<Instructions, String> {
+        let expression_instructions = self.emit_expression(program.expression)?;
+        let mut new = Vec::with_capacity(expression_instructions.len() + 1);
+        new.extend_from_slice(&expression_instructions);
+        new.push(Instruction::End);
+        Ok(Instructions::new(new))
+    }
+
+    fn emit_expression(&self, expression: Expression) -> Result<Vec<Instruction>, String> {
+        match expression {
+            Expression::BinaryExpression(binary_expression) => {
+                self.emit_binary_expression(binary_expression)
+            }
+            Expression::NumberLiteral(number_literal) => Ok(vec![Instruction::F64Const(
+                u64::from_le_bytes(number_literal.value.to_le_bytes()),
+            )]),
+        }
+    }
+
+    fn emit_binary_expression(
+        &self,
+        binary_expression: BinaryExpression,
+    ) -> Result<Vec<Instruction>, String> {
+        let left = self.emit_expression(*binary_expression.left)?;
+        let right = self.emit_expression(*binary_expression.right)?;
+        let op = match binary_expression.op {
+            BinaryOperator::Add => Instruction::F64Add,
+            BinaryOperator::Subtract => Instruction::F64Sub,
+            BinaryOperator::Multiply => Instruction::F64Mul,
+            BinaryOperator::Divide => Instruction::F64Div,
+        };
+        let mut instructions = Vec::with_capacity(left.len() + right.len() + 1);
+        instructions.extend_from_slice(&left);
+        instructions.extend_from_slice(&right);
+        instructions.push(op);
+        Ok(instructions)
     }
 }
 
-pub trait Serialize {
-    /// Serialization error produced by serialization routine.
-    type Error: From<io::Error>;
-    /// Serialize type to serial i/o
-    fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error>;
-}
-
+/*
 impl Serialize for Program {
     type Error = Error;
     fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error> {
@@ -45,10 +108,9 @@ impl Serialize for Expression {
 impl Serialize for NumberLiteral {
     type Error = Error;
     fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error> {
-        opcodes::F64CONST.serialize(writer)?;
-        writer
-            .write(&[0, 0, 0, 0, 0, 0, 240, 63])
-            .map_err(|err| Error::HeapOther(err.to_string()))?;
+        Instruction::F64Const(self.value)
+            .serialize(writer)
+            .map_err(|err| format!("{}", err))?;
         Ok(())
     }
 }
@@ -65,44 +127,14 @@ impl Serialize for BinaryExpression {
 }
 
 impl Serialize for BinaryOperator {
-    type Error = Error;
+    type Error = SerializationError;
     fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
-            Self::Add => opcodes::F64ADD.serialize(writer),
-            Self::Subtract => opcodes::F64SUB.serialize(writer),
-            Self::Multiply => opcodes::F64MUL.serialize(writer),
-            Self::Divide => opcodes::F64DIV.serialize(writer),
+            Self::Add => Instruction::F64Add.serialize(writer),
+            Self::Subtract => Instruction::F64Sub.serialize(writer),
+            Self::Multiply => Instruction::F64Mul.serialize(writer),
+            Self::Divide => Instruction::F64Div.serialize(writer),
         }
     }
 }
-
-impl Serialize for u8 {
-    type Error = Error;
-    fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error> {
-        writer
-            .write(&[self])
-            .map_err(|err| Error::HeapOther(err.to_string()))?;
-        Ok(())
-    }
-}
-
-impl Serialize for u64 {
-    type Error = Error;
-    fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error> {
-        let mut buf = [0u8; 1];
-        let mut v = self;
-        loop {
-            buf[0] = (v & 0b0111_1111) as u8;
-            v >>= 7;
-            if v > 0 {
-                buf[0] |= 0b1000_0000;
-            }
-            writer.write(&buf[..])?;
-            if v == 0 {
-                break;
-            }
-        }
-
-        Ok(())
-    }
-}
+*/
