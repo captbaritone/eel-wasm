@@ -141,15 +141,20 @@ impl<'a> FunctionEmitter<'a> {
     fn emit_binary_expression(&mut self, binary_expression: BinaryExpression) -> EmitterResult<()> {
         self.emit_expression(*binary_expression.left)?;
         self.emit_expression(*binary_expression.right)?;
-        let op = match binary_expression.op {
-            BinaryOperator::Add => Instruction::F64Add,
-            BinaryOperator::Subtract => Instruction::F64Sub,
-            BinaryOperator::Multiply => Instruction::F64Mul,
+        match binary_expression.op {
+            BinaryOperator::Add => self.push(Instruction::F64Add),
+            BinaryOperator::Subtract => self.push(Instruction::F64Sub),
+            BinaryOperator::Multiply => self.push(Instruction::F64Mul),
             BinaryOperator::Divide => {
-                Instruction::Call(self.resolve_builtin_function(BuiltinFunction::Div))
+                let func_index = self.resolve_builtin_function(BuiltinFunction::Div);
+                self.push(Instruction::Call(func_index))
+            }
+            BinaryOperator::Eq => {
+                self.push(Instruction::F64Sub);
+                self.emit_is_zeroish();
+                self.push(Instruction::F64ConvertSI32)
             }
         };
-        self.push(op);
         Ok(())
     }
 
@@ -179,7 +184,7 @@ impl<'a> FunctionEmitter<'a> {
                 let test = function_call.arguments.pop().unwrap();
 
                 self.emit_expression(test)?;
-                emit_is_not_zeroish(&mut self.instructions);
+                self.emit_is_not_zeroish();
                 self.push(Instruction::If(BlockType::Value(ValueType::F64)));
                 self.emit_expression(consiquent)?;
                 self.push(Instruction::Else);
@@ -260,12 +265,18 @@ impl<'a> FunctionEmitter<'a> {
     fn push(&mut self, instruction: Instruction) {
         self.instructions.push(instruction)
     }
-}
 
-fn emit_is_not_zeroish(instructions: &mut Vec<Instruction>) {
-    instructions.push(Instruction::F64Abs);
-    instructions.push(Instruction::F64Const(f64_const(EPSILON)));
-    instructions.push(Instruction::F64Gt);
+    fn emit_is_not_zeroish(&mut self) {
+        self.push(Instruction::F64Abs);
+        self.push(Instruction::F64Const(f64_const(EPSILON)));
+        self.push(Instruction::F64Gt);
+    }
+
+    fn emit_is_zeroish(&mut self) {
+        self.push(Instruction::F64Abs);
+        self.push(Instruction::F64Const(f64_const(EPSILON)));
+        self.push(Instruction::F64Lt);
+    }
 }
 
 fn variable_is_register(name: &str) -> bool {

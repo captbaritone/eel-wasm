@@ -51,7 +51,13 @@ impl<'a> Lexer<'a> {
                     _ => TokenKind::Slash,
                 }
             }
-            '=' => self.read_char_as_kind(TokenKind::Equal),
+            '=' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::DoubleEqual),
+                    _ => TokenKind::Equal,
+                }
+            }
             '(' => self.read_char_as_kind(TokenKind::OpenParen),
             ')' => self.read_char_as_kind(TokenKind::CloseParen),
             ',' => self.read_char_as_kind(TokenKind::Comma),

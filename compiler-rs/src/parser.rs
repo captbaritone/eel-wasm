@@ -159,9 +159,21 @@ impl<'a> Parser<'a> {
                 TokenKind::Slash if precedence < QUOTIENT_PRECEDENCE => {
                     self.parse_quotient(next)?
                 }
+                TokenKind::DoubleEqual => self.parse_comparison(next)?,
                 _ => return Ok(next),
             }
         }
+    }
+
+    fn parse_comparison(&mut self, left: Expression) -> ParseResult<Expression> {
+        self.expect_kind(TokenKind::DoubleEqual)?;
+        // TODO: What precedence?
+        let right = self.parse_expression(0)?;
+        Ok(Expression::BinaryExpression(BinaryExpression {
+            left: Box::new(left),
+            right: Box::new(right),
+            op: BinaryOperator::Eq,
+        }))
     }
 
     fn parse_sum(&mut self, left: Expression) -> ParseResult<Expression> {

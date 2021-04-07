@@ -45,6 +45,7 @@ pub enum BinaryOperator {
     Subtract,
     Multiply,
     Divide,
+    Eq,
 }
 
 #[derive(Debug, PartialEq)]
