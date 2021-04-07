@@ -1,8 +1,10 @@
-use crate::ast::{Expression, Program};
-use crate::span::Span;
 use crate::{
-    ast::{Assignment, BinaryExpression, BinaryOperator, FunctionCall},
+    ast::{Assignment, BinaryExpression, BinaryOperator, Expression, FunctionCall, Program},
     error::CompilerError,
+    index_store::IndexStore,
+    shim::Shim,
+    span::Span,
+    EelFunctionType,
 };
 use parity_wasm::elements::Module;
 use parity_wasm::elements::{
@@ -11,7 +13,6 @@ use parity_wasm::elements::{
     Section, Serialize, Type, TypeSection, ValueType,
 };
 use parity_wasm::elements::{External, Instruction, Instructions};
-use std::collections::{hash_map::Entry, HashMap};
 
 type EmitterResult<T> = Result<T, CompilerError>;
 
@@ -25,14 +26,18 @@ pub fn emit(
 
 struct Emitter {
     current_pool: String,
-    globals: HashMap<String, u32>,
+    globals: IndexStore<String>,
+    shims: IndexStore<Shim>,
+    function_types: IndexStore<EelFunctionType>,
 }
 
 impl Emitter {
     fn new() -> Self {
         Emitter {
             current_pool: "".to_string(), // TODO: Is this okay to be empty?
-            globals: HashMap::default(),
+            globals: Default::default(),
+            function_types: Default::default(),
+            shims: IndexStore::new(),
         }
     }
     fn emit(
@@ -42,7 +47,6 @@ impl Emitter {
     ) -> EmitterResult<Vec<u8>> {
         let mut imports = Vec::new();
 
-        self.current_pool = "pool".to_string();
         for (pool_name, global) in globals {
             self.current_pool = pool_name;
             // TODO: Lots of clones.
@@ -51,6 +55,15 @@ impl Emitter {
         }
 
         let (function_exports, function_bodies, funcs) = self.emit_programs(programs)?;
+
+        for shim in self.shims.keys() {
+            let type_index = self.function_types.get(shim.get_type());
+            imports.push(ImportEntry::new(
+                "shims".to_string(),
+                shim.as_str().to_string(),
+                External::Function(type_index),
+            ))
+        }
 
         let mut sections = vec![];
         sections.push(Section::Type(self.emit_type_section()));
@@ -78,9 +91,18 @@ impl Emitter {
     }
 
     fn emit_type_section(&self) -> TypeSection {
-        let params = vec![];
-        let results = vec![ValueType::F64];
-        TypeSection::with_types(vec![Type::Function(FunctionType::new(params, results))])
+        let function_types = self
+            .function_types
+            .keys()
+            .iter()
+            .map(|(args, returns)| {
+                Type::Function(FunctionType::new(
+                    vec![ValueType::F64; *args],
+                    vec![ValueType::F64; *returns],
+                ))
+            })
+            .collect();
+        TypeSection::with_types(function_types)
     }
 
     fn emit_import_section(&self, imports: Vec<ImportEntry>) -> Option<ImportSection> {
@@ -96,15 +118,16 @@ impl Emitter {
     }
 
     fn emit_global_section(&self) -> Option<GlobalSection> {
-        // TODO: Derive this from seen globals
-        if self.globals.len() == 0 {
+        let globals: Vec<GlobalEntry> = self
+            .globals
+            .keys()
+            .iter()
+            .map(|_| make_empty_global())
+            .collect();
+
+        if globals.len() == 0 {
             None
         } else {
-            let globals = [0..self.globals.len()]
-                .iter()
-                .map(|_| make_empty_global())
-                .collect();
-
             Some(GlobalSection::with_entries(globals))
         }
     }
@@ -131,7 +154,10 @@ impl Emitter {
             let func_body = FuncBody::new(locals, self.emit_program(program)?);
             instructions.push(func_body);
 
-            funcs.push(Func::new(0))
+            // TODO: In the future functions should not return any values
+            let function_type = self.function_types.get((0, 1));
+
+            funcs.push(Func::new(function_type))
         }
         Ok((names, instructions, funcs))
     }
@@ -202,34 +228,44 @@ impl Emitter {
         &mut self,
         function_call: FunctionCall,
     ) -> EmitterResult<Vec<Instruction>> {
+        let mut instructions = vec![];
+        let arity = function_call.arguments.len();
+        for arg in function_call.arguments {
+            instructions.extend_from_slice(&self.emit_expression(arg)?);
+        }
+        // TODO: Assert arrity
         match &function_call.name.name[..] {
             "int" => {
-                let mut instructions = vec![];
-                for arg in function_call.arguments {
-                    instructions.extend_from_slice(&self.emit_expression(arg)?);
-                }
                 instructions.push(Instruction::F64Floor);
-                Ok(instructions)
             }
-            _ => Err(CompilerError::new(
-                format!("Unknown function `{}`", function_call.name.name),
-                function_call.name.span,
-            )),
+            shim_name if Shim::from_str(shim_name).is_some() => {
+                let shim = Shim::from_str(shim_name).unwrap();
+                if arity != shim.arity() {
+                    return Err(CompilerError::new(
+                        format!(
+                            "Incorrect argument count for function `{}`. Expected {} but got {}.",
+                            shim_name,
+                            shim.arity(),
+                            arity
+                        ),
+                        // TODO: Better to underline the argument list
+                        function_call.name.span,
+                    ));
+                }
+                instructions.push(Instruction::Call(self.shims.get(shim)));
+            }
+            _ => {
+                return Err(CompilerError::new(
+                    format!("Unknown function `{}`", function_call.name.name),
+                    function_call.name.span,
+                ))
+            }
         }
+        Ok(instructions)
     }
 
     fn resolve_variable(&mut self, name: String) -> u32 {
-        let next = self.globals.len() as u32;
-        match self
-            .globals
-            .entry(format!("{}::{}", self.current_pool, &name)) // TODO: Can we avoid this format?
-        {
-            Entry::Occupied(entry) => entry.get().clone(),
-            Entry::Vacant(entry) => {
-                entry.insert(next);
-                next
-            }
-        }
+        self.globals.get(name)
     }
 }
 

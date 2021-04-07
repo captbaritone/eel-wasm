@@ -2,8 +2,10 @@ mod ast;
 mod emitter;
 mod error;
 mod file_chars;
+mod index_store;
 mod lexer;
 mod parser;
+mod shim;
 mod span;
 mod tokens;
 
@@ -15,6 +17,8 @@ pub use lexer::Lexer;
 pub use parser::parse;
 pub use tokens::Token;
 pub use tokens::TokenKind;
+
+pub type EelFunctionType = (usize, usize);
 
 use wasm_bindgen::prelude::*;
 
