@@ -1,4 +1,4 @@
-use crate::ast::{BinaryExpression, BinaryOperator};
+use crate::ast::{Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, Identifier};
 
 use super::ast::{Expression, NumberLiteral, Program};
 use super::lexer::Lexer;
@@ -32,7 +32,8 @@ impl<'a> Parser<'a> {
     }
 
     fn expect_kind(&mut self, expected: TokenKind) -> Result<(), String> {
-        if self.token.kind == expected {
+        let token = self.peek();
+        if token.kind == expected {
             self.advance()?;
             Ok(())
         } else {
@@ -53,13 +54,41 @@ impl<'a> Parser<'a> {
 
     pub fn parse_program(&mut self) -> Result<Program, String> {
         Ok(Program {
-            expression: self.parse_expression(0)?,
+            expressions: self.parse_expression_block()?,
         })
     }
 
+    pub fn parse_expression_block(&mut self) -> Result<Vec<Expression>, String> {
+        let mut expressions = vec![];
+        while self.peek_expression() {
+            expressions.push(self.parse_expression(0)?);
+            // TODO: Eat a semicolon?
+        }
+        Ok(expressions)
+    }
+
+    fn peek_expression(&self) -> bool {
+        let token = self.peek();
+        match token.kind {
+            TokenKind::Int => true,
+            TokenKind::Identifier => true,
+            _ => false,
+        }
+    }
+
     fn parse_expression(&mut self, precedence: u8) -> Result<Expression, String> {
-        let left = self.parse_prefix()?;
-        self.maybe_parse_infix(left, precedence)
+        match self.peek().kind {
+            // TODO: Handle unary
+            TokenKind::Int => {
+                let left = self.parse_prefix()?;
+                self.maybe_parse_infix(left, precedence)
+            }
+            TokenKind::Identifier => self.parse_assignment(),
+            _ => Err(format!(
+                "Expected Int or Identifier but got {:?}",
+                self.token.kind
+            )),
+        }
     }
 
     fn parse_prefix(&mut self) -> Result<Expression, String> {
@@ -149,6 +178,25 @@ impl<'a> Parser<'a> {
             Err(format!("Expected an Int but found {:?}", self.token.kind))
         }
     }
+
+    fn parse_assignment(&mut self) -> Result<Expression, String> {
+        self.expect_kind(TokenKind::Identifier)?;
+        // TODO: Support other operator types
+        let _operator_token = self.expect_kind(TokenKind::Equal)?;
+        let right = self.parse_expression(0)?;
+        Ok(Expression::Assignment(Assignment {
+            left: Identifier {
+                // TODO: Derive name from token
+                name: "g".to_string(),
+            },
+            operator: AssignmentOperator::Equal,
+            right: Box::new(right),
+        }))
+    }
+
+    fn peek(&self) -> &Token {
+        &self.token
+    }
 }
 
 #[inline]
@@ -168,7 +216,7 @@ fn can_parse_integer() {
     assert_eq!(
         Parser::new("1").parse(),
         Ok(Program {
-            expression: Expression::NumberLiteral(NumberLiteral { value: 1.0 })
+            expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 1.0 })]
         })
     );
 }
@@ -178,7 +226,7 @@ fn can_parse_integer_2() {
     assert_eq!(
         Parser::new("2").parse(),
         Ok(Program {
-            expression: Expression::NumberLiteral(NumberLiteral { value: 2.0 })
+            expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 2.0 })]
         })
     );
 }

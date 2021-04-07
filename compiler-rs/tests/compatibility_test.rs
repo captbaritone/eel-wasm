@@ -23,7 +23,8 @@ fn run(body: &[u8]) -> Result<f64, String> {
 #[test]
 fn compatibility_tests() {
     let test_cases: &[(&'static str, &'static str, f64)] = &[
-        ("[REMOVE] Integer", "1", 2.0),
+        ("[REMOVE] Integer", "1", 1.0),
+        ("[REMOVE] Assignment", "g=1", 1.0),
         ("Expressions", "g = ((6- -7.0)+ 3.0);", 16.0),
         ("Number", "g = 5;", 5.0),
         ("Number with decimal", "g = 5.5;", 5.5),
@@ -348,18 +349,6 @@ fn compatibility_tests() {
         ),
     ];
 
-    let mut failing: Vec<&str> = Vec::new();
-
-    for (name, code, expected) in test_cases {
-        match compile(code) {
-            Ok(binary) => {
-                let actual = run(&binary).expect("to run");
-                assert_eq!(&actual, expected)
-            }
-            Err(_) => failing.push(name),
-        }
-    }
-
     let expected_failing: Vec<&str> = vec![
         "Expressions",
         "Number",
@@ -549,5 +538,23 @@ fn compatibility_tests() {
         "Divide by less than epsilon",
     ];
 
-    assert_eq!(failing, expected_failing);
+    for (name, code, expected) in test_cases {
+        match compile(code) {
+            Ok(binary) => {
+                if expected_failing.contains(name) {
+                    panic!(format!("Expected {} to fail, but it passed!", name));
+                }
+                let actual = run(&binary).expect("to run");
+                assert_eq!(&actual, expected)
+            }
+            Err(err) => {
+                if !expected_failing.contains(name) {
+                    panic!(format!(
+                        "Didn't expect \"{}\" to fail. Failed with {}",
+                        name, err
+                    ));
+                }
+            }
+        }
+    }
 }

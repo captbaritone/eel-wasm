@@ -7,6 +7,8 @@ pub enum TokenKind {
     Minus,
     Asterisk,
     Slash,
+    Equal,
+    Identifier,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }

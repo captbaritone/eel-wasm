@@ -1,12 +1,13 @@
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    pub expression: Expression,
+    pub expressions: Vec<Expression>,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     BinaryExpression(BinaryExpression),
     NumberLiteral(NumberLiteral),
+    Assignment(Assignment),
 }
 
 #[derive(Debug, PartialEq)]
@@ -27,4 +28,21 @@ pub enum BinaryOperator {
     Subtract,
     Multiply,
     Divide,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Identifier {
+    pub name: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AssignmentOperator {
+    Equal,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Assignment {
+    pub left: Identifier,
+    pub operator: AssignmentOperator,
+    pub right: Box<Expression>,
 }
