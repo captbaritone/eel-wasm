@@ -117,9 +117,8 @@ pub fn eval_eel(
 
     // TODO: Instead of returning return value, return value of globals
     match instance.invoke_export(function_to_run, &[], &mut global_imports) {
-        Ok(Some(RuntimeValue::F64(_val))) => Ok(()),
-        Ok(Some(val)) => Err(format!("Unexpected return type: {:?}", val)),
-        Ok(None) => Err("No Result".to_string()),
+        Ok(Some(_)) => Err("Did not expect to get return from eel function".to_string()),
+        Ok(None) => Ok(()),
         Err(err) => Err(format!(
             "Error invoking exported function {}: {}",
             function_to_run, err

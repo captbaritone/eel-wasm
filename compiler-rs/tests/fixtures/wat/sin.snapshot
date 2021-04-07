@@ -2,9 +2,10 @@ sin(100)
 ========================================================================
 (module
   (type (;0;) (func (param f64) (result f64)))
-  (type (;1;) (func (result f64)))
+  (type (;1;) (func))
   (import "shims" "sin" (func (;0;) (type 0)))
-  (func (;1;) (type 1) (result f64)
+  (func (;1;) (type 1)
     f64.const 0x1.9p+6 (;=100;)
-    call 0)
+    call 0
+    drop)
   (export "test" (func 1)))

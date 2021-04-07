@@ -333,7 +333,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Optional final semi",
         "Mod",
         "Mod zero",
         "Bitwise and",
@@ -356,9 +355,6 @@ fn compatibility_tests() {
         "Atan",
         "Atan2",
         "Read globals",
-        "Multiple statements",
-        "Multiple statements expression",
-        "Multiple statements expression implcit return",
         "if",
         "if",
         "if does short-circit (consiquent)",
@@ -451,10 +447,8 @@ fn compatibility_tests() {
         "Gmegabuf",
         "Megabuf != Gmegabuf",
         "Gmegabuf != Megabuf",
-        "Consecutive semis",
         "Equality (< epsilon)",
         "Equality (< -epsilon)",
-        "Variables don\'t collide",
         "Block comment",
         "Sigmoid 1, 2",
         "Sigmoid 2, 1",

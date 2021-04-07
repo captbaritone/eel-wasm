@@ -186,8 +186,7 @@ impl Emitter {
             let locals = Vec::new();
             function_bodies.push(FuncBody::new(locals, self.emit_program(program)?));
 
-            // TODO: In the future functions should not return any values
-            let function_type = self.function_types.get((0, 1));
+            let function_type = self.function_types.get((0, 0));
 
             function_definitions.push(Func::new(function_type))
         }
@@ -197,6 +196,7 @@ impl Emitter {
     fn emit_program(&mut self, eel_function: EelFunction) -> EmitterResult<Instructions> {
         let mut instructions: Vec<Instruction> = Vec::new();
         self.emit_expression_block(eel_function.expressions, &mut instructions)?;
+        instructions.push(Instruction::Drop);
         instructions.push(Instruction::End);
         Ok(Instructions::new(instructions))
     }
@@ -206,9 +206,12 @@ impl Emitter {
         block: ExpressionBlock,
         instructions: &mut Vec<Instruction>,
     ) -> EmitterResult<()> {
-        for expression in block.expressions {
+        let last_index = block.expressions.len() - 1;
+        for (i, expression) in block.expressions.into_iter().enumerate() {
             self.emit_expression(expression, instructions)?;
-            // TODO: Consider that we might need to drop the implicit return.
+            if i != last_index {
+                instructions.push(Instruction::Drop)
+            }
         }
         Ok(())
     }

@@ -69,11 +69,9 @@ fn multiple_functions() {
 
     instance
         .invoke_export("one", &[], &mut global_imports)
-        .expect("failed to execute export")
-        .expect("Ran");
+        .expect("failed to execute export");
 
     instance
         .invoke_export("two", &[], &mut global_imports)
-        .expect("failed to execute export")
-        .expect("Ran");
+        .expect("failed to execute export");
 }

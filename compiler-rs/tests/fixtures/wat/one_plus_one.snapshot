@@ -2,10 +2,11 @@
 ========================================================================
 (module
   (type (;0;) (func (param f64) (result f64)))
-  (type (;1;) (func (result f64)))
+  (type (;1;) (func))
   (import "shims" "sin" (func (;0;) (type 0)))
-  (func (;1;) (type 1) (result f64)
+  (func (;1;) (type 1)
     f64.const 0x1p+0 (;=1;)
     f64.const 0x1p+0 (;=1;)
-    f64.add)
+    f64.add
+    drop)
   (export "test" (func 1)))
