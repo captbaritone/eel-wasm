@@ -94,6 +94,9 @@ impl<'a> Parser<'a> {
         let token = self.peek();
         match token.kind {
             TokenKind::Int => true,
+            TokenKind::Plus => true,
+            TokenKind::Minus => true,
+            TokenKind::Bang => true,
             TokenKind::Identifier => true,
             _ => false,
         }
