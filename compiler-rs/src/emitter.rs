@@ -67,6 +67,7 @@ impl Serialize for BinaryOperator {
             Self::Add => opcodes::F64ADD.serialize(writer),
             Self::Subtract => opcodes::F64SUB.serialize(writer),
             Self::Multiply => opcodes::F64MUL.serialize(writer),
+            Self::Divide => opcodes::F64DIV.serialize(writer),
         }
     }
 }

@@ -29,6 +29,7 @@ impl<'a> Lexer<'a> {
                 '+' => self.read_char_as_kind(TokenKind::Plus),
                 '-' => self.read_char_as_kind(TokenKind::Minus),
                 '*' => self.read_char_as_kind(TokenKind::Asterisk),
+                '/' => self.read_char_as_kind(TokenKind::Slash),
                 _ => return Err(format!("Unexpected token {}", c)),
             },
             None => TokenKind::EOF,
