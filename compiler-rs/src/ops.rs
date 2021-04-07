@@ -1,5 +1,5 @@
 // https://github.com/paritytech/parity-wasm/blob/8caf6a8bc79a98c2f298b8fdf50857b8638e2dfc/src/elements/ops.rs#L607
-#[allow(missing_docs)]
+#[allow(missing_docs, dead_code)]
 pub mod opcodes {
     pub const UNREACHABLE: u8 = 0x00;
     pub const NOP: u8 = 0x01;
