@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{
     ast::{
-        Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, FunctionCall,
-        UnaryExpression, UnaryOperator,
+        Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, ExpressionBlock,
+        FunctionCall, UnaryExpression, UnaryOperator,
     },
     builtin_functions::BuiltinFunction,
     error::CompilerError,
@@ -194,14 +194,23 @@ impl Emitter {
         Ok((exports, function_bodies, function_definitions))
     }
 
-    fn emit_program(&mut self, program: EelFunction) -> EmitterResult<Instructions> {
+    fn emit_program(&mut self, eel_function: EelFunction) -> EmitterResult<Instructions> {
         let mut instructions: Vec<Instruction> = Vec::new();
-        for expression in program.expressions {
-            self.emit_expression(expression, &mut instructions)?;
-            // TODO: Consider that we might need to drop the implicit return.
-        }
+        self.emit_expression_block(eel_function.expressions, &mut instructions)?;
         instructions.push(Instruction::End);
         Ok(Instructions::new(instructions))
+    }
+
+    fn emit_expression_block(
+        &mut self,
+        block: ExpressionBlock,
+        instructions: &mut Vec<Instruction>,
+    ) -> EmitterResult<()> {
+        for expression in block.expressions {
+            self.emit_expression(expression, instructions)?;
+            // TODO: Consider that we might need to drop the implicit return.
+        }
+        Ok(())
     }
 
     fn emit_expression(
@@ -225,6 +234,9 @@ impl Emitter {
             }
             Expression::FunctionCall(function_call) => {
                 self.emit_function_call(function_call, instructions)
+            }
+            Expression::ExpressionBlock(expression_block) => {
+                self.emit_expression_block(expression_block, instructions)
             }
         }
     }

@@ -1,21 +1,23 @@
 1+1
 ========================================================================
 EelFunction {
-    expressions: [
-        BinaryExpression(
-            BinaryExpression {
-                left: NumberLiteral(
-                    NumberLiteral {
-                        value: 1.0,
-                    },
-                ),
-                right: NumberLiteral(
-                    NumberLiteral {
-                        value: 1.0,
-                    },
-                ),
-                op: Add,
-            },
-        ),
-    ],
+    expressions: ExpressionBlock {
+        expressions: [
+            BinaryExpression(
+                BinaryExpression {
+                    left: NumberLiteral(
+                        NumberLiteral {
+                            value: 1.0,
+                        },
+                    ),
+                    right: NumberLiteral(
+                        NumberLiteral {
+                            value: 1.0,
+                        },
+                    ),
+                    op: Add,
+                },
+            ),
+        ],
+    },
 }

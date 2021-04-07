@@ -1,8 +1,8 @@
 use std::num::ParseFloatError;
 
 use crate::ast::{
-    Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, FunctionCall, Identifier,
-    UnaryExpression, UnaryOperator,
+    Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, ExpressionBlock,
+    FunctionCall, Identifier, UnaryExpression, UnaryOperator,
 };
 
 use super::ast::{EelFunction, Expression, NumberLiteral};
@@ -71,7 +71,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn parse_expression_block(&mut self) -> ParseResult<Vec<Expression>> {
+    pub fn parse_expression_block(&mut self) -> ParseResult<ExpressionBlock> {
         let mut expressions = vec![];
         while self.peek_expression() {
             expressions.push(self.parse_expression(0)?);
@@ -80,7 +80,7 @@ impl<'a> Parser<'a> {
                 self.advance()?;
             }
         }
-        Ok(expressions)
+        Ok(ExpressionBlock { expressions })
     }
 
     fn peek_expression(&self) -> bool {
@@ -109,9 +109,9 @@ impl<'a> Parser<'a> {
         match self.token.kind {
             TokenKind::OpenParen => {
                 self.advance()?;
-                let expression = self.parse_expression(0)?;
+                let expression_block = self.parse_expression_block()?;
                 self.expect_kind(TokenKind::CloseParen)?;
-                Ok(expression)
+                Ok(Expression::ExpressionBlock(expression_block))
             }
             TokenKind::Int => Ok(Expression::NumberLiteral(self.parse_int()?)),
             TokenKind::Plus => {
@@ -309,7 +309,9 @@ fn can_parse_integer() {
     assert_eq!(
         Parser::new("1").parse(),
         Ok(EelFunction {
-            expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 1.0 })]
+            expressions: ExpressionBlock {
+                expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 1.0 })]
+            }
         })
     );
 }
@@ -319,7 +321,9 @@ fn can_parse_integer_2() {
     assert_eq!(
         Parser::new("2").parse(),
         Ok(EelFunction {
-            expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 2.0 })]
+            expressions: ExpressionBlock {
+                expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 2.0 })]
+            }
         })
     );
 }

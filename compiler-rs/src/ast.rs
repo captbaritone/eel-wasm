@@ -2,6 +2,11 @@ use crate::span::Span;
 
 #[derive(Debug, PartialEq)]
 pub struct EelFunction {
+    pub expressions: ExpressionBlock,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ExpressionBlock {
     pub expressions: Vec<Expression>,
 }
 
@@ -12,6 +17,7 @@ pub enum Expression {
     NumberLiteral(NumberLiteral),
     Assignment(Assignment),
     FunctionCall(FunctionCall),
+    ExpressionBlock(ExpressionBlock),
 }
 
 #[derive(Debug, PartialEq)]
