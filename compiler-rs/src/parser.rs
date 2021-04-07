@@ -77,6 +77,15 @@ impl<'a> Parser<'a> {
     }
 
     fn peek_expression(&self) -> bool {
+        self.peek_prefix()
+    }
+
+    fn parse_expression(&mut self, precedence: u8) -> ParseResult<Expression> {
+        let left = self.parse_prefix()?;
+        self.maybe_parse_infix(left, precedence)
+    }
+
+    fn peek_prefix(&self) -> bool {
         let token = self.peek();
         match token.kind {
             TokenKind::Int => true,
@@ -85,29 +94,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_expression(&mut self, precedence: u8) -> ParseResult<Expression> {
-        let token = self.peek();
-        match &token.kind {
-            // TODO: Handle unary
-            TokenKind::Int => {
-                let left = self.parse_prefix()?;
-                self.maybe_parse_infix(left, precedence)
-            }
-            TokenKind::Identifier => self.parse_identifier_expression(),
-            kind => Err(CompilerError::new(
-                format!("Expected Int or Identifier but got {:?}", kind),
-                token.span,
-            )),
-        }
-    }
-
     fn parse_prefix(&mut self) -> ParseResult<Expression> {
         match self.token.kind {
             TokenKind::Int => Ok(Expression::NumberLiteral(self.parse_int()?)),
             // TokenKind::OpenParen => self.parse_parenthesized_expression(),
             // Once we have other prefix operators: `+-!` they  will go here.
+            TokenKind::Identifier => self.parse_identifier_expression(),
             _ => Err(CompilerError::new(
-                format!("Expected Int but got {:?}", self.token.kind),
+                format!("Expected Int or Identifier but got {:?}", self.token.kind),
                 self.token.span,
             )),
         }
