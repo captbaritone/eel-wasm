@@ -1,11 +1,12 @@
 mod ast;
 mod builtin_functions;
 mod constants;
-mod emitter;
 mod error;
 mod file_chars;
+mod function_emitter;
 mod index_store;
 mod lexer;
+mod module_emitter;
 mod parser;
 mod shim;
 mod span;
@@ -15,8 +16,8 @@ mod utils;
 use std::collections::{HashMap, HashSet};
 
 use ast::EelFunction;
-use emitter::emit;
 use error::CompilerError;
+use module_emitter::emit_module;
 // Only exported for tests
 pub use lexer::Lexer;
 use parity_wasm::elements::FunctionType;
@@ -54,5 +55,5 @@ pub fn compile(
             Ok((name, program, pool))
         })
         .collect();
-    emit(eel_functions?, globals)
+    emit_module(eel_functions?, globals)
 }

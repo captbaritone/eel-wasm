@@ -19,3 +19,5 @@ impl CompilerError {
         self.message.clone()
     }
 }
+
+pub type EmitterResult<T> = Result<T, CompilerError>;
