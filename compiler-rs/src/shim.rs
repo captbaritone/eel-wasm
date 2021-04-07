@@ -17,11 +17,9 @@ impl Shim {
         vec![ValueType::F64; self.arity()]
     }
 
+    // All shims return a value
     pub fn get_return(&self) -> Vec<ValueType> {
-        match self {
-            Shim::Sin => vec![ValueType::F64],
-            Shim::Pow => vec![ValueType::F64],
-        }
+        vec![ValueType::F64]
     }
     pub fn arity(&self) -> usize {
         match self {
