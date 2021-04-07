@@ -1,72 +1,29 @@
 extern crate wabt;
 extern crate wasmi;
 
-use std::error::Error;
+use wasmi::ImportsBuilder;
+use wasmi::{ModuleInstance, NopExternals, RuntimeValue};
 
-use wasmi::{
-    nan_preserving_float::F64, GlobalDescriptor, GlobalInstance, GlobalRef, ImportResolver,
-    ImportsBuilder,
-};
-use wasmi::{
-    Error as InterpreterError, ModuleImportResolver, ModuleInstance, ModuleRef, NopExternals,
-    RuntimeValue,
-};
-
-use parity_wasm::{
-    builder::{from_module, module},
-    elements::{
-        BlockType, External, GlobalEntry, GlobalType, ImportEntry, InitExpr, Instruction,
-        Instructions, MemoryType, Module, TableType, ValueType,
-    },
-};
-
-struct SpecModule {
-    g: GlobalRef,
-}
-
-impl SpecModule {
-    fn new() -> Self {
-        SpecModule {
-            g: GlobalInstance::alloc(RuntimeValue::F64(666.0.into()), false),
-        }
-    }
-}
-
-impl ModuleImportResolver for SpecModule {
-    fn resolve_global(
-        &self,
-        field_name: &str,
-        _global_type: &GlobalDescriptor,
-    ) -> Result<GlobalRef, InterpreterError> {
-        panic!("Filed name");
-        Ok(GlobalInstance::alloc(RuntimeValue::F64(1.0.into()), false))
-    }
-}
-
-// #[test]
+#[test]
 fn wasm_test() {
     // Parse WAT (WebAssembly Text format) into wasm bytecode.
     let wasm_binary: Vec<u8> = wabt::wat2wasm(
         r#"
             (module
-                (import "main" "foo" (global (;0;) (mut f64)))
                 (func (export "test") (result f64)
-                    f64.const 69
-                    set_global 0
                     f64.const 1
+                    f64.const 1
+                    f64.add
                 )
             )
             "#,
     )
     .expect("failed to parse wat");
+
+    // println!("{:?}", wasm_binary);
     // Load wasm binary and prepare it for instantiation.
     let module = wasmi::Module::from_buffer(&wasm_binary).expect("failed to load wasm");
-    /*
-
-    let mut imports = ImportsBuilder::default();
-    let main = SpecModule::new();
-    imports.push_resolver("main", &main);
-
+    let imports = ImportsBuilder::default();
     // Instantiate a module with empty imports and
     // assert that there is no `start` function.
     let instance = ModuleInstance::new(&module, &imports)
@@ -79,6 +36,6 @@ fn wasm_test() {
         instance
             .invoke_export("test", &[], &mut NopExternals,)
             .expect("failed to execute export"),
-        Some(RuntimeValue::F64(1.0.into())),
-    ); */
+        Some(RuntimeValue::F64(2.0.into())),
+    );
 }

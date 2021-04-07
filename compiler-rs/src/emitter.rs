@@ -45,7 +45,11 @@ impl Serialize for Expression {
 impl Serialize for NumberLiteral {
     type Error = Error;
     fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error> {
-        self.value.serialize(writer)
+        opcodes::F64CONST.serialize(writer)?;
+        writer
+            .write(&[0, 0, 0, 0, 0, 0, 240, 63])
+            .map_err(|err| Error::HeapOther(err.to_string()))?;
+        Ok(())
     }
 }
 
