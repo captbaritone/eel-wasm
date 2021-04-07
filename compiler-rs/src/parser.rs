@@ -1,4 +1,6 @@
-use crate::ast::{Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, Identifier};
+use crate::ast::{
+    Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, FunctionCall, Identifier,
+};
 
 use super::ast::{Expression, NumberLiteral, Program};
 use super::lexer::Lexer;
@@ -83,7 +85,7 @@ impl<'a> Parser<'a> {
                 let left = self.parse_prefix()?;
                 self.maybe_parse_infix(left, precedence)
             }
-            TokenKind::Identifier => self.parse_assignment(),
+            TokenKind::Identifier => self.parse_identifier(),
             _ => Err(format!(
                 "Expected Int or Identifier but got {:?}",
                 self.token.kind
@@ -179,19 +181,44 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_assignment(&mut self) -> Result<Expression, String> {
+    fn parse_identifier(&mut self) -> Result<Expression, String> {
         // TODO: A little odd that we get the identifier before we check the
         // kind. (lifetimes...)
         let identifier = self.token.text().to_string();
         self.expect_kind(TokenKind::Identifier)?;
+
+        match self.peek().kind {
+            TokenKind::Equal => {
+                let _operator_token = self.expect_kind(TokenKind::Equal)?;
+                let right = self.parse_expression(0)?;
+                Ok(Expression::Assignment(Assignment {
+                    left: Identifier { name: identifier },
+                    operator: AssignmentOperator::Equal,
+                    right: Box::new(right),
+                }))
+            }
+            TokenKind::OpenParen => {
+                self.advance()?;
+                let mut arguments = vec![];
+                while self.peek_expression() {
+                    arguments.push(self.parse_expression(0)?);
+                    match self.peek().kind {
+                        TokenKind::Comma => self.advance()?,
+                        TokenKind::CloseParen => {
+                            self.advance()?;
+                            break;
+                        }
+                        _ => return Err("Expected , or )".to_string()),
+                    }
+                }
+                Ok(Expression::FunctionCall(FunctionCall {
+                    name: Identifier { name: identifier },
+                    arguments,
+                }))
+            }
+            _ => Err(format!("Expected = or (")),
+        }
         // TODO: Support other operator types
-        let _operator_token = self.expect_kind(TokenKind::Equal)?;
-        let right = self.parse_expression(0)?;
-        Ok(Expression::Assignment(Assignment {
-            left: Identifier { name: identifier },
-            operator: AssignmentOperator::Equal,
-            right: Box::new(right),
-        }))
     }
 
     fn peek(&self) -> &Token {

@@ -25,6 +25,7 @@ fn compatibility_tests() {
     let test_cases: &[(&'static str, &'static str, f64)] = &[
         ("[REMOVE] Integer", "1", 1.0),
         ("[REMOVE] Assignment", "g=1", 1.0),
+        ("[REMOVE] Call", "int(4)", 4.0),
         ("Expressions", "g = ((6- -7.0)+ 3.0);", 16.0),
         ("Number", "g = 5;", 5.0),
         ("Number with decimal", "g = 5.5;", 5.5),

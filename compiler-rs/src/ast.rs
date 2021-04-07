@@ -8,6 +8,7 @@ pub enum Expression {
     BinaryExpression(BinaryExpression),
     NumberLiteral(NumberLiteral),
     Assignment(Assignment),
+    FunctionCall(FunctionCall),
 }
 
 #[derive(Debug, PartialEq)]
@@ -45,4 +46,10 @@ pub struct Assignment {
     pub left: Identifier,
     pub operator: AssignmentOperator,
     pub right: Box<Expression>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct FunctionCall {
+    pub name: Identifier,
+    pub arguments: Vec<Expression>,
 }

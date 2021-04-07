@@ -8,7 +8,7 @@ use parity_wasm::elements::{
 };
 use parity_wasm::elements::{External, Instruction, Instructions};
 
-use crate::ast::{Assignment, BinaryExpression, BinaryOperator};
+use crate::ast::{Assignment, BinaryExpression, BinaryOperator, FunctionCall};
 
 use super::ast::{Expression, Program};
 
@@ -147,6 +147,7 @@ impl Emitter {
             Expression::NumberLiteral(number_literal) => Ok(vec![Instruction::F64Const(
                 u64::from_le_bytes(number_literal.value.to_le_bytes()),
             )]),
+            Expression::FunctionCall(function_call) => self.emit_function_call(function_call),
         }
     }
 
@@ -182,6 +183,23 @@ impl Emitter {
         instructions.push(Instruction::SetGlobal(resolved_name));
         instructions.push(Instruction::GetGlobal(resolved_name));
         Ok(instructions)
+    }
+
+    fn emit_function_call(
+        &mut self,
+        function_call: FunctionCall,
+    ) -> Result<Vec<Instruction>, String> {
+        match &function_call.name.name[..] {
+            "int" => {
+                let mut instructions = vec![];
+                for arg in function_call.arguments {
+                    instructions.extend_from_slice(&self.emit_expression(arg)?);
+                }
+                instructions.push(Instruction::F64Floor);
+                Ok(instructions)
+            }
+            _ => Err(format!("Unknown function `{}`", function_call.name.name)),
+        }
     }
 
     fn resolve_variable(&mut self, name: String) -> u32 {

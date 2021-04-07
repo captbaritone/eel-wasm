@@ -31,6 +31,9 @@ impl<'a> Lexer<'a> {
             '*' => self.read_char_as_kind(TokenKind::Asterisk),
             '/' => self.read_char_as_kind(TokenKind::Slash),
             '=' => self.read_char_as_kind(TokenKind::Equal),
+            '(' => self.read_char_as_kind(TokenKind::OpenParen),
+            ')' => self.read_char_as_kind(TokenKind::CloseParen),
+            ',' => self.read_char_as_kind(TokenKind::Comma),
             NULL => TokenKind::EOF,
             c => return Err(format!("Unexpected character {}", c)),
         };

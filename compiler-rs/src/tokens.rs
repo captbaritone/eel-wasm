@@ -9,6 +9,9 @@ pub enum TokenKind {
     Slash,
     Equal,
     Identifier,
+    OpenParen,
+    CloseParen,
+    Comma,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }
