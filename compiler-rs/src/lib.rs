@@ -2,7 +2,6 @@ mod ast;
 mod emitter;
 mod file_chars;
 mod lexer;
-mod ops;
 mod parser;
 mod span;
 mod tokens;
