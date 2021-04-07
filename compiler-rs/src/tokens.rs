@@ -5,6 +5,7 @@ pub enum TokenKind {
     Int,
     Plus,
     Minus,
+    Bang,
     Asterisk,
     Slash,
     Equal,

@@ -1,5 +1,6 @@
 use crate::ast::{
     Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, FunctionCall, Identifier,
+    UnaryExpression, UnaryOperator,
 };
 
 use super::ast::{EelFunction, Expression, NumberLiteral};
@@ -97,6 +98,27 @@ impl<'a> Parser<'a> {
     fn parse_prefix(&mut self) -> ParseResult<Expression> {
         match self.token.kind {
             TokenKind::Int => Ok(Expression::NumberLiteral(self.parse_int()?)),
+            TokenKind::Plus => {
+                self.advance()?;
+                Ok(Expression::UnaryExpression(UnaryExpression {
+                    right: Box::new(self.parse_expression(0)?),
+                    op: UnaryOperator::Plus,
+                }))
+            }
+            TokenKind::Minus => {
+                self.advance()?;
+                Ok(Expression::UnaryExpression(UnaryExpression {
+                    right: Box::new(self.parse_expression(0)?),
+                    op: UnaryOperator::Minus,
+                }))
+            }
+            TokenKind::Bang => {
+                self.advance()?;
+                Ok(Expression::UnaryExpression(UnaryExpression {
+                    right: Box::new(self.parse_expression(0)?),
+                    op: UnaryOperator::Not,
+                }))
+            }
             // TokenKind::OpenParen => self.parse_parenthesized_expression(),
             // Once we have other prefix operators: `+-!` they  will go here.
             TokenKind::Identifier => self.parse_identifier_expression(),

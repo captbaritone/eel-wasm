@@ -8,9 +8,16 @@ pub struct EelFunction {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     BinaryExpression(BinaryExpression),
+    UnaryExpression(UnaryExpression),
     NumberLiteral(NumberLiteral),
     Assignment(Assignment),
     FunctionCall(FunctionCall),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct UnaryExpression {
+    pub right: Box<Expression>,
+    pub op: UnaryOperator,
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,6 +38,13 @@ pub enum BinaryOperator {
     Subtract,
     Multiply,
     Divide,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum UnaryOperator {
+    Plus,
+    Minus,
+    Not,
 }
 
 #[derive(Debug, PartialEq)]

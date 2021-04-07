@@ -1,7 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    ast::{Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, FunctionCall},
+    ast::{
+        Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, FunctionCall,
+        UnaryExpression, UnaryOperator,
+    },
     builtin_functions::BuiltinFunction,
     error::CompilerError,
     index_store::IndexStore,
@@ -16,6 +19,8 @@ use parity_wasm::elements::{
 };
 
 type EmitterResult<T> = Result<T, CompilerError>;
+
+static EPSILON: f64 = 0.00001;
 
 pub fn emit(
     eel_functions: Vec<(String, EelFunction, String)>,
@@ -204,6 +209,9 @@ impl Emitter {
         instructions: &mut Vec<Instruction>,
     ) -> EmitterResult<()> {
         match expression {
+            Expression::UnaryExpression(unary_expression) => {
+                self.emit_unary_expression(unary_expression, instructions)
+            }
             Expression::BinaryExpression(binary_expression) => {
                 self.emit_binary_expression(binary_expression, instructions)
             }
@@ -211,13 +219,36 @@ impl Emitter {
                 self.emit_assignment(assignment_expression, instructions)
             }
             Expression::NumberLiteral(number_literal) => {
-                instructions.push(Instruction::F64Const(u64::from_le_bytes(
-                    number_literal.value.to_le_bytes(),
-                )));
+                instructions.push(Instruction::F64Const(f64_const(number_literal.value)));
                 Ok(())
             }
             Expression::FunctionCall(function_call) => {
                 self.emit_function_call(function_call, instructions)
+            }
+        }
+    }
+
+    fn emit_unary_expression(
+        &mut self,
+        unary_expression: UnaryExpression,
+        instructions: &mut Vec<Instruction>,
+    ) -> EmitterResult<()> {
+        match unary_expression.op {
+            UnaryOperator::Plus => self.emit_expression(*unary_expression.right, instructions),
+            UnaryOperator::Minus => {
+                self.emit_expression(*unary_expression.right, instructions)?;
+                instructions.push(Instruction::F64Neg);
+                Ok(())
+            }
+            UnaryOperator::Not => {
+                self.emit_expression(*unary_expression.right, instructions)?;
+                instructions.extend(vec![
+                    Instruction::F32Abs,
+                    Instruction::F64Const(f64_const(EPSILON)),
+                    Instruction::F64Lt,
+                ]);
+                instructions.push(Instruction::F64ConvertSI32);
+                Ok(())
             }
         }
     }
@@ -311,6 +342,11 @@ impl Emitter {
             .expect("Tried to compute builtin index before setting offset.");
         self.builtin_functions.get(builtin) + offset
     }
+}
+
+// TODO: There's got to be a better way.
+fn f64_const(value: f64) -> u64 {
+    u64::from_le_bytes(value.to_le_bytes())
 }
 
 fn variable_is_register(name: &str) -> bool {
