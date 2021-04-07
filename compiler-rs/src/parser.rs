@@ -72,7 +72,7 @@ impl<'a> Parser<'a> {
         let mut expressions = vec![];
         while self.peek_expression() {
             expressions.push(self.parse_expression(0)?);
-            // TODO: This is probably not quite right. We should requie semis between expressions.
+            // TODO: This is probably not quite right. We should require semis between expressions.
             while self.peek().kind == TokenKind::Semi {
                 self.advance()?;
             }
