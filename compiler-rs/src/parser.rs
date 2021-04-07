@@ -204,8 +204,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_identifier_expression(&mut self) -> ParseResult<Expression> {
-        // TODO: A little odd that we get the identifier before we check the
-        // kind. (lifetimes...)
         let identifier = self.parse_identifier()?;
 
         match self.token.kind {
