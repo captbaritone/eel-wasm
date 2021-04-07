@@ -13,7 +13,7 @@ use crate::{
     EelFunctionType,
 };
 use parity_wasm::elements::{
-    CodeSection, ExportEntry, ExportSection, External, Func, FuncBody, FunctionSection,
+    BlockType, CodeSection, ExportEntry, ExportSection, External, Func, FuncBody, FunctionSection,
     FunctionType, GlobalEntry, GlobalSection, GlobalType, ImportEntry, ImportSection, InitExpr,
     Instruction, Instructions, Internal, Module, Section, Serialize, Type, TypeSection, ValueType,
 };
@@ -308,31 +308,38 @@ impl Emitter {
 
     fn emit_function_call(
         &mut self,
-        function_call: FunctionCall,
+        mut function_call: FunctionCall,
         instructions: &mut Vec<Instruction>,
     ) -> EmitterResult<()> {
-        let arity = function_call.arguments.len();
-        for arg in function_call.arguments {
-            &self.emit_expression(arg, instructions)?;
-        }
-        // TODO: Assert arrity
         match &function_call.name.name[..] {
             "int" => {
+                assert_arity(&function_call, 1)?;
+                for arg in function_call.arguments {
+                    self.emit_expression(arg, instructions)?;
+                }
                 instructions.push(Instruction::F64Floor);
+            }
+            "if" => {
+                assert_arity(&function_call, 3)?;
+
+                let alternate = function_call.arguments.pop().unwrap();
+                let consiquent = function_call.arguments.pop().unwrap();
+                let test = function_call.arguments.pop().unwrap();
+
+                self.emit_expression(test, instructions)?;
+                emit_is_not_zeroish(instructions);
+                instructions.push(Instruction::If(BlockType::Value(ValueType::F64)));
+                self.emit_expression(consiquent, instructions)?;
+                instructions.push(Instruction::Else);
+                self.emit_expression(alternate, instructions)?;
+                instructions.push(Instruction::End);
             }
             shim_name if Shim::from_str(shim_name).is_some() => {
                 let shim = Shim::from_str(shim_name).unwrap();
-                if arity != shim.arity() {
-                    return Err(CompilerError::new(
-                        format!(
-                            "Incorrect argument count for function `{}`. Expected {} but got {}.",
-                            shim_name,
-                            shim.arity(),
-                            arity
-                        ),
-                        // TODO: Better to underline the argument list
-                        function_call.name.span,
-                    ));
+                assert_arity(&function_call, shim.arity())?;
+
+                for arg in function_call.arguments {
+                    self.emit_expression(arg, instructions)?;
                 }
                 instructions.push(Instruction::Call(self.shims.get(shim)));
             }
@@ -365,6 +372,12 @@ impl Emitter {
     }
 }
 
+fn emit_is_not_zeroish(instructions: &mut Vec<Instruction>) {
+    instructions.push(Instruction::F64Abs);
+    instructions.push(Instruction::F64Const(f64_const(EPSILON)));
+    instructions.push(Instruction::F64Gt);
+}
+
 // TODO: There's got to be a better way.
 fn f64_const(value: f64) -> u64 {
     u64::from_le_bytes(value.to_le_bytes())
@@ -392,4 +405,21 @@ fn make_import_entry(module_str: String, field_str: String) -> ImportEntry {
         field_str,
         External::Global(GlobalType::new(ValueType::F64, true)),
     )
+}
+
+fn assert_arity(function_call: &FunctionCall, arity: usize) -> EmitterResult<()> {
+    if function_call.arguments.len() != arity {
+        Err(CompilerError::new(
+            format!(
+                "Incorrect argument count for function `{}`. Expected {} but got {}.",
+                function_call.name.name,
+                arity,
+                function_call.arguments.len()
+            ),
+            // TODO: Better to underline the argument list
+            function_call.name.span,
+        ))
+    } else {
+        Ok(())
+    }
 }
