@@ -1,3 +1,5 @@
+use std::process::id;
+
 use crate::ast::{Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, Identifier};
 
 use super::ast::{Expression, NumberLiteral, Program};
@@ -31,7 +33,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn expect_kind(&mut self, expected: TokenKind) -> Result<(), String> {
+    fn expect_kind(&mut self, expected: TokenKind) -> Result<(0), String> {
         let token = self.peek();
         if token.kind == expected {
             self.advance()?;
@@ -180,15 +182,15 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_assignment(&mut self) -> Result<Expression, String> {
+        // TODO: A little odd that we get the identifier before we check the
+        // kind. (lifetimes...)
+        let identifier = self.token.text().to_string();
         self.expect_kind(TokenKind::Identifier)?;
         // TODO: Support other operator types
         let _operator_token = self.expect_kind(TokenKind::Equal)?;
         let right = self.parse_expression(0)?;
         Ok(Expression::Assignment(Assignment {
-            left: Identifier {
-                // TODO: Derive name from token
-                name: "g".to_string(),
-            },
+            left: Identifier { name: identifier },
             operator: AssignmentOperator::Equal,
             right: Box::new(right),
         }))

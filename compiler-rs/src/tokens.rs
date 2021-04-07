@@ -23,4 +23,8 @@ impl<'a> Token<'a> {
     pub fn new(kind: TokenKind, span: Span<'a>) -> Self {
         Token { kind, span }
     }
+
+    pub fn text(&self) -> &str {
+        self.span.str_from_source()
+    }
 }
