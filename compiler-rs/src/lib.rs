@@ -6,6 +6,7 @@ mod parser;
 mod span;
 mod tokens;
 
+use ast::Program;
 use emitter::emit;
 use parser::Parser;
 
@@ -19,11 +20,16 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub fn assert_compile(source: &str) -> Vec<u8> {
-    compile(source, vec![]).expect("Don't screw it up")
+    compile(vec![("test".to_string(), source)], vec![]).expect("Don't screw it up")
 }
 
-pub fn compile(source: &str, globals: Vec<String>) -> Result<Vec<u8>, String> {
-    let mut parser = Parser::new(source);
-    let program = parser.parse()?;
-    emit(program, globals)
+pub fn compile(sources: Vec<(String, &str)>, globals: Vec<String>) -> Result<Vec<u8>, String> {
+    let programs: Result<Vec<(String, Program)>, String> = sources
+        .into_iter()
+        .map(|(name, source)| {
+            let mut parser = Parser::new(&source);
+            Ok((name, parser.parse()?))
+        })
+        .collect();
+    emit(programs?, globals)
 }

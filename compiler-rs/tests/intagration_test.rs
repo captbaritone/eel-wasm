@@ -1,6 +1,6 @@
 extern crate eel_wasm;
 
-use std::{collections::HashMap, io, ops::Deref, rc::Rc};
+use std::{collections::HashMap, io};
 
 use eel_wasm::compile;
 use wasmi::{
@@ -29,7 +29,7 @@ fn run(body: &[u8]) -> Result<f64, String> {
 
 fn test_run(program: &str, expected_output: f64) {
     assert_eq!(
-        run(&compile(program, vec![]).unwrap()).expect("Run Error"),
+        run(&compile(vec![("test".to_string(), program)], vec![]).unwrap()).expect("Run Error"),
         expected_output
     );
 }
@@ -37,7 +37,7 @@ fn test_run(program: &str, expected_output: f64) {
 #[test]
 fn build_one() -> io::Result<()> {
     assert_eq!(
-        &compile("1", vec![]).unwrap(),
+        &compile(vec![("test".to_string(), "1")], vec![]).unwrap(),
         &[
             0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 124, 3, 2, 1, 0, 7, 8, 1, 4, 116, 101,
             115, 116, 0, 0, 10, 13, 1, 11, 0, 68, 0, 0, 0, 0, 0, 0, 240, 63, 11,
@@ -78,7 +78,8 @@ fn with_global() {
     let global_imports = GlobalPool {
         globals: HashMap::default(),
     };
-    let wasm_binary = compile("g=1", vec!["g".to_string()]).expect("Expect to compile");
+    let wasm_binary = compile(vec![("test".to_string(), "g=1")], vec!["g".to_string()])
+        .expect("Expect to compile");
     // TODO: This will fail becuase wasmi 0.8.0 depends upon wasmi-validaiton
     // 0.3.0 which does not include https://github.com/paritytech/wasmi/pull/228
     // which allows mutable globals.
@@ -95,6 +96,34 @@ fn with_global() {
     // and empty external function executor.
     instance
         .invoke_export("test", &[], &mut NopExternals)
+        .expect("failed to execute export")
+        .expect("Ran");
+}
+
+#[test]
+fn multiple_functions() {
+    let wasm_binary = compile(
+        vec![("one".to_string(), "1"), ("two".to_string(), "2")],
+        vec![],
+    )
+    .expect("Expect to compile");
+    // TODO: This will fail becuase wasmi 0.8.0 depends upon wasmi-validaiton
+    // 0.3.0 which does not include https://github.com/paritytech/wasmi/pull/228
+    // which allows mutable globals.
+    // 0.3.1 has the PR, but wasmi has not shipped a new version that includes it.
+    // parity-wasm already depends upon 0.3.1 (I _think_)
+    let module = wasmi::Module::from_buffer(&wasm_binary).expect("No validation errors");
+    let instance = ModuleInstance::new(&module, &ImportsBuilder::default())
+        .expect("failed to instantiate wasm module")
+        .assert_no_start();
+
+    instance
+        .invoke_export("one", &[], &mut NopExternals)
+        .expect("failed to execute export")
+        .expect("Ran");
+
+    instance
+        .invoke_export("two", &[], &mut NopExternals)
         .expect("failed to execute export")
         .expect("Ran");
 }

@@ -1,20 +1,20 @@
 use std::collections::{hash_map::Entry, HashMap};
 
+use parity_wasm::elements::Module;
 use parity_wasm::elements::{
     CodeSection, ExportEntry, ExportSection, Func, FuncBody, FunctionSection, FunctionType,
     GlobalEntry, GlobalSection, GlobalType, ImportEntry, ImportSection, InitExpr, Internal,
     Section, Serialize, Type, TypeSection, ValueType,
 };
 use parity_wasm::elements::{External, Instruction, Instructions};
-use parity_wasm::{builder::ModuleBuilder, elements::Module};
 
 use crate::ast::{Assignment, BinaryExpression, BinaryOperator};
 
 use super::ast::{Expression, Program};
 
-pub fn emit(program: Program, globals: Vec<String>) -> Result<Vec<u8>, String> {
+pub fn emit(programs: Vec<(String, Program)>, globals: Vec<String>) -> Result<Vec<u8>, String> {
     let mut emitter = Emitter::new();
-    emitter.emit(program, globals)
+    emitter.emit(programs, globals)
 }
 
 struct Emitter {
@@ -29,7 +29,11 @@ impl Emitter {
             globals: HashMap::default(),
         }
     }
-    fn emit(&mut self, program: Program, globals: Vec<String>) -> Result<Vec<u8>, String> {
+    fn emit(
+        &mut self,
+        programs: Vec<(String, Program)>,
+        globals: Vec<String>,
+    ) -> Result<Vec<u8>, String> {
         let mut imports = Vec::new();
 
         self.current_pool = "pool".to_string();
@@ -38,19 +42,20 @@ impl Emitter {
             self.resolve_variable(global.clone());
             imports.push(make_import_entry(self.current_pool.clone(), global.clone()));
         }
-        let instructions = self.emit_program(program)?;
+
+        let (function_exports, function_bodies, funcs) = self.emit_programs(programs)?;
 
         let mut sections = vec![];
         sections.push(Section::Type(self.emit_type_section()));
         if let Some(import_section) = self.emit_import_section(imports) {
             sections.push(Section::Import(import_section));
         }
-        sections.push(Section::Function(self.emit_function_section()));
+        sections.push(Section::Function(self.emit_function_section(funcs)));
         if let Some(global_section) = self.emit_global_section() {
             sections.push(Section::Global(global_section));
         }
-        sections.push(Section::Export(self.emit_export_section()));
-        sections.push(Section::Code(self.emit_code_section(instructions)));
+        sections.push(Section::Export(self.emit_export_section(function_exports)));
+        sections.push(Section::Code(self.emit_code_section(function_bodies)));
 
         let mut binary: Vec<u8> = Vec::new();
         Module::new(sections)
@@ -74,8 +79,8 @@ impl Emitter {
         }
     }
 
-    fn emit_function_section(&self) -> FunctionSection {
-        FunctionSection::with_entries(vec![Func::new(0)])
+    fn emit_function_section(&self, funcs: Vec<Func>) -> FunctionSection {
+        FunctionSection::with_entries(funcs)
     }
 
     fn emit_global_section(&self) -> Option<GlobalSection> {
@@ -83,28 +88,39 @@ impl Emitter {
         if self.globals.len() == 0 {
             None
         } else {
-            let mut globals = vec![];
-            let mut globals_left = self.globals.len();
-            while globals_left > 0 {
-                globals.push(make_empty_global());
-                globals_left -= 1;
-            }
+            let globals = [0..self.globals.len()]
+                .iter()
+                .map(|_| make_empty_global())
+                .collect();
 
             Some(GlobalSection::with_entries(globals))
         }
     }
 
-    fn emit_export_section(&self) -> ExportSection {
-        ExportSection::with_entries(vec![ExportEntry::new(
-            "test".to_string(),
-            Internal::Function(0),
-        )])
+    fn emit_export_section(&self, function_exports: Vec<ExportEntry>) -> ExportSection {
+        ExportSection::with_entries(function_exports)
     }
 
-    fn emit_code_section(&self, instructions: Instructions) -> CodeSection {
-        let locals = vec![];
-        let func_body = FuncBody::new(locals, instructions);
-        CodeSection::with_bodies(vec![func_body])
+    fn emit_code_section(&self, function_bodies: Vec<FuncBody>) -> CodeSection {
+        CodeSection::with_bodies(function_bodies)
+    }
+
+    fn emit_programs(
+        &mut self,
+        programs: Vec<(String, Program)>,
+    ) -> Result<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>), String> {
+        let mut names = Vec::new();
+        let mut instructions = Vec::new();
+        let mut funcs = Vec::new();
+        for (i, (name, program)) in programs.into_iter().enumerate() {
+            names.push(ExportEntry::new(name, Internal::Function(i as u32)));
+            let locals = Vec::new();
+            let func_body = FuncBody::new(locals, self.emit_program(program)?);
+            instructions.push(func_body);
+
+            funcs.push(Func::new(0))
+        }
+        Ok((names, instructions, funcs))
     }
 
     fn emit_program(&mut self, program: Program) -> Result<Instructions, String> {
