@@ -244,7 +244,7 @@ impl Emitter {
             UnaryOperator::Not => {
                 self.emit_expression(*unary_expression.right, instructions)?;
                 instructions.extend(vec![
-                    Instruction::F32Abs,
+                    Instruction::F64Abs,
                     Instruction::F64Const(f64_const(EPSILON)),
                     Instruction::F64Lt,
                 ]);

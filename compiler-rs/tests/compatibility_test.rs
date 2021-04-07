@@ -333,10 +333,6 @@ fn compatibility_tests() {
 
     let expected_failing: Vec<&str> = vec![
         "Optional final semi",
-        "Unary not true",
-        "Unary not false",
-        "Unary not 0.1",
-        "Unary not < epsilon",
         "Mod",
         "Mod zero",
         "Bitwise and",
