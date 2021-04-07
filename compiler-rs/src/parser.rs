@@ -1,3 +1,5 @@
+use std::num::ParseFloatError;
+
 use crate::ast::{
     Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, FunctionCall, Identifier,
     UnaryExpression, UnaryOperator,
@@ -205,10 +207,9 @@ impl<'a> Parser<'a> {
     fn parse_int(&mut self) -> ParseResult<NumberLiteral> {
         if let TokenKind::Int = self.token.kind {
             let value = self.lexer.source(self.token.span);
-            match value.parse::<f64>() {
+            match parse_number(value) {
                 Ok(value) => {
                     self.advance()?;
-                    // TODO: This is not quite right
                     Ok(NumberLiteral { value })
                 }
                 Err(_) => Err(CompilerError::new(
@@ -280,6 +281,14 @@ impl<'a> Parser<'a> {
 
     fn peek(&self) -> &Token {
         &self.token
+    }
+}
+
+fn parse_number(raw: &str) -> Result<f64, ParseFloatError> {
+    if raw.starts_with('.') {
+        format!("0{}", raw).parse::<f64>()
+    } else {
+        raw.parse::<f64>()
     }
 }
 

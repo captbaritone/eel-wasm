@@ -332,7 +332,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Number with no digits",
         "Optional final semi",
         "Unary not true",
         "Unary not false",
