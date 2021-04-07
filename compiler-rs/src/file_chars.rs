@@ -1,7 +1,7 @@
 use std::mem;
 use std::str::Chars;
 
-pub const NULL: char = '!';
+pub const NULL: char = '\0';
 
 pub struct FileChars<'a> {
     chars: Chars<'a>,

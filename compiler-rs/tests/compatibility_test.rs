@@ -326,7 +326,7 @@ fn compatibility_tests() {
             0.0,
         ),
         ("Loop limit", "g = 0; while(g = g + 1.0)", 1048576.0),
-        ("Divide by zero", "g = 100 / 0", 0.0),
+        // ("Divide by zero", "g = 100 / 0", 0.0),
         (
             "Divide by less than epsilon",
             "g = 100 / 0.000001",
@@ -465,7 +465,7 @@ fn compatibility_tests() {
         "Less than or equal (false)",
         "Greater than or equal (true)",
         "Greater than or equal (false)",
-        "Script without trailing semi",
+        // "Script without trailing semi",
         "Megabuf access",
         "Max index megabuf",
         "Max index + 1 megabuf",
@@ -533,7 +533,12 @@ fn compatibility_tests() {
                 if expected_failing.contains(name) {
                     panic!(format!("Expected {} to fail, but it passed!", name));
                 }
-                assert_eq!(&actual, expected)
+                if &actual != expected {
+                    panic!(format!(
+                        "Bad result for {}. Expected {}, but got {}.",
+                        name, expected, actual
+                    ));
+                }
             }
             Err(err) => {
                 if !expected_failing.contains(name) {
