@@ -15,6 +15,7 @@ static SUM_PRECEDENCE: u8 = 1;
 static DIFFERENCE_PRECEDENCE: u8 = 1;
 static PRODUCT_PRECEDENCE: u8 = 2;
 static QUOTIENT_PRECEDENCE: u8 = 2;
+static MOD_PRECEDENCE: u8 = 3; // TODO: What should this be?
 static PREFIX_PRECEDENCE: u8 = 6;
 
 struct Parser<'a> {
@@ -159,6 +160,7 @@ impl<'a> Parser<'a> {
                 TokenKind::Slash if precedence < QUOTIENT_PRECEDENCE => {
                     self.parse_quotient(next)?
                 }
+                TokenKind::Percent if precedence < MOD_PRECEDENCE => self.parse_mod(next)?,
                 TokenKind::DoubleEqual => self.parse_comparison(next)?,
                 _ => return Ok(next),
             }
@@ -213,6 +215,16 @@ impl<'a> Parser<'a> {
             left: Box::new(left),
             right: Box::new(right),
             op: BinaryOperator::Divide,
+        }))
+    }
+
+    fn parse_mod(&mut self, left: Expression) -> ParseResult<Expression> {
+        self.expect_kind(TokenKind::Percent)?;
+        let right = self.parse_expression(left_associative(MOD_PRECEDENCE))?;
+        Ok(Expression::BinaryExpression(BinaryExpression {
+            left: Box::new(left),
+            right: Box::new(right),
+            op: BinaryOperator::Mod,
         }))
     }
 

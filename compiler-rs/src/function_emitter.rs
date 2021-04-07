@@ -149,6 +149,10 @@ impl<'a> FunctionEmitter<'a> {
                 let func_index = self.resolve_builtin_function(BuiltinFunction::Div);
                 self.push(Instruction::Call(func_index))
             }
+            BinaryOperator::Mod => {
+                let func_index = self.resolve_builtin_function(BuiltinFunction::Mod);
+                self.push(Instruction::Call(func_index))
+            }
             BinaryOperator::Eq => {
                 self.push(Instruction::F64Sub);
                 self.emit_is_zeroish();

@@ -334,8 +334,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Mod",
-        "Mod zero",
         "Bitwise and",
         "Bitwise or",
         "To the power",
@@ -467,8 +465,6 @@ fn compatibility_tests() {
         "Exponentiation associativity",
         "^ has lower precedence than * (left)",
         "^ has lower precedence than * (right)",
-        "% has lower precedence than * (right)",
-        "% has lower precedence than * (left)",
         "% and ^ have the same precedence (% first)",
         "% and ^ have the same precedence (^ first)",
         "Loop limit",

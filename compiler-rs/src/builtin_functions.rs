@@ -9,6 +9,7 @@ use crate::EelFunctionType;
 #[derive(PartialEq, Eq, Hash)]
 pub enum BuiltinFunction {
     Div,
+    Mod,
     GetBufferIndex,
 }
 
@@ -19,6 +20,9 @@ impl BuiltinFunction {
                 FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
             }
             Self::GetBufferIndex => FunctionType::new(vec![ValueType::F64], vec![ValueType::I32]),
+            Self::Mod => {
+                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
+            }
         }
     }
 
@@ -81,6 +85,25 @@ impl BuiltinFunction {
                     Instruction::I32Or,
                     // STACK: [-1, $truncated * 8, <is index out of range>]
                     Instruction::Select,
+                    Instruction::End,
+                ]),
+            ),
+            Self::Mod => FuncBody::new(
+                vec![],
+                Instructions::new(vec![
+                    Instruction::GetLocal(1),
+                    Instruction::F64Const(f64_const(0.0)),
+                    Instruction::F64Ne,
+                    Instruction::If(BlockType::Value(ValueType::F64)),
+                    Instruction::GetLocal(0),
+                    Instruction::I64TruncSF64,
+                    Instruction::GetLocal(1),
+                    Instruction::I64TruncSF64,
+                    Instruction::I64RemS,
+                    Instruction::F64ConvertSI64,
+                    Instruction::Else,
+                    Instruction::F64Const(f64_const(0.0)),
+                    Instruction::End,
                     Instruction::End,
                 ]),
             ),
