@@ -26,7 +26,7 @@ pub fn emit(
 
 struct Emitter {
     current_pool: String,
-    globals: IndexStore<String>,
+    globals: IndexStore<(Option<String>, String)>,
     shims: IndexStore<Shim>,
     function_types: IndexStore<EelFunctionType>,
 }
@@ -265,8 +265,20 @@ impl Emitter {
     }
 
     fn resolve_variable(&mut self, name: String) -> u32 {
-        self.globals.get(name)
+        let pool = if variable_is_register(&name) {
+            None
+        } else {
+            Some(self.current_pool.clone())
+        };
+
+        self.globals.get((pool, name))
     }
+}
+
+fn variable_is_register(name: &str) -> bool {
+    let chars: Vec<_> = name.chars().collect();
+    // We avoided pulling in the regex crate! (But at what cost?)
+    matches!(chars.as_slice(), ['r', 'e', 'g', '0'..='9', '0'..='9'])
 }
 
 fn make_empty_global() -> GlobalEntry {
