@@ -7,9 +7,7 @@ use super::tokens::{Token, TokenKind};
 
 static SUM_PRECEDENCE: u8 = 1;
 static DIFFERENCE_PRECEDENCE: u8 = 1;
-/*
 static PRODUCT_PRECEDENCE: u8 = 2;
-*/
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -84,11 +82,9 @@ impl<'a> Parser<'a> {
                 TokenKind::Minus if precedence < DIFFERENCE_PRECEDENCE => {
                     self.parse_difference(next)?
                 }
-                /*
                 TokenKind::Asterisk if precedence < PRODUCT_PRECEDENCE => {
                     self.parse_product(next)?
                 }
-                */
                 _ => return Ok(next),
             }
         }
@@ -111,6 +107,16 @@ impl<'a> Parser<'a> {
             left: Box::new(left),
             right: Box::new(right),
             op: BinaryOperator::Subtract,
+        }))
+    }
+
+    fn parse_product(&mut self, left: Expression) -> Result<Expression, String> {
+        self.expect_kind(TokenKind::Asterisk)?;
+        let right = self.parse_expression(left_associative(PRODUCT_PRECEDENCE))?;
+        Ok(Expression::BinaryExpression(BinaryExpression {
+            left: Box::new(left),
+            right: Box::new(right),
+            op: BinaryOperator::Multiply,
         }))
     }
 

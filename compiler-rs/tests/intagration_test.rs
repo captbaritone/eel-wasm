@@ -8,5 +8,6 @@ use eel_wasm::compile;
 fn run_snapshots() -> io::Result<()> {
     assert_eq!(compile("1+1").unwrap(), [1, 1, 160]);
     assert_eq!(compile("1-1").unwrap(), [1, 1, 161]);
+    assert_eq!(compile("1*1").unwrap(), [1, 1, 162]);
     Ok(())
 }

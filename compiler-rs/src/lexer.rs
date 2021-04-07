@@ -28,6 +28,7 @@ impl<'a> Lexer<'a> {
                 _ if is_int(c) => self.read_int(),
                 '+' => self.read_char_as_kind(TokenKind::Plus),
                 '-' => self.read_char_as_kind(TokenKind::Minus),
+                '*' => self.read_char_as_kind(TokenKind::Asterisk),
                 _ => return Err(format!("Unexpected token {}", c)),
             },
             None => TokenKind::EOF,

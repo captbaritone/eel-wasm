@@ -25,5 +25,5 @@ pub struct NumberLiteral {
 pub enum BinaryOperator {
     Add,
     Subtract,
-    // Multiply,
+    Multiply,
 }

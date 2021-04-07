@@ -5,6 +5,7 @@ pub enum TokenKind {
     Int,
     Plus,
     Minus,
+    Asterisk,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }
