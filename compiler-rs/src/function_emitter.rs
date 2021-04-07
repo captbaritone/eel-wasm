@@ -187,9 +187,8 @@ impl<'a> FunctionEmitter<'a> {
         match &function_call.name.name[..] {
             "int" => {
                 assert_arity(&function_call, 1)?;
-                for arg in function_call.arguments {
-                    self.emit_expression(arg)?;
-                }
+                self.emit_function_args(function_call)?;
+
                 self.push(Instruction::F64Floor);
             }
             "if" => {
@@ -207,15 +206,79 @@ impl<'a> FunctionEmitter<'a> {
                 self.emit_expression(alternate)?;
                 self.push(Instruction::End);
             }
+            "abs" => {
+                assert_arity(&function_call, 1)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Abs)
+            }
+            "sqrt" => {
+                assert_arity(&function_call, 1)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Abs);
+                self.push(Instruction::F64Sqrt)
+            }
+            "min" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Min)
+            }
+            "max" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Max)
+            }
+            "above" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Gt);
+                self.push(Instruction::F64ConvertSI32)
+            }
+            "below" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Lt);
+                self.push(Instruction::F64ConvertSI32)
+            }
+            "equal" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Sub);
+                self.emit_is_zeroish();
+                self.push(Instruction::F64ConvertSI32)
+            }
+            "bnot" => {
+                assert_arity(&function_call, 1)?;
+                self.emit_function_args(function_call)?;
+
+                self.emit_is_zeroish();
+                self.push(Instruction::F64ConvertSI32)
+            }
+            "floor" => {
+                assert_arity(&function_call, 1)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Floor)
+            }
+            "ceil" => {
+                assert_arity(&function_call, 1)?;
+                self.emit_function_args(function_call)?;
+
+                self.push(Instruction::F64Ceil)
+            }
             "megabuf" => self.emit_memory_access(&mut function_call, 0)?,
             "gmegabuf" => self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8)?,
             shim_name if Shim::from_str(shim_name).is_some() => {
                 let shim = Shim::from_str(shim_name).unwrap();
                 assert_arity(&function_call, shim.arity())?;
+                self.emit_function_args(function_call)?;
 
-                for arg in function_call.arguments {
-                    self.emit_expression(arg)?;
-                }
                 let shim_index = self.shims.get(shim);
                 self.push(Instruction::Call(shim_index));
             }
@@ -225,6 +288,12 @@ impl<'a> FunctionEmitter<'a> {
                     function_call.name.span,
                 ))
             }
+        }
+        Ok(())
+    }
+    fn emit_function_args(&mut self, function_call: FunctionCall) -> EmitterResult<()> {
+        for arg in function_call.arguments {
+            self.emit_expression(arg)?;
         }
         Ok(())
     }
