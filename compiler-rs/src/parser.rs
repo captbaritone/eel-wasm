@@ -6,8 +6,8 @@ use super::span::Span;
 use super::tokens::{Token, TokenKind};
 
 static SUM_PRECEDENCE: u8 = 1;
-/*
 static DIFFERENCE_PRECEDENCE: u8 = 1;
+/*
 static PRODUCT_PRECEDENCE: u8 = 2;
 */
 
@@ -81,10 +81,10 @@ impl<'a> Parser<'a> {
         loop {
             next = match self.token.kind {
                 TokenKind::Plus if precedence < SUM_PRECEDENCE => self.parse_sum(next)?,
-                /*
                 TokenKind::Minus if precedence < DIFFERENCE_PRECEDENCE => {
                     self.parse_difference(next)?
                 }
+                /*
                 TokenKind::Asterisk if precedence < PRODUCT_PRECEDENCE => {
                     self.parse_product(next)?
                 }
@@ -101,6 +101,16 @@ impl<'a> Parser<'a> {
             left: Box::new(left),
             right: Box::new(right),
             op: BinaryOperator::Add,
+        }))
+    }
+
+    fn parse_difference(&mut self, left: Expression) -> Result<Expression, String> {
+        self.expect_kind(TokenKind::Minus)?;
+        let right = self.parse_expression(left_associative(DIFFERENCE_PRECEDENCE))?;
+        Ok(Expression::BinaryExpression(BinaryExpression {
+            left: Box::new(left),
+            right: Box::new(right),
+            op: BinaryOperator::Subtract,
         }))
     }
 

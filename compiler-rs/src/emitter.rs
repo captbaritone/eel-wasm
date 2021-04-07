@@ -65,6 +65,7 @@ impl Serialize for BinaryOperator {
     fn serialize<W: io::Write>(self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Add => opcodes::F64ADD.serialize(writer),
+            Self::Subtract => opcodes::F64SUB.serialize(writer),
         }
     }
 }

@@ -4,6 +4,7 @@ use super::span::Span;
 pub enum TokenKind {
     Int,
     Plus,
+    Minus,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }

@@ -24,6 +24,6 @@ pub struct NumberLiteral {
 #[derive(Debug, PartialEq)]
 pub enum BinaryOperator {
     Add,
-    // Subtract,
+    Subtract,
     // Multiply,
 }
