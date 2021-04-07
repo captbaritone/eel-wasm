@@ -326,7 +326,7 @@ fn compatibility_tests() {
             0.0,
         ),
         ("Loop limit", "g = 0; while(g = g + 1.0)", 1048576.0),
-        // ("Divide by zero", "g = 100 / 0", 0.0),
+        ("Divide by zero", "g = 100 / 0", 0.0),
         (
             "Divide by less than epsilon",
             "g = 100 / 0.000001",
@@ -519,7 +519,6 @@ fn compatibility_tests() {
         "% and ^ have the same precedence (% first)",
         "% and ^ have the same precedence (^ first)",
         "Loop limit",
-        "Divide by zero",
         "Divide by less than epsilon",
     ];
 

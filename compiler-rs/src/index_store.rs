@@ -24,6 +24,13 @@ impl<T: Eq + Hash> IndexStore<T> {
         }
     }
 
+    pub fn ensure(&mut self, key: T) {
+        let next = self.map.len() as u32;
+        if let Entry::Vacant(entry) = self.map.entry(key) {
+            entry.insert(next);
+        }
+    }
+
     // TODO: Return iter?
     pub fn keys(&self) -> Vec<&T> {
         self.map.keys().collect()

@@ -1,4 +1,5 @@
 mod ast;
+mod builtin_functions;
 mod emitter;
 mod error;
 mod file_chars;

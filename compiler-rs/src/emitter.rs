@@ -2,19 +2,18 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{
     ast::{Assignment, BinaryExpression, BinaryOperator, Expression, FunctionCall, Program},
+    builtin_functions::BuiltinFunction,
     error::CompilerError,
     index_store::IndexStore,
     shim::Shim,
     span::Span,
     EelFunctionType,
 };
-use parity_wasm::elements::Module;
 use parity_wasm::elements::{
-    CodeSection, ExportEntry, ExportSection, Func, FuncBody, FunctionSection, FunctionType,
-    GlobalEntry, GlobalSection, GlobalType, ImportEntry, ImportSection, InitExpr, Internal,
-    Section, Serialize, Type, TypeSection, ValueType,
+    CodeSection, ExportEntry, ExportSection, External, Func, FuncBody, FunctionSection,
+    FunctionType, GlobalEntry, GlobalSection, GlobalType, ImportEntry, ImportSection, InitExpr,
+    Instruction, Instructions, Internal, Module, Section, Serialize, Type, TypeSection, ValueType,
 };
-use parity_wasm::elements::{External, Instruction, Instructions};
 
 type EmitterResult<T> = Result<T, CompilerError>;
 
@@ -30,7 +29,9 @@ struct Emitter {
     current_pool: String,
     globals: IndexStore<(Option<String>, String)>,
     shims: IndexStore<Shim>,
+    builtin_functions: IndexStore<BuiltinFunction>,
     function_types: IndexStore<EelFunctionType>,
+    builtin_offset: Option<u32>,
 }
 
 impl Emitter {
@@ -38,8 +39,10 @@ impl Emitter {
         Emitter {
             current_pool: "".to_string(), // TODO: Is this okay to be empty?
             globals: Default::default(),
-            function_types: Default::default(),
             shims: IndexStore::new(),
+            function_types: Default::default(),
+            builtin_functions: IndexStore::new(),
+            builtin_offset: None,
         }
     }
     fn emit(
@@ -58,18 +61,22 @@ impl Emitter {
             }
         }
 
-        self.shims.get(Shim::Sin);
-
-        let (function_exports, function_bodies, funcs) = self.emit_programs(programs, 1)?;
-
-        for shim in self.shims.keys() {
-            let type_index = self.function_types.get(shim.get_type());
+        let shims: Vec<Shim> = vec![Shim::Sin];
+        for shim in shims {
+            let field_str = shim.as_str().to_string();
+            let type_ = shim.get_type();
+            self.shims.ensure(shim);
             imports.push(ImportEntry::new(
                 "shims".to_string(),
-                shim.as_str().to_string(),
-                External::Function(type_index),
-            ))
+                field_str,
+                External::Function(self.function_types.get(type_)),
+            ));
         }
+
+        self.builtin_offset = Some(programs.len() as u32 + imports.len() as u32);
+
+        let (function_exports, function_bodies, funcs) =
+            self.emit_programs(programs, imports.len() as u32)?;
 
         let mut sections = vec![];
         sections.push(Section::Type(self.emit_type_section()));
@@ -119,8 +126,13 @@ impl Emitter {
         }
     }
 
-    fn emit_function_section(&self, funcs: Vec<Func>) -> FunctionSection {
-        FunctionSection::with_entries(funcs)
+    fn emit_function_section(&mut self, funcs: Vec<Func>) -> FunctionSection {
+        let mut entries = funcs.clone();
+        for builtin in self.builtin_functions.keys() {
+            let type_idx = self.function_types.get(builtin.get_type());
+            entries.push(Func::new(type_idx));
+        }
+        FunctionSection::with_entries(entries)
     }
 
     fn emit_global_section(&self) -> Option<GlobalSection> {
@@ -143,7 +155,12 @@ impl Emitter {
     }
 
     fn emit_code_section(&self, function_bodies: Vec<FuncBody>) -> CodeSection {
-        CodeSection::with_bodies(function_bodies)
+        // TODO: Avoid this clone
+        let mut bodies = function_bodies.clone();
+        for builtin in self.builtin_functions.keys() {
+            bodies.push(builtin.func_body());
+        }
+        CodeSection::with_bodies(bodies)
     }
 
     fn emit_programs(
@@ -216,7 +233,9 @@ impl Emitter {
             BinaryOperator::Add => Instruction::F64Add,
             BinaryOperator::Subtract => Instruction::F64Sub,
             BinaryOperator::Multiply => Instruction::F64Mul,
-            BinaryOperator::Divide => Instruction::F64Div,
+            BinaryOperator::Divide => {
+                Instruction::Call(self.resolve_builtin_function(BuiltinFunction::Div))
+            }
         };
         instructions.push(op);
         Ok(())
@@ -283,6 +302,14 @@ impl Emitter {
         };
 
         self.globals.get((pool, name))
+    }
+
+    fn resolve_builtin_function(&mut self, builtin: BuiltinFunction) -> u32 {
+        self.function_types.ensure(builtin.get_type());
+        let offset = self
+            .builtin_offset
+            .expect("Tried to compute builtin index before setting offset.");
+        self.builtin_functions.get(builtin) + offset
     }
 }
 

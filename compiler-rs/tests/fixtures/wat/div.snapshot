@@ -1,0 +1,27 @@
+g = 100 / 0
+========================================================================
+(module
+  (type (;0;) (func (param f64) (result f64)))
+  (type (;1;) (func (param f64 f64) (result f64)))
+  (type (;2;) (func (result f64)))
+  (import "shims" "sin" (func (;0;) (type 0)))
+  (func (;1;) (type 2) (result f64)
+    f64.const 0x1.9p+6 (;=100;)
+    f64.const 0x0p+0 (;=0;)
+    call 2
+    global.set 0
+    global.get 0)
+  (func (;2;) (type 1) (param f64 f64) (result f64)
+    (local i32)
+    local.get 1
+    f64.const 0x0p+0 (;=0;)
+    f64.ne
+    if (result f64)  ;; label = @1
+      local.get 0
+      local.get 1
+      f64.div
+    else
+      f64.const 0x0p+0 (;=0;)
+    end)
+  (global (;0;) (mut f64) (f64.const 0x0p+0 (;=0;)))
+  (export "test" (func 1)))

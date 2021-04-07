@@ -33,6 +33,7 @@ wee_alloc = { version = "0.4.5", optional = true }
 
 [dev-dependencies]
 # https://github.com/paritytech/wasmi/issues/252
+# wasmi = { path = "../../wasmi"}
 wasmi = { git = "https://github.com/paritytech/wasmi", branch = "master" }
 wabt = "0.9.0"
 wasm-bindgen-test = "0.3.13"
