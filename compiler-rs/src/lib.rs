@@ -12,7 +12,7 @@ mod tokens;
 
 use std::collections::{HashMap, HashSet};
 
-use ast::Program;
+use ast::EelFunction;
 use emitter::emit;
 use error::CompilerError;
 // Only exported for tests
@@ -44,12 +44,12 @@ pub fn compile(
     sources: Vec<(String, &str, String)>,
     globals: HashMap<String, HashSet<String>>,
 ) -> Result<Vec<u8>, CompilerError> {
-    let programs: Result<Vec<(String, Program, String)>, CompilerError> = sources
+    let eel_functions: Result<Vec<(String, EelFunction, String)>, CompilerError> = sources
         .into_iter()
         .map(|(name, source, pool)| {
             let program = parse(&source)?;
             Ok((name, program, pool))
         })
         .collect();
-    emit(programs?, globals)
+    emit(eel_functions?, globals)
 }

@@ -1,6 +1,6 @@
 1+1
 ========================================================================
-Program {
+EelFunction {
     expressions: [
         BinaryExpression(
             BinaryExpression {

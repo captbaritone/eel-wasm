@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    ast::{Assignment, BinaryExpression, BinaryOperator, Expression, FunctionCall, Program},
+    ast::{Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, FunctionCall},
     builtin_functions::BuiltinFunction,
     error::CompilerError,
     index_store::IndexStore,
@@ -18,11 +18,11 @@ use parity_wasm::elements::{
 type EmitterResult<T> = Result<T, CompilerError>;
 
 pub fn emit(
-    programs: Vec<(String, Program, String)>,
+    eel_functions: Vec<(String, EelFunction, String)>,
     globals_map: HashMap<String, HashSet<String>>,
 ) -> EmitterResult<Vec<u8>> {
     let mut emitter = Emitter::new();
-    emitter.emit(programs, globals_map)
+    emitter.emit(eel_functions, globals_map)
 }
 
 struct Emitter {
@@ -47,7 +47,7 @@ impl Emitter {
     }
     fn emit(
         &mut self,
-        programs: Vec<(String, Program, String)>,
+        eel_functions: Vec<(String, EelFunction, String)>,
         globals_map: HashMap<String, HashSet<String>>, // HahsMap<pool, HashSet<global>>
     ) -> EmitterResult<Vec<u8>> {
         let mut imports = Vec::new();
@@ -73,10 +73,10 @@ impl Emitter {
             ));
         }
 
-        self.builtin_offset = Some(programs.len() as u32 + imports.len() as u32);
+        self.builtin_offset = Some(eel_functions.len() as u32 + imports.len() as u32);
 
         let (function_exports, function_bodies, funcs) =
-            self.emit_programs(programs, imports.len() as u32)?;
+            self.emit_eel_functions(eel_functions, imports.len() as u32)?;
 
         let mut sections = vec![];
         sections.push(Section::Type(self.emit_type_section()));
@@ -163,15 +163,15 @@ impl Emitter {
         CodeSection::with_bodies(bodies)
     }
 
-    fn emit_programs(
+    fn emit_eel_functions(
         &mut self,
-        programs: Vec<(String, Program, String)>,
+        eel_functions: Vec<(String, EelFunction, String)>,
         offset: u32,
     ) -> EmitterResult<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>)> {
         let mut exports = Vec::new();
         let mut function_bodies = Vec::new();
         let mut function_definitions = Vec::new();
-        for (i, (name, program, pool_name)) in programs.into_iter().enumerate() {
+        for (i, (name, program, pool_name)) in eel_functions.into_iter().enumerate() {
             self.current_pool = pool_name;
             exports.push(ExportEntry::new(
                 name,
@@ -188,7 +188,7 @@ impl Emitter {
         Ok((exports, function_bodies, function_definitions))
     }
 
-    fn emit_program(&mut self, program: Program) -> EmitterResult<Instructions> {
+    fn emit_program(&mut self, program: EelFunction) -> EmitterResult<Instructions> {
         let mut instructions: Vec<Instruction> = Vec::new();
         for expression in program.expressions {
             self.emit_expression(expression, &mut instructions)?;

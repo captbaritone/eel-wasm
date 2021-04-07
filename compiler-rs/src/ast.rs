@@ -1,7 +1,7 @@
 use crate::span::Span;
 
 #[derive(Debug, PartialEq)]
-pub struct Program {
+pub struct EelFunction {
     pub expressions: Vec<Expression>,
 }
 

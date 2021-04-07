@@ -2,7 +2,7 @@ use crate::ast::{
     Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, FunctionCall, Identifier,
 };
 
-use super::ast::{Expression, NumberLiteral, Program};
+use super::ast::{EelFunction, Expression, NumberLiteral};
 use super::error::CompilerError;
 use super::lexer::Lexer;
 use super::span::Span;
@@ -20,7 +20,7 @@ struct Parser<'a> {
 
 type ParseResult<T> = Result<T, CompilerError>;
 
-pub fn parse(src: &str) -> ParseResult<Program> {
+pub fn parse(src: &str) -> ParseResult<EelFunction> {
     let mut parser = Parser::new(&src);
     parser.parse()
 }
@@ -54,15 +54,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> ParseResult<Program> {
+    pub fn parse(&mut self) -> ParseResult<EelFunction> {
         self.expect_kind(TokenKind::SOF)?;
         let program = self.parse_program()?;
         self.expect_kind(TokenKind::EOF)?;
         Ok(program)
     }
 
-    pub fn parse_program(&mut self) -> ParseResult<Program> {
-        Ok(Program {
+    pub fn parse_program(&mut self) -> ParseResult<EelFunction> {
+        Ok(EelFunction {
             expressions: self.parse_expression_block()?,
         })
     }
@@ -269,7 +269,7 @@ fn right_associative(precedence: u8) -> u8 {
 fn can_parse_integer() {
     assert_eq!(
         Parser::new("1").parse(),
-        Ok(Program {
+        Ok(EelFunction {
             expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 1.0 })]
         })
     );
@@ -279,7 +279,7 @@ fn can_parse_integer() {
 fn can_parse_integer_2() {
     assert_eq!(
         Parser::new("2").parse(),
-        Ok(Program {
+        Ok(EelFunction {
             expressions: vec![Expression::NumberLiteral(NumberLiteral { value: 2.0 })]
         })
     );
