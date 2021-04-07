@@ -13,6 +13,7 @@ static SUM_PRECEDENCE: u8 = 1;
 static DIFFERENCE_PRECEDENCE: u8 = 1;
 static PRODUCT_PRECEDENCE: u8 = 2;
 static QUOTIENT_PRECEDENCE: u8 = 2;
+static PREFIX_PRECEDENCE: u8 = 6;
 
 struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -104,21 +105,21 @@ impl<'a> Parser<'a> {
             TokenKind::Plus => {
                 self.advance()?;
                 Ok(Expression::UnaryExpression(UnaryExpression {
-                    right: Box::new(self.parse_expression(0)?),
+                    right: Box::new(self.parse_expression(PREFIX_PRECEDENCE)?),
                     op: UnaryOperator::Plus,
                 }))
             }
             TokenKind::Minus => {
                 self.advance()?;
                 Ok(Expression::UnaryExpression(UnaryExpression {
-                    right: Box::new(self.parse_expression(0)?),
+                    right: Box::new(self.parse_expression(PREFIX_PRECEDENCE)?),
                     op: UnaryOperator::Minus,
                 }))
             }
             TokenKind::Bang => {
                 self.advance()?;
                 Ok(Expression::UnaryExpression(UnaryExpression {
-                    right: Box::new(self.parse_expression(0)?),
+                    right: Box::new(self.parse_expression(PREFIX_PRECEDENCE)?),
                     op: UnaryOperator::Not,
                 }))
             }

@@ -29,8 +29,7 @@ fn compatibility_tests() {
         ("To the power", "g = 5 ^ 2;", 25.0),
         ("Order of operations (+ and *)", "g = 1 + 1 * 10;", 11.0),
         ("Order of operations (+ and /)", "g = 1 + 1 / 10;", 1.1),
-        // TODO: Fix this
-        // ("Order of operations (unary - and +)", "g = -1 + 1;", 0.0),
+        ("Order of operations (unary - and +)", "g = -1 + 1;", 0.0),
         ("Parens", "g = (1 + 1.0) * 10;", 20.0),
         ("Absolute value negative", "g = abs(-10);", 10.0),
         ("Absolute value positive", "g = abs(10);", 10.0),
@@ -348,7 +347,6 @@ fn compatibility_tests() {
         "Bitwise and",
         "Bitwise or",
         "To the power",
-        "Order of operations (unary - and +)",
         "Parens",
         "Absolute value negative",
         "Absolute value positive",
