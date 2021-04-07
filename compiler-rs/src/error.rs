@@ -13,4 +13,9 @@ impl CompilerError {
             message: message.into(),
         }
     }
+
+    // TODO: Print a code frame
+    pub fn pretty_print(&self, _source: &str) -> String {
+        self.message.clone()
+    }
 }
