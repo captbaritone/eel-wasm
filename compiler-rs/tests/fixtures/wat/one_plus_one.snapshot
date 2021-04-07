@@ -9,4 +9,5 @@
     f64.const 0x1p+0 (;=1;)
     f64.add
     drop)
+  (memory (;0;) 2048 2048)
   (export "test" (func 1)))

@@ -8,4 +8,5 @@ sin(100)
     f64.const 0x1.9p+6 (;=100;)
     call 0
     drop)
+  (memory (;0;) 2048 2048)
   (export "test" (func 1)))

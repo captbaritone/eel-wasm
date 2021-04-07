@@ -1,5 +1,6 @@
 mod ast;
 mod builtin_functions;
+mod constants;
 mod emitter;
 mod error;
 mod file_chars;
@@ -9,6 +10,7 @@ mod parser;
 mod shim;
 mod span;
 mod tokens;
+mod utils;
 
 use std::collections::{HashMap, HashSet};
 
@@ -17,11 +19,12 @@ use emitter::emit;
 use error::CompilerError;
 // Only exported for tests
 pub use lexer::Lexer;
+use parity_wasm::elements::FunctionType;
 pub use parser::parse;
 pub use tokens::Token;
 pub use tokens::TokenKind;
 
-pub type EelFunctionType = (usize, usize);
+pub type EelFunctionType = FunctionType;
 
 use wasm_bindgen::prelude::*;
 

@@ -9,5 +9,6 @@ reg00=10
     global.set 0
     global.get 0
     drop)
+  (memory (;0;) 2048 2048)
   (global (;0;) (mut f64) (f64.const 0x0p+0 (;=0;)))
   (export "test" (func 1)))

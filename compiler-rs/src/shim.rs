@@ -1,4 +1,5 @@
 use crate::EelFunctionType;
+use parity_wasm::elements::{FunctionType, ValueType};
 
 // TODO: We could use https://docs.rs/strum_macros/0.20.1/strum_macros/index.html
 #[derive(PartialEq, Eq, Hash)]
@@ -8,7 +9,9 @@ pub enum Shim {
 
 impl Shim {
     pub fn get_type(&self) -> EelFunctionType {
-        (self.arity(), 1)
+        match self {
+            Shim::Sin => FunctionType::new(vec![ValueType::F64], vec![ValueType::F64]),
+        }
     }
     pub fn arity(&self) -> usize {
         match self {

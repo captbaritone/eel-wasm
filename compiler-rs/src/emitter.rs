@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    mem,
+};
 
 use crate::{
     ast::{
@@ -6,21 +9,22 @@ use crate::{
         FunctionCall, UnaryExpression, UnaryOperator,
     },
     builtin_functions::BuiltinFunction,
+    constants::{BUFFER_SIZE, EPSILON, WASM_MEMORY_SIZE},
     error::CompilerError,
     index_store::IndexStore,
     shim::Shim,
     span::Span,
+    utils::f64_const,
     EelFunctionType,
 };
 use parity_wasm::elements::{
     BlockType, CodeSection, ExportEntry, ExportSection, External, Func, FuncBody, FunctionSection,
     FunctionType, GlobalEntry, GlobalSection, GlobalType, ImportEntry, ImportSection, InitExpr,
-    Instruction, Instructions, Internal, Module, Section, Serialize, Type, TypeSection, ValueType,
+    Instruction, Instructions, Internal, Local, MemorySection, MemoryType, Module, Section,
+    Serialize, Type, TypeSection, ValueType,
 };
 
 type EmitterResult<T> = Result<T, CompilerError>;
-
-static EPSILON: f64 = 0.00001;
 
 pub fn emit(
     eel_functions: Vec<(String, EelFunction, String)>,
@@ -37,6 +41,7 @@ struct Emitter {
     builtin_functions: IndexStore<BuiltinFunction>,
     function_types: IndexStore<EelFunctionType>,
     builtin_offset: Option<u32>,
+    locals: Vec<ValueType>,
 }
 
 impl Emitter {
@@ -48,6 +53,7 @@ impl Emitter {
             function_types: Default::default(),
             builtin_functions: IndexStore::new(),
             builtin_offset: None,
+            locals: Default::default(),
         }
     }
     fn emit(
@@ -90,6 +96,11 @@ impl Emitter {
             sections.push(Section::Import(import_section));
         }
         sections.push(Section::Function(self.emit_function_section(funcs)));
+
+        sections.push(Section::Memory(MemorySection::with_entries(vec![
+            MemoryType::new(WASM_MEMORY_SIZE, Some(WASM_MEMORY_SIZE)),
+        ])));
+
         if let Some(global_section) = self.emit_global_section() {
             sections.push(Section::Global(global_section));
         }
@@ -113,11 +124,12 @@ impl Emitter {
         let function_types = self
             .function_types
             .keys()
-            .iter()
-            .map(|(args, returns)| {
+            .into_iter()
+            .map(|function_type| {
                 Type::Function(FunctionType::new(
-                    vec![ValueType::F64; *args],
-                    vec![ValueType::F64; *returns],
+                    // TODO: This is clone with more steps. What's going on
+                    function_type.params().to_vec(),
+                    function_type.results().to_vec(),
                 ))
             })
             .collect();
@@ -178,15 +190,25 @@ impl Emitter {
         let mut function_bodies = Vec::new();
         let mut function_definitions = Vec::new();
         for (i, (name, program, pool_name)) in eel_functions.into_iter().enumerate() {
+            // Note: We assume self.locals has been rest during the previous run.
             self.current_pool = pool_name;
             exports.push(ExportEntry::new(
                 name,
                 Internal::Function(i as u32 + offset),
             ));
-            let locals = Vec::new();
-            function_bodies.push(FuncBody::new(locals, self.emit_program(program)?));
 
-            let function_type = self.function_types.get((0, 0));
+            let instructions = self.emit_program(program)?;
+
+            let local_types = mem::replace(&mut self.locals, Vec::new());
+
+            let locals = local_types
+                .into_iter()
+                .map(|type_| Local::new(1, type_))
+                .collect();
+
+            function_bodies.push(FuncBody::new(locals, instructions));
+
+            let function_type = self.function_types.get(FunctionType::new(vec![], vec![]));
 
             function_definitions.push(Func::new(function_type))
         }
@@ -334,6 +356,10 @@ impl Emitter {
                 self.emit_expression(alternate, instructions)?;
                 instructions.push(Instruction::End);
             }
+            "megabuf" => self.emit_memory_access(&mut function_call, 0, instructions)?,
+            "gmegabuf" => {
+                self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8, instructions)?
+            }
             shim_name if Shim::from_str(shim_name).is_some() => {
                 let shim = Shim::from_str(shim_name).unwrap();
                 assert_arity(&function_call, shim.arity())?;
@@ -353,6 +379,33 @@ impl Emitter {
         Ok(())
     }
 
+    fn emit_memory_access(
+        &mut self,
+        function_call: &mut FunctionCall,
+        memory_offset: u32,
+        instructions: &mut Vec<Instruction>,
+    ) -> EmitterResult<()> {
+        assert_arity(&function_call, 1)?;
+        let index = self.resolve_local(ValueType::I32);
+        self.emit_expression(function_call.arguments.pop().unwrap(), instructions)?;
+        instructions.push(Instruction::Call(
+            self.resolve_builtin_function(BuiltinFunction::GetBufferIndex),
+        ));
+        //
+        instructions.push(Instruction::TeeLocal(index));
+        instructions.push(Instruction::I32Const(-1));
+        instructions.push(Instruction::I32Ne);
+        // STACK: [in range]
+        instructions.push(Instruction::If(BlockType::Value(ValueType::F64)));
+        instructions.push(Instruction::GetLocal(index));
+        instructions.push(Instruction::F64Load(3, memory_offset));
+        instructions.push(Instruction::Else);
+        instructions.push(Instruction::F64Const(f64_const(0.0)));
+        instructions.push(Instruction::End);
+
+        Ok(())
+    }
+
     fn resolve_variable(&mut self, name: String) -> u32 {
         let pool = if variable_is_register(&name) {
             None
@@ -361,6 +414,11 @@ impl Emitter {
         };
 
         self.globals.get((pool, name))
+    }
+
+    fn resolve_local(&mut self, type_: ValueType) -> u32 {
+        self.locals.push(type_);
+        return self.locals.len() as u32 - 1;
     }
 
     fn resolve_builtin_function(&mut self, builtin: BuiltinFunction) -> u32 {
@@ -376,11 +434,6 @@ fn emit_is_not_zeroish(instructions: &mut Vec<Instruction>) {
     instructions.push(Instruction::F64Abs);
     instructions.push(Instruction::F64Const(f64_const(EPSILON)));
     instructions.push(Instruction::F64Gt);
-}
-
-// TODO: There's got to be a better way.
-fn f64_const(value: f64) -> u64 {
-    u64::from_le_bytes(value.to_le_bytes())
 }
 
 fn variable_is_register(name: &str) -> bool {
