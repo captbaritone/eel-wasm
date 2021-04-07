@@ -25,7 +25,7 @@ fn main() {
         process::exit(1);
     });
 
-    let result = compile(&source).unwrap_or_else(|err| {
+    let result = compile(&source, vec![]).unwrap_or_else(|err| {
         eprintln!("{}", err);
         process::exit(1);
     });

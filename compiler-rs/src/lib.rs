@@ -19,11 +19,11 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub fn assert_compile(source: &str) -> Vec<u8> {
-    compile(source).expect("Don't screw it up")
+    compile(source, vec![]).expect("Don't screw it up")
 }
 
-pub fn compile(source: &str) -> Result<Vec<u8>, String> {
+pub fn compile(source: &str, globals: Vec<String>) -> Result<Vec<u8>, String> {
     let mut parser = Parser::new(source);
     let program = parser.parse()?;
-    emit(program)
+    emit(program, globals)
 }

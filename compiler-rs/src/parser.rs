@@ -1,5 +1,3 @@
-use std::process::id;
-
 use crate::ast::{Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, Identifier};
 
 use super::ast::{Expression, NumberLiteral, Program};
@@ -33,7 +31,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn expect_kind(&mut self, expected: TokenKind) -> Result<(0), String> {
+    fn expect_kind(&mut self, expected: TokenKind) -> Result<(), String> {
         let token = self.peek();
         if token.kind == expected {
             self.advance()?;

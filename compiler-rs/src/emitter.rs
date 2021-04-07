@@ -2,35 +2,49 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use parity_wasm::elements::{
     CodeSection, ExportEntry, ExportSection, Func, FuncBody, FunctionSection, FunctionType,
-    GlobalEntry, GlobalSection, GlobalType, InitExpr, Internal, Module, Section, Serialize, Type,
-    TypeSection, ValueType,
+    GlobalEntry, GlobalSection, GlobalType, ImportEntry, ImportSection, InitExpr, Internal,
+    Section, Serialize, Type, TypeSection, ValueType,
 };
-use parity_wasm::elements::{Instruction, Instructions};
+use parity_wasm::elements::{External, Instruction, Instructions};
+use parity_wasm::{builder::ModuleBuilder, elements::Module};
 
 use crate::ast::{Assignment, BinaryExpression, BinaryOperator};
 
 use super::ast::{Expression, Program};
 
-pub fn emit(program: Program) -> Result<Vec<u8>, String> {
+pub fn emit(program: Program, globals: Vec<String>) -> Result<Vec<u8>, String> {
     let mut emitter = Emitter::new();
-    emitter.emit(program)
+    emitter.emit(program, globals)
 }
 
 struct Emitter {
+    current_pool: String,
     globals: HashMap<String, u32>,
 }
 
 impl Emitter {
     fn new() -> Self {
         Emitter {
+            current_pool: "".to_string(), // TODO: Is this okay to be empty?
             globals: HashMap::default(),
         }
     }
-    fn emit(&mut self, program: Program) -> Result<Vec<u8>, String> {
+    fn emit(&mut self, program: Program, globals: Vec<String>) -> Result<Vec<u8>, String> {
+        let mut imports = Vec::new();
+
+        self.current_pool = "pool".to_string();
+        for global in &globals {
+            // TODO: Lots of clones.
+            self.resolve_variable(global.clone());
+            imports.push(make_import_entry(self.current_pool.clone(), global.clone()));
+        }
         let instructions = self.emit_program(program)?;
 
         let mut sections = vec![];
         sections.push(Section::Type(self.emit_type_section()));
+        if let Some(import_section) = self.emit_import_section(imports) {
+            sections.push(Section::Import(import_section));
+        }
         sections.push(Section::Function(self.emit_function_section()));
         if let Some(global_section) = self.emit_global_section() {
             sections.push(Section::Global(global_section));
@@ -50,6 +64,14 @@ impl Emitter {
         let params = vec![];
         let results = vec![ValueType::F64];
         TypeSection::with_types(vec![Type::Function(FunctionType::new(params, results))])
+    }
+
+    fn emit_import_section(&self, imports: Vec<ImportEntry>) -> Option<ImportSection> {
+        if imports.len() > 0 {
+            Some(ImportSection::with_entries(imports))
+        } else {
+            None
+        }
     }
 
     fn emit_function_section(&self) -> FunctionSection {
@@ -148,7 +170,10 @@ impl Emitter {
 
     fn resolve_variable(&mut self, name: String) -> u32 {
         let next = self.globals.len() as u32;
-        match self.globals.entry(name) {
+        match self
+            .globals
+            .entry(format!("{}::{}", self.current_pool, &name)) // TODO: Can we avoid this format?
+        {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
                 entry.insert(next);
@@ -168,5 +193,13 @@ fn make_empty_global() -> GlobalEntry {
             ),
             Instruction::End,
         ]),
+    )
+}
+
+fn make_import_entry(module_str: String, field_str: String) -> ImportEntry {
+    ImportEntry::new(
+        module_str,
+        field_str,
+        External::Global(GlobalType::new(ValueType::F64, true)),
     )
 }

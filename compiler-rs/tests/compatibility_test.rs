@@ -539,7 +539,7 @@ fn compatibility_tests() {
     ];
 
     for (name, code, expected) in test_cases {
-        match compile(code) {
+        match compile(code, vec![]) {
             Ok(binary) => {
                 if expected_failing.contains(name) {
                     panic!(format!("Expected {} to fail, but it passed!", name));
