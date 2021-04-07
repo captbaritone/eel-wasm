@@ -165,73 +165,75 @@ impl Emitter {
     fn emit_program(&mut self, program: Program) -> EmitterResult<Instructions> {
         let mut instructions: Vec<Instruction> = Vec::new();
         for expression in program.expressions {
-            let expression_instructions = self.emit_expression(expression)?;
-            instructions.extend_from_slice(&expression_instructions);
+            self.emit_expression(expression, &mut instructions)?;
             // TODO: Consider that we might need to drop the implicit return.
         }
-        let mut new = Vec::with_capacity(instructions.len() + 1);
-        new.extend_from_slice(&instructions);
-        new.push(Instruction::End);
-        Ok(Instructions::new(new))
+        instructions.push(Instruction::End);
+        Ok(Instructions::new(instructions))
     }
 
-    fn emit_expression(&mut self, expression: Expression) -> EmitterResult<Vec<Instruction>> {
+    fn emit_expression(
+        &mut self,
+        expression: Expression,
+        instructions: &mut Vec<Instruction>,
+    ) -> EmitterResult<()> {
         match expression {
             Expression::BinaryExpression(binary_expression) => {
-                self.emit_binary_expression(binary_expression)
+                self.emit_binary_expression(binary_expression, instructions)
             }
             Expression::Assignment(assignment_expression) => {
-                self.emit_assignment(assignment_expression)
+                self.emit_assignment(assignment_expression, instructions)
             }
-            Expression::NumberLiteral(number_literal) => Ok(vec![Instruction::F64Const(
-                u64::from_le_bytes(number_literal.value.to_le_bytes()),
-            )]),
-            Expression::FunctionCall(function_call) => self.emit_function_call(function_call),
+            Expression::NumberLiteral(number_literal) => {
+                instructions.push(Instruction::F64Const(u64::from_le_bytes(
+                    number_literal.value.to_le_bytes(),
+                )));
+                Ok(())
+            }
+            Expression::FunctionCall(function_call) => {
+                self.emit_function_call(function_call, instructions)
+            }
         }
     }
 
     fn emit_binary_expression(
         &mut self,
         binary_expression: BinaryExpression,
-    ) -> EmitterResult<Vec<Instruction>> {
-        let left = self.emit_expression(*binary_expression.left)?;
-        let right = self.emit_expression(*binary_expression.right)?;
+        instructions: &mut Vec<Instruction>,
+    ) -> EmitterResult<()> {
+        self.emit_expression(*binary_expression.left, instructions)?;
+        self.emit_expression(*binary_expression.right, instructions)?;
         let op = match binary_expression.op {
             BinaryOperator::Add => Instruction::F64Add,
             BinaryOperator::Subtract => Instruction::F64Sub,
             BinaryOperator::Multiply => Instruction::F64Mul,
             BinaryOperator::Divide => Instruction::F64Div,
         };
-        let mut instructions = Vec::with_capacity(left.len() + right.len() + 1);
-        instructions.extend_from_slice(&left);
-        instructions.extend_from_slice(&right);
         instructions.push(op);
-        Ok(instructions)
+        Ok(())
     }
 
     fn emit_assignment(
         &mut self,
         assignment_expression: Assignment,
-    ) -> EmitterResult<Vec<Instruction>> {
-        let mut instructions: Vec<Instruction> = Vec::new();
+        instructions: &mut Vec<Instruction>,
+    ) -> EmitterResult<()> {
         let resolved_name = self.resolve_variable(assignment_expression.left.name);
-        let right_expression = self.emit_expression(*assignment_expression.right)?;
-
-        instructions.extend_from_slice(&right_expression);
+        self.emit_expression(*assignment_expression.right, instructions)?;
 
         instructions.push(Instruction::SetGlobal(resolved_name));
         instructions.push(Instruction::GetGlobal(resolved_name));
-        Ok(instructions)
+        Ok(())
     }
 
     fn emit_function_call(
         &mut self,
         function_call: FunctionCall,
-    ) -> EmitterResult<Vec<Instruction>> {
-        let mut instructions = vec![];
+        instructions: &mut Vec<Instruction>,
+    ) -> EmitterResult<()> {
         let arity = function_call.arguments.len();
         for arg in function_call.arguments {
-            instructions.extend_from_slice(&self.emit_expression(arg)?);
+            &self.emit_expression(arg, instructions)?;
         }
         // TODO: Assert arrity
         match &function_call.name.name[..] {
@@ -261,7 +263,7 @@ impl Emitter {
                 ))
             }
         }
-        Ok(instructions)
+        Ok(())
     }
 
     fn resolve_variable(&mut self, name: String) -> u32 {
