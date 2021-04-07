@@ -29,7 +29,8 @@ impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> LexerResult<Token> {
         let start = self.chars.pos;
         let kind = match self.chars.peek() {
-            c if is_int(c) => self.read_int(),
+            c if is_int(c) => self.read_number(),
+            '.' => self.read_number(),
             c if is_identifier_head(c) => self.read_identifier(),
             '+' => self.read_char_as_kind(TokenKind::Plus),
             '-' => self.read_char_as_kind(TokenKind::Minus),
@@ -61,9 +62,15 @@ impl<'a> Lexer<'a> {
         kind
     }
 
-    fn read_int(&mut self) -> TokenKind {
-        self.chars.next();
-        self.chars.eat_while(is_int);
+    fn read_number(&mut self) -> TokenKind {
+        if is_int(self.chars.peek()) {
+            self.chars.next();
+            self.chars.eat_while(is_int);
+        }
+        if self.chars.peek() == '.' {
+            self.chars.next();
+            self.chars.eat_while(is_int);
+        }
         TokenKind::Int
     }
 

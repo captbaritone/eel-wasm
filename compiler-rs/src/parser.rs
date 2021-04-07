@@ -93,6 +93,7 @@ impl<'a> Parser<'a> {
     fn peek_prefix(&self) -> bool {
         let token = self.peek();
         match token.kind {
+            TokenKind::OpenParen => true,
             TokenKind::Int => true,
             TokenKind::Plus => true,
             TokenKind::Minus => true,
@@ -104,6 +105,12 @@ impl<'a> Parser<'a> {
 
     fn parse_prefix(&mut self) -> ParseResult<Expression> {
         match self.token.kind {
+            TokenKind::OpenParen => {
+                self.advance()?;
+                let expression = self.parse_expression(0)?;
+                self.expect_kind(TokenKind::CloseParen)?;
+                Ok(expression)
+            }
             TokenKind::Int => Ok(Expression::NumberLiteral(self.parse_int()?)),
             TokenKind::Plus => {
                 self.advance()?;

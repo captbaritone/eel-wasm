@@ -62,7 +62,7 @@ where
         assert_eq!(
             actual_invalid, expected_invalid,
             "Expected file \"{}\" to be {} but it was {}",
-            source_path, actual_str, expected_str
+            source_path, expected_str, actual_str,
         );
     }
 

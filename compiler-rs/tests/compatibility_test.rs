@@ -332,10 +332,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Expressions",
-        "Number with decimal",
-        "Number with decimal and no leading whole",
-        "Number with decimal and no trailing dec",
         "Number with no digits",
         "Optional final semi",
         "Unary not true",
@@ -347,7 +343,6 @@ fn compatibility_tests() {
         "Bitwise and",
         "Bitwise or",
         "To the power",
-        "Parens",
         "Absolute value negative",
         "Absolute value positive",
         "Function used as expression",
@@ -358,7 +353,6 @@ fn compatibility_tests() {
         "Sqrt",
         "Sqrt (negative)",
         "Sqr",
-        "Int",
         "Cos",
         "Tan",
         "Asin",
@@ -502,7 +496,6 @@ fn compatibility_tests() {
         "% and ^ have the same precedence (% first)",
         "% and ^ have the same precedence (^ first)",
         "Loop limit",
-        "Divide by less than epsilon",
     ];
 
     for (name, code, expected) in test_cases {
