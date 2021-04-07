@@ -22,18 +22,22 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub fn assert_compile(source: &str) -> Vec<u8> {
-    compile(vec![("test".to_string(), source)], vec![]).expect("Don't screw it up")
+    compile(
+        vec![("test".to_string(), source, "pool".to_string())],
+        vec![],
+    )
+    .expect("Don't screw it up")
 }
 
 pub fn compile(
-    sources: Vec<(String, &str)>,
-    globals: Vec<String>,
+    sources: Vec<(String, &str, String)>,
+    globals: Vec<(String, String)>,
 ) -> Result<Vec<u8>, CompilerError> {
-    let programs: Result<Vec<(String, Program)>, CompilerError> = sources
+    let programs: Result<Vec<(String, Program, String)>, CompilerError> = sources
         .into_iter()
-        .map(|(name, source)| {
+        .map(|(name, source, pool)| {
             let program = parse(&source)?;
-            Ok((name, program))
+            Ok((name, program, pool))
         })
         .collect();
     emit(programs?, globals)

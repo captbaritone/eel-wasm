@@ -540,7 +540,7 @@ fn compatibility_tests() {
     ];
 
     for (name, code, expected) in test_cases {
-        match compile(vec![("test".to_string(), code)], vec![]) {
+        match compile(vec![("test".to_string(), code, "pool".to_string())], vec![]) {
             Ok(binary) => {
                 if expected_failing.contains(name) {
                     panic!(format!("Expected {} to fail, but it passed!", name));

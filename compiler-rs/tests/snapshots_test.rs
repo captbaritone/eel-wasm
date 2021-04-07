@@ -69,7 +69,7 @@ where
 }
 
 fn compiler_transform(src: &str) -> (String, bool) {
-    let output = compile(vec![("test".to_string(), src)], vec![]);
+    let output = compile(vec![("test".to_string(), src, "pool".to_string())], vec![]);
 
     let actual_invaid = output.is_err();
 

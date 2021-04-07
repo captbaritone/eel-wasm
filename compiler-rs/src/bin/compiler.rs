@@ -25,7 +25,11 @@ fn main() {
         process::exit(1);
     });
 
-    let result = compile(vec![("test".to_string(), &source)], vec![]).unwrap_or_else(|err| {
+    let result = compile(
+        vec![("test".to_string(), &source, "pool".to_string())],
+        vec![],
+    )
+    .unwrap_or_else(|err| {
         eprintln!("{:?}", err);
         process::exit(1);
     });

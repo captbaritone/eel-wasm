@@ -29,7 +29,12 @@ fn run(body: &[u8]) -> Result<f64, String> {
 
 fn test_run(program: &str, expected_output: f64) {
     assert_eq!(
-        run(&compile(vec![("test".to_string(), program)], vec![]).unwrap()).expect("Run Error"),
+        run(&compile(
+            vec![("test".to_string(), program, "pool".to_string())],
+            vec![]
+        )
+        .unwrap())
+        .expect("Run Error"),
         expected_output
     );
 }
@@ -37,7 +42,7 @@ fn test_run(program: &str, expected_output: f64) {
 #[test]
 fn build_one() -> io::Result<()> {
     assert_eq!(
-        &compile(vec![("test".to_string(), "1")], vec![]).unwrap(),
+        &compile(vec![("test".to_string(), "1", "pool".to_string())], vec![]).unwrap(),
         &[
             0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 124, 3, 2, 1, 0, 7, 8, 1, 4, 116, 101,
             115, 116, 0, 0, 10, 13, 1, 11, 0, 68, 0, 0, 0, 0, 0, 0, 240, 63, 11,
@@ -78,8 +83,11 @@ fn with_global() {
     let global_imports = GlobalPool {
         globals: HashMap::default(),
     };
-    let wasm_binary = compile(vec![("test".to_string(), "g=1")], vec!["g".to_string()])
-        .expect("Expect to compile");
+    let wasm_binary = compile(
+        vec![("test".to_string(), "g=1", "pool".to_string())],
+        vec![("g".to_string(), "pool".to_string())],
+    )
+    .expect("Expect to compile");
     // TODO: This will fail becuase wasmi 0.8.0 depends upon wasmi-validaiton
     // 0.3.0 which does not include https://github.com/paritytech/wasmi/pull/228
     // which allows mutable globals.
@@ -103,7 +111,10 @@ fn with_global() {
 #[test]
 fn multiple_functions() {
     let wasm_binary = compile(
-        vec![("one".to_string(), "1"), ("two".to_string(), "2")],
+        vec![
+            ("one".to_string(), "1", "pool".to_string()),
+            ("two".to_string(), "2", "pool".to_string()),
+        ],
         vec![],
     )
     .expect("Expect to compile");

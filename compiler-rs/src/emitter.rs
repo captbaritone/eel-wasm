@@ -15,7 +15,10 @@ use std::collections::{hash_map::Entry, HashMap};
 
 type EmitterResult<T> = Result<T, CompilerError>;
 
-pub fn emit(programs: Vec<(String, Program)>, globals: Vec<String>) -> EmitterResult<Vec<u8>> {
+pub fn emit(
+    programs: Vec<(String, Program, String)>,
+    globals: Vec<(String, String)>,
+) -> EmitterResult<Vec<u8>> {
     let mut emitter = Emitter::new();
     emitter.emit(programs, globals)
 }
@@ -34,13 +37,14 @@ impl Emitter {
     }
     fn emit(
         &mut self,
-        programs: Vec<(String, Program)>,
-        globals: Vec<String>,
+        programs: Vec<(String, Program, String)>,
+        globals: Vec<(String, String)>, // (Pool name, global)
     ) -> EmitterResult<Vec<u8>> {
         let mut imports = Vec::new();
 
         self.current_pool = "pool".to_string();
-        for global in &globals {
+        for (pool_name, global) in globals {
+            self.current_pool = pool_name;
             // TODO: Lots of clones.
             self.resolve_variable(global.clone());
             imports.push(make_import_entry(self.current_pool.clone(), global.clone()));
@@ -115,12 +119,13 @@ impl Emitter {
 
     fn emit_programs(
         &mut self,
-        programs: Vec<(String, Program)>,
+        programs: Vec<(String, Program, String)>,
     ) -> EmitterResult<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>)> {
         let mut names = Vec::new();
         let mut instructions = Vec::new();
         let mut funcs = Vec::new();
-        for (i, (name, program)) in programs.into_iter().enumerate() {
+        for (i, (name, program, pool_name)) in programs.into_iter().enumerate() {
+            self.current_pool = pool_name;
             names.push(ExportEntry::new(name, Internal::Function(i as u32)));
             let locals = Vec::new();
             let func_body = FuncBody::new(locals, self.emit_program(program)?);
