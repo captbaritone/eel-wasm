@@ -1,30 +1,8 @@
-use common::GlobalPool;
-use eel_wasm::compile;
-use wasmi::{ImportsBuilder, ModuleInstance, RuntimeValue};
+use std::collections::HashMap;
+
+use common::eval_eel;
+
 mod common;
-
-fn run(body: &[u8]) -> Result<f64, String> {
-    let wasm_binary = body;
-    let module = wasmi::Module::from_buffer(&wasm_binary).expect("failed to load wasm");
-    let mut global_imports = GlobalPool {};
-    let mut imports = ImportsBuilder::default();
-    imports.push_resolver("pool", &global_imports);
-    imports.push_resolver("shims", &global_imports);
-    let instance = ModuleInstance::new(&module, &imports)
-        .expect("failed to instantiate wasm module")
-        .assert_no_start();
-
-    // Finally, invoke the exported function "test" with no parameters
-    // and empty external function executor.
-    match instance
-        .invoke_export("test", &[], &mut global_imports)
-        .expect("failed to execute export")
-    {
-        Some(RuntimeValue::F64(val)) => Ok(val.into()),
-        Some(val) => Err(format!("Unexpected return type: {:?}", val)),
-        None => Err("No Result".to_string()),
-    }
-}
 
 #[test]
 fn compatibility_tests() {
@@ -546,15 +524,15 @@ fn compatibility_tests() {
     ];
 
     for (name, code, expected) in test_cases {
-        match compile(
+        match eval_eel(
             vec![("test".to_string(), code, "pool".to_string())],
-            vec![("pool".to_string(), "g".to_string())],
+            HashMap::new(),
+            "test",
         ) {
-            Ok(binary) => {
+            Ok(actual) => {
                 if expected_failing.contains(name) {
                     panic!(format!("Expected {} to fail, but it passed!", name));
                 }
-                let actual = run(&binary).expect("to run");
                 assert_eq!(&actual, expected)
             }
             Err(err) => {

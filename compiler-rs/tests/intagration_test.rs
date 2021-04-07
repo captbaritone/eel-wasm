@@ -1,42 +1,19 @@
 extern crate eel_wasm;
 mod common;
 
-use common::GlobalPool;
+use std::collections::HashMap;
+
+use common::{eval_eel, GlobalPool};
 use eel_wasm::compile;
-use wasmi::{ImportsBuilder, ModuleInstance, RuntimeValue};
-
-fn run(body: &[u8]) -> Result<f64, String> {
-    let wasm_binary = body;
-    let module = wasmi::Module::from_buffer(&wasm_binary).expect("failed to load wasm");
-
-    let mut global_imports = GlobalPool {};
-    let mut imports = ImportsBuilder::default();
-    imports.push_resolver("pool", &global_imports);
-    imports.push_resolver("shims", &global_imports);
-    let instance = ModuleInstance::new(&module, &imports)
-        .expect("failed to instantiate wasm module")
-        .assert_no_start();
-
-    match instance
-        .invoke_export("test", &[], &mut global_imports)
-        .expect("failed to execute export")
-    {
-        Some(RuntimeValue::F64(val)) => Ok(val.into()),
-        Some(val) => Err(format!("Unexpected return type: {:?}", val)),
-        None => Err("No Result".to_string()),
-    }
-}
+use wasmi::{ImportsBuilder, ModuleInstance};
 
 fn test_run(program: &str, expected_output: f64) {
-    assert_eq!(
-        run(&compile(
-            vec![("test".to_string(), program, "pool".to_string())],
-            vec![]
-        )
-        .unwrap())
-        .expect("Run Error"),
-        expected_output
+    let result = eval_eel(
+        vec![("test".to_string(), program, "pool".to_string())],
+        HashMap::default(),
+        "test",
     );
+    assert_eq!(result, Ok(expected_output));
 }
 
 #[test]
@@ -67,7 +44,7 @@ fn multiple_functions() {
             ("one".to_string(), "1", "pool".to_string()),
             ("two".to_string(), "2", "pool".to_string()),
         ],
-        vec![],
+        HashMap::default(),
     )
     .expect("Expect to compile");
     // TODO: This will fail becuase wasmi 0.8.0 depends upon wasmi-validaiton

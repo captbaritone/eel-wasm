@@ -9,6 +9,8 @@ mod shim;
 mod span;
 mod tokens;
 
+use std::collections::{HashMap, HashSet};
+
 use ast::Program;
 use emitter::emit;
 use error::CompilerError;
@@ -32,14 +34,14 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub fn assert_compile(source: &str) -> Vec<u8> {
     compile(
         vec![("test".to_string(), source, "pool".to_string())],
-        vec![],
+        HashMap::default(),
     )
     .expect("Don't screw it up")
 }
 
 pub fn compile(
     sources: Vec<(String, &str, String)>,
-    globals: Vec<(String, String)>,
+    globals: HashMap<String, HashSet<String>>,
 ) -> Result<Vec<u8>, CompilerError> {
     let programs: Result<Vec<(String, Program, String)>, CompilerError> = sources
         .into_iter()

@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::{
     ast::{Assignment, BinaryExpression, BinaryOperator, Expression, FunctionCall, Program},
     error::CompilerError,
@@ -18,10 +20,10 @@ type EmitterResult<T> = Result<T, CompilerError>;
 
 pub fn emit(
     programs: Vec<(String, Program, String)>,
-    globals: Vec<(String, String)>,
+    globals_map: HashMap<String, HashSet<String>>,
 ) -> EmitterResult<Vec<u8>> {
     let mut emitter = Emitter::new();
-    emitter.emit(programs, globals)
+    emitter.emit(programs, globals_map)
 }
 
 struct Emitter {
@@ -43,15 +45,17 @@ impl Emitter {
     fn emit(
         &mut self,
         programs: Vec<(String, Program, String)>,
-        globals: Vec<(String, String)>, // (Pool name, global)
+        globals_map: HashMap<String, HashSet<String>>, // HahsMap<pool, HashSet<global>>
     ) -> EmitterResult<Vec<u8>> {
         let mut imports = Vec::new();
 
-        for (pool_name, global) in globals {
+        for (pool_name, globals) in globals_map {
             self.current_pool = pool_name;
-            // TODO: Lots of clones.
-            self.resolve_variable(global.clone());
-            imports.push(make_import_entry(self.current_pool.clone(), global.clone()));
+            for global in globals {
+                // TODO: Lots of clones.
+                self.resolve_variable(global.clone());
+                imports.push(make_import_entry(self.current_pool.clone(), global.clone()));
+            }
         }
 
         self.shims.get(Shim::Sin);

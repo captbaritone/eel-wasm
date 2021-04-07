@@ -1,9 +1,9 @@
 extern crate eel_wasm;
 
-use std::env;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use std::{collections::HashMap, env};
 
 use eel_wasm::{compile, Lexer, TokenKind};
 use eel_wasm::{parse, Token};
@@ -70,7 +70,10 @@ where
 }
 
 fn compiler_transform(src: &str) -> (String, bool) {
-    let output = compile(vec![("test".to_string(), src, "pool".to_string())], vec![]);
+    let output = compile(
+        vec![("test".to_string(), src, "pool".to_string())],
+        HashMap::default(),
+    );
 
     let actual_invaid = output.is_err();
 

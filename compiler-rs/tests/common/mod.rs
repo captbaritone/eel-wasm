@@ -1,11 +1,14 @@
 extern crate eel_wasm;
 
-use wasmi::nan_preserving_float::F64;
-use wasmi::RuntimeValue;
+use std::collections::{HashMap, HashSet};
+
+use eel_wasm::compile;
+use wasmi::{nan_preserving_float::F64, ImportsBuilder};
 use wasmi::{
     Error as WasmiError, Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalInstance,
     GlobalRef, ModuleImportResolver, RuntimeArgs, Signature, Trap, ValueType,
 };
+use wasmi::{ModuleInstance, RuntimeValue};
 
 pub struct GlobalPool {}
 
@@ -71,5 +74,42 @@ impl Externals for GlobalPool {
             }
             _ => panic!("Unimplemented function at {}", index),
         }
+    }
+}
+
+pub fn eval_eel(
+    sources: Vec<(String, &str, String)>,
+    globals_map: HashMap<String, HashSet<String>>,
+    function_to_run: &str,
+) -> Result<f64, String> {
+    // TODO: Avoid having to clone globals
+    let wasm_binary = compile(sources, globals_map.clone())
+        .map_err(|err| format!("Compiler Error: {:?}", err))?;
+
+    let module = wasmi::Module::from_buffer(&wasm_binary)
+        .map_err(|err| format!("Error parsing binary Wasm: {}", err))?;
+
+    let mut global_imports = GlobalPool {};
+    let mut imports = ImportsBuilder::default();
+
+    for (pool, _) in globals_map {
+        // TODO: Only make defined globals resolvable
+        imports.push_resolver(pool, &global_imports);
+    }
+
+    imports.push_resolver("shims", &global_imports);
+    let instance = ModuleInstance::new(&module, &imports)
+        .map_err(|err| format!("Error instantiating Wasm module: {}", err))?
+        .assert_no_start();
+
+    // TODO: Instead of returning return value, return value of globals
+    match instance.invoke_export(function_to_run, &[], &mut global_imports) {
+        Ok(Some(RuntimeValue::F64(val))) => Ok(val.into()),
+        Ok(Some(val)) => Err(format!("Unexpected return type: {:?}", val)),
+        Ok(None) => Err("No Result".to_string()),
+        Err(err) => Err(format!(
+            "Error invoking exported function {}: {}",
+            function_to_run, err
+        )),
     }
 }

@@ -1,6 +1,6 @@
 use eel_wasm::compile;
-use std::fs;
 use std::process;
+use std::{collections::HashMap, fs};
 
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -27,7 +27,7 @@ fn main() {
 
     let result = compile(
         vec![("test".to_string(), &source, "pool".to_string())],
-        vec![],
+        HashMap::default(),
     )
     .unwrap_or_else(|err| {
         eprintln!("{:?}", err);
