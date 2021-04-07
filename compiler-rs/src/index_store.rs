@@ -29,3 +29,18 @@ impl<T: Eq + Hash> IndexStore<T> {
         self.map.keys().collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::EelFunctionType;
+    #[test]
+    fn tuple() {
+        let mut function_types: IndexStore<EelFunctionType> = IndexStore::new();
+        let one_arg_one_return = function_types.get((1, 1));
+        let no_arg_one_return = function_types.get((0, 1));
+
+        assert_eq!(one_arg_one_return, 0);
+        assert_eq!(no_arg_one_return, 1);
+    }
+}

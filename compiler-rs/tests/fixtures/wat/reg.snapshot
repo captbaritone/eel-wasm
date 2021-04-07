@@ -2,9 +2,11 @@ reg00=10
 ========================================================================
 (module
   (type (;0;) (func (result f64)))
-  (func (;0;) (type 0) (result f64)
+  (type (;1;) (func (param f64) (result f64)))
+  (import "shims" "sin" (func (;0;) (type 1)))
+  (func (;1;) (type 0) (result f64)
     f64.const 0x1.4p+3 (;=10;)
     global.set 0
     global.get 0)
   (global (;0;) (mut f64) (f64.const 0x0p+0 (;=0;)))
-  (export "test" (func 0)))
+  (export "test" (func 1)))

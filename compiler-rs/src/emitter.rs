@@ -54,7 +54,9 @@ impl Emitter {
             imports.push(make_import_entry(self.current_pool.clone(), global.clone()));
         }
 
-        let (function_exports, function_bodies, funcs) = self.emit_programs(programs)?;
+        self.shims.get(Shim::Sin);
+
+        let (function_exports, function_bodies, funcs) = self.emit_programs(programs, 1)?;
 
         for shim in self.shims.keys() {
             let type_index = self.function_types.get(shim.get_type());
@@ -143,13 +145,17 @@ impl Emitter {
     fn emit_programs(
         &mut self,
         programs: Vec<(String, Program, String)>,
+        offset: u32,
     ) -> EmitterResult<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>)> {
         let mut exports = Vec::new();
         let mut function_bodies = Vec::new();
         let mut function_definitions = Vec::new();
         for (i, (name, program, pool_name)) in programs.into_iter().enumerate() {
             self.current_pool = pool_name;
-            exports.push(ExportEntry::new(name, Internal::Function(i as u32)));
+            exports.push(ExportEntry::new(
+                name,
+                Internal::Function(i as u32 + offset),
+            ));
             let locals = Vec::new();
             function_bodies.push(FuncBody::new(locals, self.emit_program(program)?));
 
