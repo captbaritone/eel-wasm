@@ -357,8 +357,6 @@ fn compatibility_tests() {
         "Logical or (first value false)",
         "Logical and shortcircuts",
         "Logical or shortcircuts",
-        "Exec2",
-        "Exec3",
         "While",
         "Loop",
         "Loop fractional times",
@@ -396,6 +394,10 @@ fn compatibility_tests() {
     ];
 
     println!("Failing: {}/{}", expected_failing.len(), test_cases.len());
+    println!(
+        "Passing: {}%",
+        (test_cases.len() - expected_failing.len()) as f64 / test_cases.len() as f64
+    );
 
     for (name, code, expected) in test_cases {
         let mut globals = HashMap::default();

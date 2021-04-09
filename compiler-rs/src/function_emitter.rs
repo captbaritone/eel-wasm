@@ -50,8 +50,12 @@ impl<'a> FunctionEmitter<'a> {
     }
 
     fn emit_expression_block(&mut self, block: ExpressionBlock) -> EmitterResult<()> {
-        let last_index = block.expressions.len() - 1;
-        for (i, expression) in block.expressions.into_iter().enumerate() {
+        self.emit_expression_list(block.expressions)
+    }
+
+    fn emit_expression_list(&mut self, expressions: Vec<Expression>) -> EmitterResult<()> {
+        let last_index = expressions.len() - 1;
+        for (i, expression) in expressions.into_iter().enumerate() {
             self.emit_expression(expression)?;
             if i != last_index {
                 self.push(Instruction::Drop)
@@ -314,6 +318,14 @@ impl<'a> FunctionEmitter<'a> {
                 let func_index = self.context.resolve_builtin_function(BuiltinFunction::Sign);
 
                 self.push(Instruction::Call(func_index))
+            }
+            "exec2" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_expression_list(function_call.arguments)?
+            }
+            "exec3" => {
+                assert_arity(&function_call, 3)?;
+                self.emit_expression_list(function_call.arguments)?
             }
             "megabuf" => self.emit_memory_access(&mut function_call, 0)?,
             "gmegabuf" => self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8)?,
