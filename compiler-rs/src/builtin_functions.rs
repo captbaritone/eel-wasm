@@ -2,9 +2,12 @@ use parity_wasm::elements::{
     BlockType, FuncBody, FunctionType, Instruction, Instructions, Local, ValueType,
 };
 
-use crate::constants::{BUFFER_SIZE, EPSILON};
 use crate::utils::f64_const;
 use crate::EelFunctionType;
+use crate::{
+    constants::{BUFFER_SIZE, EPSILON},
+    emitter_context::EmitterContext,
+};
 
 #[derive(PartialEq, Eq, Hash)]
 pub enum BuiltinFunction {
@@ -46,7 +49,7 @@ impl BuiltinFunction {
         }
     }
 
-    pub fn func_body(&self) -> FuncBody {
+    pub fn func_body(&self, _context: &EmitterContext) -> FuncBody {
         match self {
             Self::Sign => FuncBody::new(
                 vec![],

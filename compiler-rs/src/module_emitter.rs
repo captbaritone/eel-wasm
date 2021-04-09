@@ -180,7 +180,7 @@ impl Emitter {
         for module_function in self.context.functions.keys() {
             let body = match module_function {
                 ModuleFunction::Shim(_) => None,
-                ModuleFunction::Builtin(builtin) => Some(builtin.func_body()),
+                ModuleFunction::Builtin(builtin) => Some(builtin.func_body(&self.context)),
                 ModuleFunction::Eel(func_idx) => {
                     // TODO: Avoid this clone
                     Some(function_bodies.get(*func_idx).unwrap().clone())
