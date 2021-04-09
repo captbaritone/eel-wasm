@@ -1,16 +1,14 @@
+use crate::emitter_context::{EmitterContext, ModuleFunction};
 use std::collections::{HashMap, HashSet};
 
 use crate::{
     ast::EelFunction,
-    builtin_functions::BuiltinFunction,
     constants::WASM_MEMORY_SIZE,
     error::{CompilerError, EmitterResult},
     function_emitter::emit_function,
-    index_store::IndexStore,
     shim::Shim,
     span::Span,
     utils::f64_const,
-    EelFunctionType,
 };
 use parity_wasm::elements::{
     CodeSection, ExportEntry, ExportSection, External, Func, FuncBody, FunctionSection,
@@ -28,23 +26,13 @@ pub fn emit_module(
 }
 
 struct Emitter {
-    current_pool: String,
-    globals: IndexStore<(Option<String>, String)>,
-    shims: IndexStore<Shim>,
-    builtin_functions: IndexStore<BuiltinFunction>,
-    function_types: IndexStore<EelFunctionType>,
-    builtin_offset: Option<u32>,
+    context: EmitterContext,
 }
 
 impl Emitter {
     fn new() -> Self {
         Emitter {
-            current_pool: "".to_string(), // TODO: Is this okay to be empty?
-            globals: Default::default(),
-            shims: IndexStore::new(),
-            function_types: Default::default(),
-            builtin_functions: IndexStore::new(),
-            builtin_offset: None,
+            context: EmitterContext::new(),
         }
     }
     fn emit(
@@ -55,11 +43,14 @@ impl Emitter {
         let mut imports = Vec::new();
 
         for (pool_name, globals) in globals_map {
-            self.current_pool = pool_name;
+            self.context.current_pool = pool_name;
             for global in globals {
                 // TODO: Lots of clones.
-                self.resolve_variable(global.clone());
-                imports.push(make_import_entry(self.current_pool.clone(), global.clone()));
+                self.context.resolve_variable(global.clone());
+                imports.push(make_import_entry(
+                    self.context.current_pool.clone(),
+                    global.clone(),
+                ));
             }
         }
 
@@ -81,15 +72,18 @@ impl Emitter {
         for shim in shims {
             let field_str = shim.as_str().to_string();
             let type_ = shim.get_type();
-            self.shims.ensure(shim);
+            self.context.resolve_shim_function(shim);
             imports.push(ImportEntry::new(
                 "shims".to_string(),
                 field_str,
-                External::Function(self.function_types.get(type_)),
+                External::Function(self.context.function_types.get(type_)),
             ));
         }
 
-        self.builtin_offset = Some(eel_functions.len() as u32 + shim_offset);
+        // Reserve an index for each eel function
+        for (idx, _) in eel_functions.iter().enumerate() {
+            self.context.resolve_eel_function(idx);
+        }
 
         let (function_exports, function_bodies, funcs) =
             self.emit_eel_functions(eel_functions, shim_offset)?;
@@ -126,6 +120,7 @@ impl Emitter {
 
     fn emit_type_section(&self) -> TypeSection {
         let function_types = self
+            .context
             .function_types
             .keys()
             .into_iter()
@@ -149,16 +144,26 @@ impl Emitter {
     }
 
     fn emit_function_section(&mut self, funcs: Vec<Func>) -> FunctionSection {
-        let mut entries = funcs.clone();
-        for builtin in self.builtin_functions.keys() {
-            let type_idx = self.function_types.get(builtin.get_type());
-            entries.push(Func::new(type_idx));
+        let mut entries = Vec::new();
+        for module_function in self.context.functions.keys() {
+            let func = match module_function {
+                ModuleFunction::Shim(_) => None,
+                ModuleFunction::Builtin(builtin) => {
+                    let type_idx = self.context.function_types.get(builtin.get_type());
+                    Some(Func::new(type_idx))
+                }
+                ModuleFunction::Eel(func_idx) => Some(funcs.get(*func_idx).unwrap().clone()),
+            };
+            if let Some(func) = func {
+                entries.push(func);
+            }
         }
         FunctionSection::with_entries(entries)
     }
 
     fn emit_global_section(&self) -> Option<GlobalSection> {
         let globals: Vec<GlobalEntry> = self
+            .context
             .globals
             .keys()
             .iter()
@@ -177,10 +182,19 @@ impl Emitter {
     }
 
     fn emit_code_section(&self, function_bodies: Vec<FuncBody>) -> CodeSection {
-        // TODO: Avoid this clone
-        let mut bodies = function_bodies.clone();
-        for builtin in self.builtin_functions.keys() {
-            bodies.push(builtin.func_body());
+        let mut bodies = Vec::new();
+        for module_function in self.context.functions.keys() {
+            let body = match module_function {
+                ModuleFunction::Shim(_) => None,
+                ModuleFunction::Builtin(builtin) => Some(builtin.func_body()),
+                ModuleFunction::Eel(func_idx) => {
+                    // TODO: Avoid this clone
+                    Some(function_bodies.get(*func_idx).unwrap().clone())
+                }
+            };
+            if let Some(body) = body {
+                bodies.push(body);
+            }
         }
         CodeSection::with_bodies(bodies)
     }
@@ -194,15 +208,8 @@ impl Emitter {
         let mut function_bodies = Vec::new();
         let mut function_definitions = Vec::new();
         for (i, (name, program, pool_name)) in eel_functions.into_iter().enumerate() {
-            let function_body = emit_function(
-                program,
-                pool_name,
-                &mut self.globals,
-                &mut self.shims,
-                &mut self.builtin_functions,
-                &mut self.function_types,
-                &self.builtin_offset,
-            )?;
+            self.context.current_pool = pool_name;
+            let function_body = emit_function(program, &mut self.context)?;
 
             function_bodies.push(function_body);
 
@@ -211,28 +218,15 @@ impl Emitter {
                 Internal::Function(i as u32 + offset),
             ));
 
-            let function_type = self.function_types.get(FunctionType::new(vec![], vec![]));
+            let function_type = self
+                .context
+                .function_types
+                .get(FunctionType::new(vec![], vec![]));
 
             function_definitions.push(Func::new(function_type))
         }
         Ok((exports, function_bodies, function_definitions))
     }
-
-    fn resolve_variable(&mut self, name: String) -> u32 {
-        let pool = if variable_is_register(&name) {
-            None
-        } else {
-            Some(self.current_pool.clone())
-        };
-
-        self.globals.get((pool, name))
-    }
-}
-
-fn variable_is_register(name: &str) -> bool {
-    let chars: Vec<_> = name.chars().collect();
-    // We avoided pulling in the regex crate! (But at what cost?)
-    matches!(chars.as_slice(), ['r', 'e', 'g', '0'..='9', '0'..='9'])
 }
 
 fn make_empty_global() -> GlobalEntry {

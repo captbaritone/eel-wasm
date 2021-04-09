@@ -1,3 +1,4 @@
+use crate::emitter_context::EmitterContext;
 use crate::{
     ast::{
         Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, ExpressionBlock,
@@ -6,9 +7,7 @@ use crate::{
     builtin_functions::BuiltinFunction,
     constants::BUFFER_SIZE,
     error::CompilerError,
-    index_store::IndexStore,
     shim::Shim,
-    EelFunctionType,
 };
 use crate::{constants::EPSILON, error::EmitterResult};
 use crate::{span::Span, utils::f64_const};
@@ -16,21 +15,9 @@ use parity_wasm::elements::{BlockType, FuncBody, Instruction, Instructions, Loca
 
 pub fn emit_function(
     eel_function: EelFunction,
-    current_pool: String,
-    globals: &mut IndexStore<(Option<String>, String)>,
-    shims: &mut IndexStore<Shim>,
-    builtin_functions: &mut IndexStore<BuiltinFunction>,
-    function_types: &mut IndexStore<EelFunctionType>,
-    builtin_offset: &Option<u32>,
+    context: &mut EmitterContext,
 ) -> EmitterResult<FuncBody> {
-    let mut function_emitter = FunctionEmitter::new(
-        current_pool,
-        globals,
-        shims,
-        builtin_functions,
-        function_types,
-        builtin_offset,
-    );
+    let mut function_emitter = FunctionEmitter::new(context);
 
     function_emitter.emit_expression_block(eel_function.expressions)?;
 
@@ -48,32 +35,15 @@ pub fn emit_function(
 }
 
 struct FunctionEmitter<'a> {
-    current_pool: String,
-    globals: &'a mut IndexStore<(Option<String>, String)>,
-    shims: &'a mut IndexStore<Shim>,
-    builtin_functions: &'a mut IndexStore<BuiltinFunction>,
-    function_types: &'a mut IndexStore<EelFunctionType>,
-    builtin_offset: &'a Option<u32>,
-    locals: Vec<ValueType>,
+    context: &'a mut EmitterContext,
     instructions: Vec<Instruction>,
+    locals: Vec<ValueType>,
 }
 
 impl<'a> FunctionEmitter<'a> {
-    fn new(
-        current_pool: String,
-        globals: &'a mut IndexStore<(Option<String>, String)>,
-        shims: &'a mut IndexStore<Shim>,
-        builtin_functions: &'a mut IndexStore<BuiltinFunction>,
-        function_types: &'a mut IndexStore<EelFunctionType>,
-        builtin_offset: &'a Option<u32>,
-    ) -> Self {
+    fn new(context: &'a mut EmitterContext) -> Self {
         Self {
-            current_pool,
-            globals,
-            shims,
-            function_types,
-            builtin_functions,
-            builtin_offset,
+            context,
             locals: Vec::new(),
             instructions: Vec::new(),
         }
@@ -110,7 +80,7 @@ impl<'a> FunctionEmitter<'a> {
                 self.emit_expression_block(expression_block)
             }
             Expression::Identifier(identifier) => {
-                let index = self.resolve_variable(identifier.name);
+                let index = self.context.resolve_variable(identifier.name);
                 self.push(Instruction::GetGlobal(index));
                 Ok(())
             }
@@ -146,11 +116,11 @@ impl<'a> FunctionEmitter<'a> {
             BinaryOperator::Subtract => self.push(Instruction::F64Sub),
             BinaryOperator::Multiply => self.push(Instruction::F64Mul),
             BinaryOperator::Divide => {
-                let func_index = self.resolve_builtin_function(BuiltinFunction::Div);
+                let func_index = self.context.resolve_builtin_function(BuiltinFunction::Div);
                 self.push(Instruction::Call(func_index))
             }
             BinaryOperator::Mod => {
-                let func_index = self.resolve_builtin_function(BuiltinFunction::Mod);
+                let func_index = self.context.resolve_builtin_function(BuiltinFunction::Mod);
                 self.push(Instruction::Call(func_index))
             }
             BinaryOperator::Eq => {
@@ -165,15 +135,19 @@ impl<'a> FunctionEmitter<'a> {
                 ))
             }
             BinaryOperator::BitwiseAnd => {
-                let func_index = self.resolve_builtin_function(BuiltinFunction::BitwiseAnd);
+                let func_index = self
+                    .context
+                    .resolve_builtin_function(BuiltinFunction::BitwiseAnd);
                 self.push(Instruction::Call(func_index))
             }
             BinaryOperator::BitwiseOr => {
-                let func_index = self.resolve_builtin_function(BuiltinFunction::BitwiseOr);
+                let func_index = self
+                    .context
+                    .resolve_builtin_function(BuiltinFunction::BitwiseOr);
                 self.push(Instruction::Call(func_index))
             }
             BinaryOperator::Pow => {
-                let shim_index = self.shims.get(Shim::Pow);
+                let shim_index = self.context.resolve_shim_function(Shim::Pow);
                 self.push(Instruction::Call(shim_index))
             }
         };
@@ -181,7 +155,9 @@ impl<'a> FunctionEmitter<'a> {
     }
 
     fn emit_assignment(&mut self, assignment_expression: Assignment) -> EmitterResult<()> {
-        let resolved_name = self.resolve_variable(assignment_expression.left.name);
+        let resolved_name = self
+            .context
+            .resolve_variable(assignment_expression.left.name);
         self.emit_expression(*assignment_expression.right)?;
 
         self.push(Instruction::SetGlobal(resolved_name));
@@ -281,21 +257,25 @@ impl<'a> FunctionEmitter<'a> {
             "sqr" => {
                 assert_arity(&function_call, 1)?;
                 self.emit_function_args(function_call)?;
-                let func_index = self.resolve_builtin_function(BuiltinFunction::Sqr);
+                let func_index = self.context.resolve_builtin_function(BuiltinFunction::Sqr);
 
                 self.push(Instruction::Call(func_index))
             }
             "bor" => {
                 assert_arity(&function_call, 2)?;
                 self.emit_function_args(function_call)?;
-                let func_index = self.resolve_builtin_function(BuiltinFunction::LogicalOr);
+                let func_index = self
+                    .context
+                    .resolve_builtin_function(BuiltinFunction::LogicalOr);
 
                 self.push(Instruction::Call(func_index))
             }
             "band" => {
                 assert_arity(&function_call, 2)?;
                 self.emit_function_args(function_call)?;
-                let func_index = self.resolve_builtin_function(BuiltinFunction::LogicalAnd);
+                let func_index = self
+                    .context
+                    .resolve_builtin_function(BuiltinFunction::LogicalAnd);
 
                 self.push(Instruction::Call(func_index))
             }
@@ -303,14 +283,14 @@ impl<'a> FunctionEmitter<'a> {
             "mod" => {
                 assert_arity(&function_call, 2)?;
                 self.emit_function_args(function_call)?;
-                let func_index = self.resolve_builtin_function(BuiltinFunction::Mod);
+                let func_index = self.context.resolve_builtin_function(BuiltinFunction::Mod);
 
                 self.push(Instruction::Call(func_index))
             }
             "sign" => {
                 assert_arity(&function_call, 1)?;
                 self.emit_function_args(function_call)?;
-                let func_index = self.resolve_builtin_function(BuiltinFunction::Sign);
+                let func_index = self.context.resolve_builtin_function(BuiltinFunction::Sign);
 
                 self.push(Instruction::Call(func_index))
             }
@@ -321,7 +301,7 @@ impl<'a> FunctionEmitter<'a> {
                 assert_arity(&function_call, shim.arity())?;
                 self.emit_function_args(function_call)?;
 
-                let shim_index = self.shims.get(shim);
+                let shim_index = self.context.resolve_shim_function(shim);
                 self.push(Instruction::Call(shim_index));
             }
             _ => {
@@ -349,7 +329,9 @@ impl<'a> FunctionEmitter<'a> {
         let index = self.resolve_local(ValueType::I32);
         self.emit_expression(function_call.arguments.pop().unwrap())?;
 
-        let call_index = self.resolve_builtin_function(BuiltinFunction::GetBufferIndex);
+        let call_index = self
+            .context
+            .resolve_builtin_function(BuiltinFunction::GetBufferIndex);
         self.push(Instruction::Call(call_index));
         //
         self.push(Instruction::TeeLocal(index));
@@ -364,29 +346,6 @@ impl<'a> FunctionEmitter<'a> {
         self.push(Instruction::End);
 
         Ok(())
-    }
-
-    fn resolve_variable(&mut self, name: String) -> u32 {
-        let pool = if variable_is_register(&name) {
-            None
-        } else {
-            Some(self.current_pool.clone())
-        };
-
-        self.globals.get((pool, name))
-    }
-
-    fn resolve_local(&mut self, type_: ValueType) -> u32 {
-        self.locals.push(type_);
-        return self.locals.len() as u32 - 1;
-    }
-
-    fn resolve_builtin_function(&mut self, builtin: BuiltinFunction) -> u32 {
-        self.function_types.ensure(builtin.get_type());
-        let offset = self
-            .builtin_offset
-            .expect("Tried to compute builtin index before setting offset.");
-        self.builtin_functions.get(builtin) + offset
     }
 
     fn push(&mut self, instruction: Instruction) {
@@ -404,12 +363,11 @@ impl<'a> FunctionEmitter<'a> {
         self.push(Instruction::F64Const(f64_const(EPSILON)));
         self.push(Instruction::F64Lt);
     }
-}
 
-fn variable_is_register(name: &str) -> bool {
-    let chars: Vec<_> = name.chars().collect();
-    // We avoided pulling in the regex crate! (But at what cost?)
-    matches!(chars.as_slice(), ['r', 'e', 'g', '0'..='9', '0'..='9'])
+    fn resolve_local(&mut self, type_: ValueType) -> u32 {
+        self.locals.push(type_);
+        return self.locals.len() as u32 - 1;
+    }
 }
 
 fn assert_arity(function_call: &FunctionCall, arity: usize) -> EmitterResult<()> {

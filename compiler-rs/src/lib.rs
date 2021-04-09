@@ -1,6 +1,7 @@
 mod ast;
 mod builtin_functions;
 mod constants;
+mod emitter_context;
 mod error;
 mod file_chars;
 mod function_emitter;
