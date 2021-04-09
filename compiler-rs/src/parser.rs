@@ -178,6 +178,7 @@ impl<'a> Parser<'a> {
                     (left_associative(ASSIGNMENT_PRECEDENCE), BinaryOperator::Eq)
                 }
                 TokenKind::And => (0, BinaryOperator::BitwiseAnd),
+                TokenKind::AndAnd => (0, BinaryOperator::LogicalAnd),
                 TokenKind::Pipe => (0, BinaryOperator::BitwiseOr),
                 TokenKind::Caret if precedence < EXPONENTIATION_PRECEDENCE => (
                     left_associative(EXPONENTIATION_PRECEDENCE),

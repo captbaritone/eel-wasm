@@ -87,7 +87,13 @@ impl<'a> Lexer<'a> {
             ';' => self.read_char_as_kind(TokenKind::Semi),
             '!' => self.read_char_as_kind(TokenKind::Bang),
             '%' => self.read_char_as_kind(TokenKind::Percent),
-            '&' => self.read_char_as_kind(TokenKind::And),
+            '&' => {
+                self.chars.next();
+                match self.chars.next {
+                    '&' => self.read_char_as_kind(TokenKind::AndAnd),
+                    _ => TokenKind::And,
+                }
+            }
             '|' => self.read_char_as_kind(TokenKind::Pipe),
             '^' => self.read_char_as_kind(TokenKind::Caret),
             c if is_whitepsace(c) => {

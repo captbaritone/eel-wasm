@@ -1,4 +1,3 @@
-use crate::utils::f64_const;
 use crate::{
     ast::{
         Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, ExpressionBlock,
@@ -12,6 +11,7 @@ use crate::{
     EelFunctionType,
 };
 use crate::{constants::EPSILON, error::EmitterResult};
+use crate::{span::Span, utils::f64_const};
 use parity_wasm::elements::{BlockType, FuncBody, Instruction, Instructions, Local, ValueType};
 
 pub fn emit_function(
@@ -157,6 +157,12 @@ impl<'a> FunctionEmitter<'a> {
                 self.push(Instruction::F64Sub);
                 self.emit_is_zeroish();
                 self.push(Instruction::F64ConvertSI32)
+            }
+            BinaryOperator::LogicalAnd => {
+                return Err(CompilerError::new(
+                    "&& has not yet been implemented".to_string(),
+                    Span::new(0, 0),
+                ))
             }
             BinaryOperator::BitwiseAnd => {
                 let func_index = self.resolve_builtin_function(BuiltinFunction::BitwiseAnd);
