@@ -13,6 +13,9 @@ use crate::{constants::EPSILON, error::EmitterResult};
 use crate::{span::Span, utils::f64_const};
 use parity_wasm::elements::{BlockType, FuncBody, Instruction, Instructions, Local, ValueType};
 
+// https://github.com/WACUP/vis_milk2/blob/de9625a89e724afe23ed273b96b8e48496095b6c/ns-eel2/ns-eel.h#L136
+static MAX_LOOP_COUNT: i32 = 1048576;
+
 pub fn emit_function(
     eel_function: EelFunction,
     context: &mut EmitterContext,
@@ -327,6 +330,11 @@ impl<'a> FunctionEmitter<'a> {
                 assert_arity(&function_call, 3)?;
                 self.emit_expression_list(function_call.arguments)?
             }
+            "while" => {
+                assert_arity(&function_call, 1)?;
+                let body = function_call.arguments.pop().unwrap();
+                self.emit_while(body)?;
+            }
             "megabuf" => self.emit_memory_access(&mut function_call, 0)?,
             "gmegabuf" => self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8)?,
             shim_name if Shim::from_str(shim_name).is_some() => {
@@ -378,6 +386,32 @@ impl<'a> FunctionEmitter<'a> {
         self.push(Instruction::F64Const(f64_const(0.0)));
         self.push(Instruction::End);
 
+        Ok(())
+    }
+
+    fn emit_while(&mut self, body: Expression) -> EmitterResult<()> {
+        let iteration_idx = self.resolve_local(ValueType::I32);
+        self.push(Instruction::I32Const(0));
+        self.push(Instruction::SetLocal(iteration_idx));
+
+        self.push(Instruction::Loop(BlockType::NoResult));
+
+        // Increment and check loop count
+        self.push(Instruction::GetLocal(iteration_idx));
+        self.push(Instruction::I32Const(1));
+        self.push(Instruction::I32Add);
+        self.push(Instruction::TeeLocal(iteration_idx));
+        // STACK: [iteration count]
+        self.push(Instruction::I32Const(MAX_LOOP_COUNT));
+        self.push(Instruction::I32LtU);
+        // STACK: [loop in range]
+        self.emit_expression(body)?;
+        self.emit_is_not_zeroish();
+        // STACK: [loop in range, body is truthy]
+        self.push(Instruction::I32And);
+        self.push(Instruction::BrIf(0));
+        self.push(Instruction::End);
+        self.push(Instruction::F64Const(f64_const(0.0)));
         Ok(())
     }
 

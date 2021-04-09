@@ -357,7 +357,6 @@ fn compatibility_tests() {
         "Logical or (first value false)",
         "Logical and shortcircuts",
         "Logical or shortcircuts",
-        "While",
         "Loop",
         "Loop fractional times",
         "Loop zero times",
@@ -390,7 +389,6 @@ fn compatibility_tests() {
         "gmegabuf does not write megabuf",
         "megabuf does not write gmegabuf",
         "Adjacent buf indicies don\'t collide",
-        "Loop limit",
     ];
 
     println!("Failing: {}/{}", expected_failing.len(), test_cases.len());
