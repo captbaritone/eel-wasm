@@ -51,6 +51,8 @@ pub enum BinaryOperator {
     BitwiseOr,
     LogicalAnd,
     Pow,
+    LessThan,
+    GreaterThan,
 }
 
 #[derive(Debug, PartialEq)]

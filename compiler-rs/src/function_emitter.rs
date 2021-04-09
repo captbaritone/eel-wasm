@@ -128,6 +128,14 @@ impl<'a> FunctionEmitter<'a> {
                 self.emit_is_zeroish();
                 self.push(Instruction::F64ConvertSI32)
             }
+            BinaryOperator::LessThan => {
+                self.push(Instruction::F64Lt);
+                self.push(Instruction::F64ConvertSI32)
+            }
+            BinaryOperator::GreaterThan => {
+                self.push(Instruction::F64Gt);
+                self.push(Instruction::F64ConvertSI32)
+            }
             BinaryOperator::LogicalAnd => {
                 return Err(CompilerError::new(
                     "&& has not yet been implemented".to_string(),

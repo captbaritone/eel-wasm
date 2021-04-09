@@ -21,6 +21,9 @@ pub enum TokenKind {
     Pipe,
     Caret,
     PlusEqual,
+    OpenAngel,
+    CloseAngel,
+    Than,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }

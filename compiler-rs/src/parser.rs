@@ -174,9 +174,12 @@ impl<'a> Parser<'a> {
                 TokenKind::Percent if precedence < MOD_PRECEDENCE => {
                     (left_associative(MOD_PRECEDENCE), BinaryOperator::Mod)
                 }
+                // TODO: prededence?
                 TokenKind::DoubleEqual if precedence < ASSIGNMENT_PRECEDENCE => {
                     (left_associative(ASSIGNMENT_PRECEDENCE), BinaryOperator::Eq)
                 }
+                TokenKind::OpenAngel => (0, BinaryOperator::LessThan),
+                TokenKind::CloseAngel => (0, BinaryOperator::GreaterThan),
                 TokenKind::And => (0, BinaryOperator::BitwiseAnd),
                 TokenKind::AndAnd => (0, BinaryOperator::LogicalAnd),
                 TokenKind::Pipe => (0, BinaryOperator::BitwiseOr),

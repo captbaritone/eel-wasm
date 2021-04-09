@@ -96,6 +96,8 @@ impl<'a> Lexer<'a> {
             }
             '|' => self.read_char_as_kind(TokenKind::Pipe),
             '^' => self.read_char_as_kind(TokenKind::Caret),
+            '<' => self.read_char_as_kind(TokenKind::OpenAngel),
+            '>' => self.read_char_as_kind(TokenKind::CloseAngel),
             c if is_whitepsace(c) => {
                 self.chars.eat_while(is_whitepsace);
                 return self.next_token();
