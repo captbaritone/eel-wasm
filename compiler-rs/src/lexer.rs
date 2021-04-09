@@ -39,11 +39,24 @@ impl<'a> Lexer<'a> {
                     _ => TokenKind::Plus,
                 }
             }
-            '-' => self.read_char_as_kind(TokenKind::Minus),
-            '*' => self.read_char_as_kind(TokenKind::Asterisk),
+            '-' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::MinusEqual),
+                    _ => TokenKind::Minus,
+                }
+            }
+            '*' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::TimesEqual),
+                    _ => TokenKind::Asterisk,
+                }
+            }
             '/' => {
                 self.chars.next();
                 match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::DivEqual),
                     '/' => {
                         self.chars.next();
                         self.eat_inline_comment_tail();
@@ -92,7 +105,13 @@ impl<'a> Lexer<'a> {
                     _ => TokenKind::Bang,
                 }
             }
-            '%' => self.read_char_as_kind(TokenKind::Percent),
+            '%' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::ModEqual),
+                    _ => TokenKind::Percent,
+                }
+            }
             '&' => {
                 self.chars.next();
                 match self.chars.next {

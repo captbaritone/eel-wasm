@@ -1,5 +1,5 @@
-use crate::emitter_context::EmitterContext;
 use crate::utils::f64_const;
+use crate::{ast::AssignmentOperator, emitter_context::EmitterContext};
 use crate::{
     ast::{
         Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, ExpressionBlock,
@@ -221,14 +221,50 @@ impl<'a> FunctionEmitter<'a> {
         Ok(())
     }
 
-    fn emit_assignment(&mut self, assignment_expression: Assignment) -> EmitterResult<()> {
+    fn emit_update_assignment(
+        &mut self,
+        assignment_expression: Assignment,
+        update: Instruction,
+    ) -> EmitterResult<()> {
         let resolved_name = self
             .context
             .resolve_variable(assignment_expression.left.name);
+        self.push(Instruction::GetGlobal(resolved_name));
         self.emit_expression(*assignment_expression.right)?;
-
+        self.push(update);
         self.push(Instruction::SetGlobal(resolved_name));
         self.push(Instruction::GetGlobal(resolved_name));
+        Ok(())
+    }
+
+    fn emit_assignment(&mut self, assignment_expression: Assignment) -> EmitterResult<()> {
+        match assignment_expression.operator {
+            AssignmentOperator::Equal => {
+                let resolved_name = self
+                    .context
+                    .resolve_variable(assignment_expression.left.name);
+                self.emit_expression(*assignment_expression.right)?;
+
+                self.push(Instruction::SetGlobal(resolved_name));
+                self.push(Instruction::GetGlobal(resolved_name));
+            }
+            AssignmentOperator::PlusEqual => {
+                self.emit_update_assignment(assignment_expression, Instruction::F64Add)?;
+            }
+            AssignmentOperator::MinusEqual => {
+                self.emit_update_assignment(assignment_expression, Instruction::F64Sub)?;
+            }
+            AssignmentOperator::TimesEqual => {
+                self.emit_update_assignment(assignment_expression, Instruction::F64Mul)?;
+            }
+            AssignmentOperator::DivEqual => {
+                self.emit_update_assignment(assignment_expression, Instruction::F64Div)?;
+            }
+            AssignmentOperator::ModEqual => {
+                let index = self.context.resolve_builtin_function(BuiltinFunction::Mod);
+                self.emit_update_assignment(assignment_expression, Instruction::Call(index))?;
+            }
+        }
         Ok(())
     }
 

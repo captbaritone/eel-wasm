@@ -333,20 +333,10 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Plus equals",
-        "Plus equals (local var)",
         "Plus equals (megabuf)",
-        "Minus equals",
-        "Minus equals (local var)",
         "Minus equals (megabuf)",
-        "Times equals",
-        "Times equals (local var)",
         "Times equals (megabuf)",
-        "Divide equals",
-        "Divide equals (local var)",
         "Divide equals (megabuf)",
-        "Mod equals",
-        "Mod equals (local var)",
         "Mod equals (megabuf)",
         "Statement block as argument",
         "Max index megabuf",

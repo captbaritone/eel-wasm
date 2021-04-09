@@ -235,19 +235,36 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_assignment(
+        &mut self,
+        identifier: Identifier,
+        operator: AssignmentOperator,
+    ) -> ParseResult<Expression> {
+        self.advance()?;
+        let right = self.parse_expression(0)?;
+        Ok(Expression::Assignment(Assignment {
+            left: identifier,
+            operator,
+            right: Box::new(right),
+        }))
+    }
+
     fn parse_identifier_expression(&mut self) -> ParseResult<Expression> {
         let identifier = self.parse_identifier()?;
 
         match &self.token.kind {
-            TokenKind::Equal => {
-                self.advance()?;
-                let right = self.parse_expression(0)?;
-                Ok(Expression::Assignment(Assignment {
-                    left: identifier,
-                    operator: AssignmentOperator::Equal,
-                    right: Box::new(right),
-                }))
+            TokenKind::Equal => self.parse_assignment(identifier, AssignmentOperator::Equal),
+            TokenKind::PlusEqual => {
+                self.parse_assignment(identifier, AssignmentOperator::PlusEqual)
             }
+            TokenKind::MinusEqual => {
+                self.parse_assignment(identifier, AssignmentOperator::MinusEqual)
+            }
+            TokenKind::TimesEqual => {
+                self.parse_assignment(identifier, AssignmentOperator::TimesEqual)
+            }
+            TokenKind::DivEqual => self.parse_assignment(identifier, AssignmentOperator::DivEqual),
+            TokenKind::ModEqual => self.parse_assignment(identifier, AssignmentOperator::ModEqual),
             TokenKind::OpenParen => {
                 self.advance()?;
                 let mut arguments = vec![];

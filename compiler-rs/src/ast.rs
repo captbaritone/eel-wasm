@@ -75,6 +75,11 @@ pub struct Identifier {
 #[derive(Debug, PartialEq)]
 pub enum AssignmentOperator {
     Equal,
+    PlusEqual,
+    MinusEqual,
+    TimesEqual,
+    DivEqual,
+    ModEqual,
 }
 
 #[derive(Debug, PartialEq)]
