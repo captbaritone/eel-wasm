@@ -335,6 +335,12 @@ impl<'a> FunctionEmitter<'a> {
                 let body = function_call.arguments.pop().unwrap();
                 self.emit_while(body)?;
             }
+            "loop" => {
+                assert_arity(&function_call, 2)?;
+                let body = function_call.arguments.pop().unwrap();
+                let count = function_call.arguments.pop().unwrap();
+                self.emit_loop(count, body)?;
+            }
             "megabuf" => self.emit_memory_access(&mut function_call, 0)?,
             "gmegabuf" => self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8)?,
             shim_name if Shim::from_str(shim_name).is_some() => {
@@ -412,6 +418,34 @@ impl<'a> FunctionEmitter<'a> {
         self.push(Instruction::BrIf(0));
         self.push(Instruction::End);
         self.push(Instruction::F64Const(f64_const(0.0)));
+        Ok(())
+    }
+
+    fn emit_loop(&mut self, count: Expression, body: Expression) -> EmitterResult<()> {
+        let iteration_idx = self.resolve_local(ValueType::I32);
+        self.push(Instruction::Block(BlockType::NoResult));
+        // Assign the count to a variable
+        self.emit_expression(count)?;
+        self.push(Instruction::I32TruncSF64);
+        self.push(Instruction::TeeLocal(iteration_idx));
+        self.push(Instruction::I32Const(0));
+        self.push(Instruction::I32LeS);
+        self.push(Instruction::BrIf(1));
+        self.push(Instruction::Loop(BlockType::NoResult));
+        // Run the body
+        self.emit_expression(body)?;
+        self.push(Instruction::Drop);
+        // Decrement the count
+        self.push(Instruction::GetLocal(iteration_idx));
+        self.push(Instruction::I32Const(1));
+        self.push(Instruction::I32Sub);
+        self.push(Instruction::TeeLocal(iteration_idx));
+        self.push(Instruction::I32Const(0));
+        self.push(Instruction::I32Ne);
+        self.push(Instruction::BrIf(0)); // Return to the top of the loop
+        self.push(Instruction::End); // End loop
+        self.push(Instruction::End); // End block
+        self.push(Instruction::F64Const(f64_const(0.0))); // Implicitly return zero
         Ok(())
     }
 
