@@ -19,6 +19,23 @@ pub enum Shim {
 }
 
 impl Shim {
+    pub fn all() -> Vec<Self> {
+        vec![
+            Shim::Sin,
+            Shim::Pow,
+            Shim::Cos,
+            Shim::Tan,
+            Shim::Asin,
+            Shim::Acos,
+            Shim::Atan,
+            Shim::Atan2,
+            Shim::Log,
+            Shim::Log10,
+            Shim::Sigmoid,
+            Shim::Exp,
+        ]
+    }
+
     pub fn get_type(&self) -> EelFunctionType {
         FunctionType::new(self.get_args(), self.get_return())
     }
@@ -31,6 +48,7 @@ impl Shim {
     pub fn get_return(&self) -> Vec<ValueType> {
         vec![ValueType::F64]
     }
+
     pub fn arity(&self) -> usize {
         match self {
             Shim::Sin => 1,

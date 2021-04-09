@@ -55,21 +55,7 @@ impl Emitter {
             }
         }
 
-        let shims: Vec<Shim> = vec![
-            Shim::Sin,
-            Shim::Pow,
-            Shim::Cos,
-            Shim::Tan,
-            Shim::Asin,
-            Shim::Acos,
-            Shim::Atan,
-            Shim::Atan2,
-            Shim::Log,
-            Shim::Log10,
-            Shim::Sigmoid,
-            Shim::Exp,
-        ];
-        for shim in shims {
+        for shim in Shim::all() {
             let field_str = shim.as_str().to_string();
             let type_ = shim.get_type();
             self.context.resolve_shim_function(shim);
