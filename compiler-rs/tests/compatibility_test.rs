@@ -333,7 +333,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Line comments (\\\\)",
         "Plus equals",
         "Plus equals (local var)",
         "Plus equals (megabuf)",

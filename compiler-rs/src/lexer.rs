@@ -51,6 +51,23 @@ impl<'a> Lexer<'a> {
                     _ => TokenKind::Slash,
                 }
             }
+            // Eel supports backslash comments!
+            '\\' => {
+                self.chars.next();
+                match self.chars.next {
+                    '\\' => {
+                        self.chars.next();
+                        self.eat_inline_comment_tail();
+                        return self.next_token();
+                    }
+                    c => {
+                        return Err(CompilerError::new(
+                            format!("Parse Error: Unexpected character '{}' following \\.", c),
+                            Span::new(start, start),
+                        ))
+                    }
+                }
+            }
             '=' => {
                 self.chars.next();
                 match self.chars.next {
