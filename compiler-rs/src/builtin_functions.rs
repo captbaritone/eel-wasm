@@ -11,8 +11,11 @@ pub enum BuiltinFunction {
     Div,
     Mod,
     GetBufferIndex,
+    LogicalOr,
+    LogicalAnd,
     BitwiseAnd,
     BitwiseOr,
+    Sqr,
 }
 
 impl BuiltinFunction {
@@ -31,6 +34,13 @@ impl BuiltinFunction {
             Self::BitwiseOr => {
                 FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
             }
+            Self::LogicalAnd => {
+                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
+            }
+            Self::LogicalOr => {
+                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
+            }
+            Self::Sqr => FunctionType::new(vec![ValueType::F64], vec![ValueType::F64]),
         }
     }
 
@@ -138,6 +148,59 @@ impl BuiltinFunction {
                     Instruction::I64TruncSF64,
                     Instruction::I64Or,
                     Instruction::F64ConvertSI64,
+                    Instruction::End,
+                ]),
+            ),
+            Self::Sqr => FuncBody::new(
+                vec![],
+                Instructions::new(vec![
+                    Instruction::GetLocal(0),
+                    Instruction::GetLocal(0),
+                    Instruction::F64Mul,
+                    Instruction::End,
+                ]),
+            ),
+            Self::LogicalAnd => FuncBody::new(
+                vec![],
+                Instructions::new(vec![
+                    Instruction::GetLocal(0),
+                    // is not zeroish
+                    Instruction::F64Abs,
+                    Instruction::F64Const(f64_const(EPSILON)),
+                    Instruction::F64Gt,
+                    // end is not zeroish
+                    Instruction::GetLocal(1),
+                    // is not zeroish
+                    Instruction::F64Abs,
+                    Instruction::F64Const(f64_const(EPSILON)),
+                    Instruction::F64Gt,
+                    // end is not zeroish
+                    Instruction::I32And,
+                    Instruction::I32Const(0),
+                    Instruction::I32Ne,
+                    Instruction::F64ConvertSI32,
+                    Instruction::End,
+                ]),
+            ),
+            Self::LogicalOr => FuncBody::new(
+                vec![],
+                Instructions::new(vec![
+                    Instruction::GetLocal(0),
+                    // is not zeroish
+                    Instruction::F64Abs,
+                    Instruction::F64Const(f64_const(EPSILON)),
+                    Instruction::F64Gt,
+                    // end is not zeroish
+                    Instruction::GetLocal(1),
+                    // is not zeroish
+                    Instruction::F64Abs,
+                    Instruction::F64Const(f64_const(EPSILON)),
+                    Instruction::F64Gt,
+                    // end is not zeroish
+                    Instruction::I32Or,
+                    Instruction::I32Const(0),
+                    Instruction::I32Ne,
+                    Instruction::F64ConvertSI32,
                     Instruction::End,
                 ]),
             ),

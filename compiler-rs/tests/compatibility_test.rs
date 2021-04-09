@@ -333,7 +333,6 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Sqr",
         "Cos",
         "Tan",
         "Asin",
@@ -348,18 +347,6 @@ fn compatibility_tests() {
         "Sign (-10)",
         "Sign (0)",
         "Sign (-0)",
-        "Bor (true, false)",
-        "Bor (false, true)",
-        "Bor (true, true)",
-        "Bor (false, false)",
-        "Bor does not shortcircut",
-        "Bor respects epsilon",
-        "Band (true, false)",
-        "Band (false, true)",
-        "Band (true, true)",
-        "Band (false, false)",
-        "Band does not shortcircut",
-        "Band respects epsilon",
         "Plus equals",
         "Plus equals (local var)",
         "Plus equals (megabuf)",
@@ -437,6 +424,8 @@ fn compatibility_tests() {
         "Adjacent buf indicies don\'t collide",
         "Loop limit",
     ];
+
+    println!("Failing: {}/{}", expected_failing.len(), test_cases.len());
 
     for (name, code, expected) in test_cases {
         let mut globals = HashMap::default();

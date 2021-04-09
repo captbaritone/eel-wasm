@@ -272,6 +272,35 @@ impl<'a> FunctionEmitter<'a> {
 
                 self.push(Instruction::F64Ceil)
             }
+            "sqr" => {
+                assert_arity(&function_call, 1)?;
+                self.emit_function_args(function_call)?;
+                let func_index = self.resolve_builtin_function(BuiltinFunction::Sqr);
+
+                self.push(Instruction::Call(func_index))
+            }
+            "bor" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+                let func_index = self.resolve_builtin_function(BuiltinFunction::LogicalOr);
+
+                self.push(Instruction::Call(func_index))
+            }
+            "band" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+                let func_index = self.resolve_builtin_function(BuiltinFunction::LogicalAnd);
+
+                self.push(Instruction::Call(func_index))
+            }
+            // TODO: Add a test for this
+            "mod" => {
+                assert_arity(&function_call, 2)?;
+                self.emit_function_args(function_call)?;
+                let func_index = self.resolve_builtin_function(BuiltinFunction::Mod);
+
+                self.push(Instruction::Call(func_index))
+            }
             "megabuf" => self.emit_memory_access(&mut function_call, 0)?,
             "gmegabuf" => self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8)?,
             shim_name if Shim::from_str(shim_name).is_some() => {
