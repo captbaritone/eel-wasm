@@ -19,6 +19,7 @@ pub enum TokenKind {
     And,
     Pipe,
     Caret,
+    PlusEqual,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser
 }

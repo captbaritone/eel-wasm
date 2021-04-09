@@ -32,7 +32,13 @@ impl<'a> Lexer<'a> {
             c if is_int(c) => self.read_number(),
             '.' => self.read_number(),
             c if is_identifier_head(c) => self.read_identifier(),
-            '+' => self.read_char_as_kind(TokenKind::Plus),
+            '+' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::PlusEqual),
+                    _ => TokenKind::Plus,
+                }
+            }
             '-' => self.read_char_as_kind(TokenKind::Minus),
             '*' => self.read_char_as_kind(TokenKind::Asterisk),
             '/' => {
