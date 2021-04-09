@@ -18,6 +18,7 @@ pub enum TokenKind {
     Percent,
     And,
     AndAnd,
+    PipePipe,
     Pipe,
     Caret,
     PlusEqual,

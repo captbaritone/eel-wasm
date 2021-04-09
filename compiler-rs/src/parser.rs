@@ -185,6 +185,7 @@ impl<'a> Parser<'a> {
                 TokenKind::NotEqual => (0, BinaryOperator::NotEqual),
                 TokenKind::And => (0, BinaryOperator::BitwiseAnd),
                 TokenKind::AndAnd => (0, BinaryOperator::LogicalAnd),
+                TokenKind::PipePipe => (0, BinaryOperator::LogicalOr),
                 TokenKind::Pipe => (0, BinaryOperator::BitwiseOr),
                 TokenKind::Caret if precedence < EXPONENTIATION_PRECEDENCE => (
                     left_associative(EXPONENTIATION_PRECEDENCE),

@@ -50,6 +50,7 @@ pub enum BinaryOperator {
     BitwiseAnd,
     BitwiseOr,
     LogicalAnd,
+    LogicalOr,
     Pow,
     LessThan,
     GreaterThan,

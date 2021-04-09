@@ -100,7 +100,13 @@ impl<'a> Lexer<'a> {
                     _ => TokenKind::And,
                 }
             }
-            '|' => self.read_char_as_kind(TokenKind::Pipe),
+            '|' => {
+                self.chars.next();
+                match self.chars.next {
+                    '|' => self.read_char_as_kind(TokenKind::PipePipe),
+                    _ => TokenKind::Pipe,
+                }
+            }
             '^' => self.read_char_as_kind(TokenKind::Caret),
             '<' => {
                 self.chars.next();

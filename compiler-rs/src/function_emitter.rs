@@ -1,4 +1,5 @@
 use crate::emitter_context::EmitterContext;
+use crate::utils::f64_const;
 use crate::{
     ast::{
         Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, ExpressionBlock,
@@ -10,7 +11,6 @@ use crate::{
     shim::Shim,
 };
 use crate::{constants::EPSILON, error::EmitterResult};
-use crate::{span::Span, utils::f64_const};
 use parity_wasm::elements::{BlockType, FuncBody, Instruction, Instructions, Local, ValueType};
 
 // https://github.com/WACUP/vis_milk2/blob/de9625a89e724afe23ed273b96b8e48496095b6c/ns-eel2/ns-eel.h#L136
@@ -114,11 +114,56 @@ impl<'a> FunctionEmitter<'a> {
             }
         }
     }
+    fn emit_logical_expression(
+        &mut self,
+        left: Expression,
+        right: Expression,
+        and: bool,
+    ) -> EmitterResult<()> {
+        self.emit_expression(left)?;
+        if and {
+            self.emit_is_zeroish();
+        } else {
+            self.emit_is_not_zeroish();
+        }
+        self.push(Instruction::If(BlockType::Value(ValueType::F64)));
+        self.push(Instruction::F64Const(f64_const(if and {
+            0.0
+        } else {
+            1.0
+        })));
+        self.push(Instruction::Else);
+        self.emit_expression(right)?;
+        self.emit_is_not_zeroish();
+        self.push(Instruction::F64ConvertSI32);
+        self.push(Instruction::End);
+        Ok(())
+    }
 
     fn emit_binary_expression(&mut self, binary_expression: BinaryExpression) -> EmitterResult<()> {
+        match binary_expression.op {
+            BinaryOperator::LogicalAnd => {
+                return self.emit_logical_expression(
+                    *binary_expression.left,
+                    *binary_expression.right,
+                    true,
+                );
+            }
+            BinaryOperator::LogicalOr => {
+                return self.emit_logical_expression(
+                    *binary_expression.left,
+                    *binary_expression.right,
+                    false,
+                );
+            }
+            _ => {}
+        }
         self.emit_expression(*binary_expression.left)?;
         self.emit_expression(*binary_expression.right)?;
         match binary_expression.op {
+            BinaryOperator::LogicalAnd | BinaryOperator::LogicalOr => {
+                // Handled above. Is there was a cleaner way to do this?
+            }
             BinaryOperator::Add => self.push(Instruction::F64Add),
             BinaryOperator::Subtract => self.push(Instruction::F64Sub),
             BinaryOperator::Multiply => self.push(Instruction::F64Mul),
@@ -155,12 +200,6 @@ impl<'a> FunctionEmitter<'a> {
             BinaryOperator::GreaterThanEqual => {
                 self.push(Instruction::F64Ge);
                 self.push(Instruction::F64ConvertSI32)
-            }
-            BinaryOperator::LogicalAnd => {
-                return Err(CompilerError::new(
-                    "&& has not yet been implemented".to_string(),
-                    Span::new(0, 0),
-                ))
             }
             BinaryOperator::BitwiseAnd => {
                 let func_index = self
