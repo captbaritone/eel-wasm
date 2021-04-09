@@ -45,6 +45,7 @@ impl Emitter {
         for (pool_name, globals) in globals_map {
             self.context.current_pool = pool_name;
             for global in globals {
+                // TODO: Ensure none of these are `ref\d\d`
                 // TODO: Lots of clones.
                 self.context.resolve_variable(global.clone());
                 imports.push(make_import_entry(
@@ -68,7 +69,6 @@ impl Emitter {
             Shim::Sigmoid,
             Shim::Exp,
         ];
-        let shim_offset = shims.len() as u32;
         for shim in shims {
             let field_str = shim.as_str().to_string();
             let type_ = shim.get_type();
@@ -80,13 +80,7 @@ impl Emitter {
             ));
         }
 
-        // Reserve an index for each eel function
-        for (idx, _) in eel_functions.iter().enumerate() {
-            self.context.resolve_eel_function(idx);
-        }
-
-        let (function_exports, function_bodies, funcs) =
-            self.emit_eel_functions(eel_functions, shim_offset)?;
+        let (function_exports, function_bodies, funcs) = self.emit_eel_functions(eel_functions)?;
 
         let mut sections = vec![];
         sections.push(Section::Type(self.emit_type_section()));
@@ -202,21 +196,18 @@ impl Emitter {
     fn emit_eel_functions(
         &mut self,
         eel_functions: Vec<(String, EelFunction, String)>,
-        offset: u32,
     ) -> EmitterResult<(Vec<ExportEntry>, Vec<FuncBody>, Vec<Func>)> {
         let mut exports = Vec::new();
         let mut function_bodies = Vec::new();
         let mut function_definitions = Vec::new();
         for (i, (name, program, pool_name)) in eel_functions.into_iter().enumerate() {
+            let function_idx = self.context.resolve_eel_function(i);
             self.context.current_pool = pool_name;
             let function_body = emit_function(program, &mut self.context)?;
 
             function_bodies.push(function_body);
 
-            exports.push(ExportEntry::new(
-                name,
-                Internal::Function(i as u32 + offset),
-            ));
+            exports.push(ExportEntry::new(name, Internal::Function(function_idx)));
 
             let function_type = self
                 .context

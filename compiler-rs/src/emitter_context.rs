@@ -36,7 +36,6 @@ impl EmitterContext {
     }
 
     pub fn resolve_shim_function(&mut self, shim: Shim) -> u32 {
-        self.function_types.ensure(shim.get_type());
         self.functions.get(ModuleFunction::Shim(shim))
     }
 
