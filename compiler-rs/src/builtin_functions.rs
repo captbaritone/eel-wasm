@@ -24,28 +24,27 @@ pub enum BuiltinFunction {
 
 impl BuiltinFunction {
     pub fn get_type(&self) -> EelFunctionType {
+        FunctionType::new(vec![ValueType::F64; self.arity()], vec![self.return_type()])
+    }
+
+    pub fn return_type(&self) -> ValueType {
         match self {
-            Self::Div => {
-                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
-            }
-            Self::GetBufferIndex => FunctionType::new(vec![ValueType::F64], vec![ValueType::I32]),
-            Self::Mod => {
-                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
-            }
-            Self::BitwiseAnd => {
-                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
-            }
-            Self::BitwiseOr => {
-                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
-            }
-            Self::LogicalAnd => {
-                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
-            }
-            Self::LogicalOr => {
-                FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
-            }
-            Self::Sqr => FunctionType::new(vec![ValueType::F64], vec![ValueType::F64]),
-            Self::Sign => FunctionType::new(vec![ValueType::F64], vec![ValueType::F64]),
+            Self::GetBufferIndex => ValueType::I32,
+            _ => ValueType::F64,
+        }
+    }
+
+    fn arity(&self) -> usize {
+        match self {
+            Self::Div => 2,
+            Self::GetBufferIndex => 1,
+            Self::Mod => 2,
+            Self::BitwiseAnd => 2,
+            Self::BitwiseOr => 2,
+            Self::LogicalAnd => 2,
+            Self::LogicalOr => 2,
+            Self::Sqr => 1,
+            Self::Sign => 1,
         }
     }
 
