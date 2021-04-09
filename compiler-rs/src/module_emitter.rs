@@ -63,7 +63,20 @@ impl Emitter {
             }
         }
 
-        let shims: Vec<Shim> = vec![Shim::Sin, Shim::Pow];
+        let shims: Vec<Shim> = vec![
+            Shim::Sin,
+            Shim::Pow,
+            Shim::Cos,
+            Shim::Tan,
+            Shim::Asin,
+            Shim::Acos,
+            Shim::Atan,
+            Shim::Atan2,
+            Shim::Log,
+            Shim::Log10,
+            Shim::Sigmoid,
+            Shim::Exp,
+        ];
         let shim_offset = shims.len() as u32;
         for shim in shims {
             let field_str = shim.as_str().to_string();

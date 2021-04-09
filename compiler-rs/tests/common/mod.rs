@@ -1,6 +1,9 @@
 extern crate eel_wasm;
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    f64::EPSILON,
+};
 
 use eel_wasm::{compile, Shim};
 use wasmi::{nan_preserving_float::F64, ImportsBuilder};
@@ -22,6 +25,41 @@ impl GlobalPool {
     }
 }
 
+fn get_shim_index(shim: Shim) -> usize {
+    match shim {
+        Shim::Sin => 1,
+        Shim::Pow => 2,
+        Shim::Cos => 3,
+        Shim::Tan => 4,
+        Shim::Asin => 5,
+        Shim::Acos => 6,
+        Shim::Atan => 7,
+        Shim::Atan2 => 8,
+        Shim::Log => 9,
+        Shim::Log10 => 10,
+        Shim::Sigmoid => 11,
+        Shim::Exp => 12,
+    }
+}
+
+fn get_shim_from_index(index: usize) -> Shim {
+    match index {
+        1 => Shim::Sin,
+        2 => Shim::Pow,
+        3 => Shim::Cos,
+        4 => Shim::Tan,
+        5 => Shim::Asin,
+        6 => Shim::Acos,
+        7 => Shim::Atan,
+        8 => Shim::Atan2,
+        9 => Shim::Log,
+        10 => Shim::Log10,
+        11 => Shim::Sigmoid,
+        12 => Shim::Exp,
+        _ => panic!("Could not find shim at index"),
+    }
+}
+
 impl ModuleImportResolver for GlobalPool {
     fn resolve_global(
         &self,
@@ -40,30 +78,21 @@ impl ModuleImportResolver for GlobalPool {
             field_name
         )))?;
 
-        /*
-        if !self.check_signature(index, signature) {
+        if signature.params().len() != shim.arity() || !signature.return_type().is_some() {
             return Err(WasmiError::Instantiation(format!(
                 "Export {} has a bad signature",
                 field_name
             )));
         }
-        */
 
-        Ok(match shim {
-            Shim::Sin => FuncInstance::alloc_host(
-                Signature::new(&[ValueType::F64][..], Some(ValueType::F64)),
-                SIN_FUNC_INDEX,
-            ),
-            Shim::Pow => FuncInstance::alloc_host(
-                Signature::new(&[ValueType::F64, ValueType::F64][..], Some(ValueType::F64)),
-                POW_FUNC_INDEX,
-            ),
-        })
+        let params = vec![ValueType::F64; shim.arity()];
+
+        Ok(FuncInstance::alloc_host(
+            Signature::new(params, Some(ValueType::F64)),
+            get_shim_index(shim),
+        ))
     }
 }
-
-const SIN_FUNC_INDEX: usize = 0;
-const POW_FUNC_INDEX: usize = 1;
 
 impl Externals for GlobalPool {
     fn invoke_index(
@@ -71,15 +100,15 @@ impl Externals for GlobalPool {
         index: usize,
         args: RuntimeArgs,
     ) -> Result<Option<RuntimeValue>, Trap> {
-        match index {
-            SIN_FUNC_INDEX => {
+        match get_shim_from_index(index) {
+            Shim::Sin => {
                 let a: F64 = args.nth_checked(0)?;
 
                 let result = a.to_float().sin();
 
                 Ok(Some(RuntimeValue::F64(F64::from(result))))
             }
-            POW_FUNC_INDEX => {
+            Shim::Pow => {
                 let a: F64 = args.nth_checked(0)?;
                 let b: F64 = args.nth_checked(1)?;
 
@@ -87,7 +116,82 @@ impl Externals for GlobalPool {
 
                 Ok(Some(RuntimeValue::F64(F64::from(result))))
             }
-            _ => panic!("Unimplemented function at {}", index),
+            Shim::Cos => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().cos();
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Tan => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().tan();
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Asin => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().asin();
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Acos => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().acos();
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Atan => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().atan();
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Atan2 => {
+                let a: F64 = args.nth_checked(0)?;
+                let b: F64 = args.nth_checked(1)?;
+
+                let result = a.to_float().atan2(b.to_float());
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Log => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().log(std::f64::consts::E);
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Log10 => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().log10();
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Sigmoid => {
+                let a: F64 = args.nth_checked(0)?;
+                let b: F64 = args.nth_checked(1)?;
+
+                let x = a.to_float();
+                let y = b.to_float();
+
+                let t = 1.0 + (-x * y).exp();
+                let result = if t.abs() > EPSILON { 1.0 / t } else { 0.0 };
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
+            Shim::Exp => {
+                let a: F64 = args.nth_checked(0)?;
+
+                let result = a.to_float().exp();
+
+                Ok(Some(RuntimeValue::F64(F64::from(result))))
+            }
         }
     }
 }

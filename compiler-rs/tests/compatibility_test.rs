@@ -333,16 +333,7 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Cos",
-        "Tan",
-        "Asin",
-        "Acos",
-        "Atan",
-        "Atan2",
         "Line comments (\\\\)",
-        "Pow",
-        "Log",
-        "Log10",
         "Sign (10)",
         "Sign (-10)",
         "Sign (0)",
@@ -400,11 +391,6 @@ fn compatibility_tests() {
         "Gmegabuf",
         "Megabuf != Gmegabuf",
         "Gmegabuf != Megabuf",
-        "Sigmoid 1, 2",
-        "Sigmoid 2, 1",
-        "Sigmoid 0, 0",
-        "Sigmoid 10, 10",
-        "Exp",
         "Assign",
         "Assign return value",
         "EPSILON buffer indexes",
