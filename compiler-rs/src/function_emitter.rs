@@ -301,6 +301,13 @@ impl<'a> FunctionEmitter<'a> {
 
                 self.push(Instruction::Call(func_index))
             }
+            "sign" => {
+                assert_arity(&function_call, 1)?;
+                self.emit_function_args(function_call)?;
+                let func_index = self.resolve_builtin_function(BuiltinFunction::Sign);
+
+                self.push(Instruction::Call(func_index))
+            }
             "megabuf" => self.emit_memory_access(&mut function_call, 0)?,
             "gmegabuf" => self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8)?,
             shim_name if Shim::from_str(shim_name).is_some() => {

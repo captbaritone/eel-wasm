@@ -16,6 +16,7 @@ pub enum BuiltinFunction {
     BitwiseAnd,
     BitwiseOr,
     Sqr,
+    Sign,
 }
 
 impl BuiltinFunction {
@@ -41,11 +42,26 @@ impl BuiltinFunction {
                 FunctionType::new(vec![ValueType::F64, ValueType::F64], vec![ValueType::F64])
             }
             Self::Sqr => FunctionType::new(vec![ValueType::F64], vec![ValueType::F64]),
+            Self::Sign => FunctionType::new(vec![ValueType::F64], vec![ValueType::F64]),
         }
     }
 
     pub fn func_body(&self) -> FuncBody {
         match self {
+            Self::Sign => FuncBody::new(
+                vec![],
+                Instructions::new(vec![
+                    Instruction::F64Const(f64_const(0.0)),
+                    Instruction::GetLocal(0),
+                    Instruction::F64Lt,
+                    Instruction::GetLocal(0),
+                    Instruction::F64Const(f64_const(0.0)),
+                    Instruction::F64Lt,
+                    Instruction::I32Sub,
+                    Instruction::F64ConvertSI32,
+                    Instruction::End,
+                ]),
+            ),
             Self::Div => FuncBody::new(
                 vec![Local::new(1, ValueType::I32)],
                 Instructions::new(vec![
