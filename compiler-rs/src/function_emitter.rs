@@ -128,6 +128,11 @@ impl<'a> FunctionEmitter<'a> {
                 self.emit_is_zeroish();
                 self.push(Instruction::F64ConvertSI32)
             }
+            BinaryOperator::NotEqual => {
+                self.push(Instruction::F64Sub);
+                self.emit_is_not_zeroish();
+                self.push(Instruction::F64ConvertSI32)
+            }
             BinaryOperator::LessThan => {
                 self.push(Instruction::F64Lt);
                 self.push(Instruction::F64ConvertSI32)

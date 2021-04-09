@@ -85,7 +85,13 @@ impl<'a> Lexer<'a> {
             ')' => self.read_char_as_kind(TokenKind::CloseParen),
             ',' => self.read_char_as_kind(TokenKind::Comma),
             ';' => self.read_char_as_kind(TokenKind::Semi),
-            '!' => self.read_char_as_kind(TokenKind::Bang),
+            '!' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::NotEqual),
+                    _ => TokenKind::Bang,
+                }
+            }
             '%' => self.read_char_as_kind(TokenKind::Percent),
             '&' => {
                 self.chars.next();

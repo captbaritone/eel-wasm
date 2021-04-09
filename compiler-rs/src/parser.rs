@@ -182,6 +182,7 @@ impl<'a> Parser<'a> {
                 TokenKind::CloseAngel => (0, BinaryOperator::GreaterThan),
                 TokenKind::LTEqual => (0, BinaryOperator::LessThanEqual),
                 TokenKind::GTEqual => (0, BinaryOperator::GreaterThanEqual),
+                TokenKind::NotEqual => (0, BinaryOperator::NotEqual),
                 TokenKind::And => (0, BinaryOperator::BitwiseAnd),
                 TokenKind::AndAnd => (0, BinaryOperator::LogicalAnd),
                 TokenKind::Pipe => (0, BinaryOperator::BitwiseOr),
