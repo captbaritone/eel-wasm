@@ -180,6 +180,8 @@ impl<'a> Parser<'a> {
                 }
                 TokenKind::OpenAngel => (0, BinaryOperator::LessThan),
                 TokenKind::CloseAngel => (0, BinaryOperator::GreaterThan),
+                TokenKind::LTEqual => (0, BinaryOperator::LessThanEqual),
+                TokenKind::GTEqual => (0, BinaryOperator::GreaterThanEqual),
                 TokenKind::And => (0, BinaryOperator::BitwiseAnd),
                 TokenKind::AndAnd => (0, BinaryOperator::LogicalAnd),
                 TokenKind::Pipe => (0, BinaryOperator::BitwiseOr),

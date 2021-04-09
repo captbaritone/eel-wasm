@@ -23,6 +23,8 @@ pub enum TokenKind {
     PlusEqual,
     OpenAngel,
     CloseAngel,
+    LTEqual,
+    GTEqual,
     Than,
     EOF,
     SOF, // Allows TokenKind to be non-optional in the parser

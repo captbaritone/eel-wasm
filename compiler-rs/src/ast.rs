@@ -53,6 +53,8 @@ pub enum BinaryOperator {
     Pow,
     LessThan,
     GreaterThan,
+    LessThanEqual,
+    GreaterThanEqual,
 }
 
 #[derive(Debug, PartialEq)]

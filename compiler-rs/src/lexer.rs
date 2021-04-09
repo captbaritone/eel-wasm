@@ -96,8 +96,20 @@ impl<'a> Lexer<'a> {
             }
             '|' => self.read_char_as_kind(TokenKind::Pipe),
             '^' => self.read_char_as_kind(TokenKind::Caret),
-            '<' => self.read_char_as_kind(TokenKind::OpenAngel),
-            '>' => self.read_char_as_kind(TokenKind::CloseAngel),
+            '<' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::LTEqual),
+                    _ => TokenKind::OpenAngel,
+                }
+            }
+            '>' => {
+                self.chars.next();
+                match self.chars.next {
+                    '=' => self.read_char_as_kind(TokenKind::GTEqual),
+                    _ => TokenKind::CloseAngel,
+                }
+            }
             c if is_whitepsace(c) => {
                 self.chars.eat_while(is_whitepsace);
                 return self.next_token();
