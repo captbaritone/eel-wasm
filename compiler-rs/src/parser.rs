@@ -1,8 +1,8 @@
 use std::num::ParseFloatError;
 
 use crate::ast::{
-    Assignment, AssignmentOperator, BinaryExpression, BinaryOperator, ExpressionBlock,
-    FunctionCall, Identifier, UnaryExpression, UnaryOperator,
+    Assignment, AssignmentOperator, AssignmentTarget, BinaryExpression, BinaryOperator,
+    ExpressionBlock, FunctionCall, Identifier, UnaryExpression, UnaryOperator,
 };
 
 use super::ast::{EelFunction, Expression, NumberLiteral};
@@ -235,63 +235,99 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_assignment(
+    fn parse_identifier_assignment(
         &mut self,
-        identifier: Identifier,
+        target: AssignmentTarget,
         operator: AssignmentOperator,
     ) -> ParseResult<Expression> {
         self.advance()?;
         let right = self.parse_expression(0)?;
         Ok(Expression::Assignment(Assignment {
-            left: identifier,
+            left: target,
             operator,
             right: Box::new(right),
         }))
     }
 
+    fn parse_assignment_tail(&mut self, left: AssignmentTarget) -> ParseResult<Expression> {
+        match self.token.kind {
+            TokenKind::Equal => self.parse_identifier_assignment(left, AssignmentOperator::Equal),
+            TokenKind::PlusEqual => {
+                self.parse_identifier_assignment(left, AssignmentOperator::PlusEqual)
+            }
+            TokenKind::MinusEqual => {
+                self.parse_identifier_assignment(left, AssignmentOperator::MinusEqual)
+            }
+            TokenKind::TimesEqual => {
+                self.parse_identifier_assignment(left, AssignmentOperator::TimesEqual)
+            }
+            TokenKind::DivEqual => {
+                self.parse_identifier_assignment(left, AssignmentOperator::DivEqual)
+            }
+            TokenKind::ModEqual => {
+                self.parse_identifier_assignment(left, AssignmentOperator::ModEqual)
+            }
+            _ => {
+                // If you hit this, peek_assignment is wrong.
+                Err(CompilerError::new(
+                    "Unexpected assignment token".to_string(),
+                    Span::empty(),
+                ))
+            }
+        }
+    }
+
+    fn peek_assignment(&self) -> bool {
+        match self.token.kind {
+            TokenKind::Equal
+            | TokenKind::PlusEqual
+            | TokenKind::MinusEqual
+            | TokenKind::TimesEqual
+            | TokenKind::DivEqual
+            | TokenKind::ModEqual => true,
+            _ => false,
+        }
+    }
+
+    fn parse_function_call(&mut self, name: Identifier) -> ParseResult<Expression> {
+        self.advance()?;
+        let mut arguments = vec![];
+        while self.peek_expression() {
+            arguments.push(self.parse_expression(0)?);
+            match self.peek().kind {
+                TokenKind::Comma => self.advance()?,
+                TokenKind::CloseParen => {
+                    self.advance()?;
+                    break;
+                }
+                _ => {
+                    return Err(CompilerError::new(
+                        "Expected , or )".to_string(),
+                        self.token.span,
+                    ))
+                }
+            }
+        }
+        let function_call = FunctionCall { name, arguments };
+
+        if self.peek_assignment() {
+            self.parse_assignment_tail(AssignmentTarget::FunctionCall(function_call))
+        } else {
+            Ok(Expression::FunctionCall(function_call))
+        }
+    }
+
     fn parse_identifier_expression(&mut self) -> ParseResult<Expression> {
         let identifier = self.parse_identifier()?;
 
+        if self.peek_assignment() {
+            return self.parse_assignment_tail(AssignmentTarget::Identifier(identifier));
+        }
+
         match &self.token.kind {
-            TokenKind::Equal => self.parse_assignment(identifier, AssignmentOperator::Equal),
-            TokenKind::PlusEqual => {
-                self.parse_assignment(identifier, AssignmentOperator::PlusEqual)
-            }
-            TokenKind::MinusEqual => {
-                self.parse_assignment(identifier, AssignmentOperator::MinusEqual)
-            }
-            TokenKind::TimesEqual => {
-                self.parse_assignment(identifier, AssignmentOperator::TimesEqual)
-            }
-            TokenKind::DivEqual => self.parse_assignment(identifier, AssignmentOperator::DivEqual),
-            TokenKind::ModEqual => self.parse_assignment(identifier, AssignmentOperator::ModEqual),
-            TokenKind::OpenParen => {
-                self.advance()?;
-                let mut arguments = vec![];
-                while self.peek_expression() {
-                    arguments.push(self.parse_expression(0)?);
-                    match self.peek().kind {
-                        TokenKind::Comma => self.advance()?,
-                        TokenKind::CloseParen => {
-                            self.advance()?;
-                            break;
-                        }
-                        _ => {
-                            return Err(CompilerError::new(
-                                "Expected , or )".to_string(),
-                                self.token.span,
-                            ))
-                        }
-                    }
-                }
-                Ok(Expression::FunctionCall(FunctionCall {
-                    name: identifier,
-                    arguments,
-                }))
-            }
+            TokenKind::OpenParen => self.parse_function_call(identifier),
             _ => Ok(Expression::Identifier(identifier)),
         }
-        // TODO: Support other operator types
     }
 
     fn peek(&self) -> &Token {

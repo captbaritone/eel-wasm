@@ -84,9 +84,15 @@ pub enum AssignmentOperator {
 
 #[derive(Debug, PartialEq)]
 pub struct Assignment {
-    pub left: Identifier,
+    pub left: AssignmentTarget,
     pub operator: AssignmentOperator,
     pub right: Box<Expression>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AssignmentTarget {
+    Identifier(Identifier),
+    FunctionCall(FunctionCall),
 }
 
 #[derive(Debug, PartialEq)]

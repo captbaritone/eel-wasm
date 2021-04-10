@@ -1,9 +1,9 @@
 use crate::utils::f64_const;
-use crate::{ast::AssignmentOperator, emitter_context::EmitterContext};
+use crate::{ast::AssignmentOperator, emitter_context::EmitterContext, span::Span};
 use crate::{
     ast::{
-        Assignment, BinaryExpression, BinaryOperator, EelFunction, Expression, ExpressionBlock,
-        FunctionCall, UnaryExpression, UnaryOperator,
+        Assignment, AssignmentTarget, BinaryExpression, BinaryOperator, EelFunction, Expression,
+        ExpressionBlock, FunctionCall, UnaryExpression, UnaryOperator,
     },
     builtin_functions::BuiltinFunction,
     constants::BUFFER_SIZE,
@@ -221,51 +221,134 @@ impl<'a> FunctionEmitter<'a> {
         Ok(())
     }
 
-    fn emit_update_assignment(
-        &mut self,
-        assignment_expression: Assignment,
-        update: Instruction,
-    ) -> EmitterResult<()> {
-        let resolved_name = self
-            .context
-            .resolve_variable(assignment_expression.left.name);
-        self.push(Instruction::GetGlobal(resolved_name));
-        self.emit_expression(*assignment_expression.right)?;
-        self.push(update);
-        self.push(Instruction::SetGlobal(resolved_name));
-        self.push(Instruction::GetGlobal(resolved_name));
-        Ok(())
-    }
-
     fn emit_assignment(&mut self, assignment_expression: Assignment) -> EmitterResult<()> {
-        match assignment_expression.operator {
-            AssignmentOperator::Equal => {
-                let resolved_name = self
-                    .context
-                    .resolve_variable(assignment_expression.left.name);
-                self.emit_expression(*assignment_expression.right)?;
-
-                self.push(Instruction::SetGlobal(resolved_name));
-                self.push(Instruction::GetGlobal(resolved_name));
-            }
-            AssignmentOperator::PlusEqual => {
-                self.emit_update_assignment(assignment_expression, Instruction::F64Add)?;
-            }
-            AssignmentOperator::MinusEqual => {
-                self.emit_update_assignment(assignment_expression, Instruction::F64Sub)?;
-            }
-            AssignmentOperator::TimesEqual => {
-                self.emit_update_assignment(assignment_expression, Instruction::F64Mul)?;
-            }
-            AssignmentOperator::DivEqual => {
-                self.emit_update_assignment(assignment_expression, Instruction::F64Div)?;
-            }
+        let updater: Option<Instruction> = match assignment_expression.operator {
+            AssignmentOperator::Equal => None,
+            AssignmentOperator::PlusEqual => Some(Instruction::F64Add),
+            AssignmentOperator::MinusEqual => Some(Instruction::F64Sub),
+            AssignmentOperator::TimesEqual => Some(Instruction::F64Mul),
+            AssignmentOperator::DivEqual => Some(Instruction::F64Div),
             AssignmentOperator::ModEqual => {
                 let index = self.context.resolve_builtin_function(BuiltinFunction::Mod);
-                self.emit_update_assignment(assignment_expression, Instruction::Call(index))?;
+                Some(Instruction::Call(index))
+            }
+        };
+
+        match assignment_expression.left {
+            AssignmentTarget::Identifier(identifier) => {
+                let resolved_name = self.context.resolve_variable(identifier.name);
+                match updater {
+                    None => {
+                        self.emit_expression(*assignment_expression.right)?;
+
+                        self.push(Instruction::SetGlobal(resolved_name));
+                        self.push(Instruction::GetGlobal(resolved_name));
+                    }
+                    Some(update) => {
+                        self.push(Instruction::GetGlobal(resolved_name));
+                        self.emit_expression(*assignment_expression.right)?;
+                        self.push(update);
+                        self.push(Instruction::SetGlobal(resolved_name));
+                        self.push(Instruction::GetGlobal(resolved_name));
+                    }
+                }
+                Ok(())
+            }
+            AssignmentTarget::FunctionCall(mut function_call) => {
+                let memory_offset = match &function_call.name.name[..] {
+                    "megabuf" => 0,
+                    "gmegabuf" => BUFFER_SIZE * 8,
+                    _ => Err(CompilerError::new(
+                        "Only `megabuf()` and `gmegabuf()` can be an assignemnt targets."
+                            .to_string(),
+                        function_call.name.span,
+                    ))?,
+                };
+                // assert arity, assert name
+                match updater {
+                    None => {
+                        // TODO: Move this to builtin_functions
+                        let unnormalized_index = self.resolve_local(ValueType::I32);
+                        let right_value = self.resolve_local(ValueType::F64);
+
+                        let index = function_call.arguments.pop().unwrap();
+                        // Emit the right hand side unconditionally to ensure it always runs.
+                        self.emit_expression(*assignment_expression.right)?;
+                        self.push(Instruction::SetLocal(right_value));
+                        self.emit_expression(index)?;
+                        let get_buffer_index = self
+                            .context
+                            .resolve_builtin_function(BuiltinFunction::GetBufferIndex);
+                        self.push(Instruction::Call(get_buffer_index));
+                        self.push(Instruction::TeeLocal(unnormalized_index));
+                        self.push(Instruction::I32Const(0));
+                        self.push(Instruction::I32LtS);
+                        // STACK: [is the index out of range?]
+                        self.push(Instruction::If(BlockType::Value(ValueType::F64)));
+                        self.push(Instruction::F64Const(f64_const(0.0)));
+                        self.push(Instruction::Else);
+                        self.push(Instruction::GetLocal(unnormalized_index));
+                        self.push(Instruction::TeeLocal(unnormalized_index));
+                        // STACK: [buffer index]
+                        self.push(Instruction::GetLocal(right_value));
+                        // STACK: [buffer index, right]
+                        self.push(Instruction::F64Store(3, memory_offset));
+                        // STACK: []
+                        self.push(Instruction::GetLocal(right_value));
+                        // STACK: [Right/Buffer value]
+                        self.push(Instruction::End);
+                        Ok(())
+                    }
+                    Some(_update) => {
+                        /*
+                                          // TODO: Move this to wasmFunctions once we know how to call functions
+                        // from within functions (need to get the offset).
+                        const index = context.resolveLocal(VAL_TYPE.i32);
+                        const inBounds = context.resolveLocal(VAL_TYPE.i32);
+                        const rightValue = context.resolveLocal(VAL_TYPE.f64);
+                        const result = context.resolveLocal(VAL_TYPE.f64);
+                        return [
+                          ...rightCode,
+                          ...op.local_set(rightValue),
+                          ...emit(left.arguments[0], context),
+                          ...(context.resolveFunc("_getBufferIndex") ?? []),
+                          ...op.local_tee(index),
+                          // STACK: [index]
+                          ...op.i32_const(-1),
+                          op.i32_ne,
+                          ...op.local_tee(inBounds),
+                          ...op.if(BLOCK.f64),
+                          ...op.local_get(index),
+                          ...op.f64_load(3, addOffset),
+                          op.else,
+                          ...op.f64_const(0),
+                          op.end,
+                          // STACK: [current value from memory || 0]
+
+                          // Apply the mutation
+                          ...op.local_get(rightValue),
+                          ...mutationCode,
+
+                          ...op.local_tee(result),
+                          // STACK: [new value]
+
+                          ...op.local_get(inBounds),
+                          ...op.if(BLOCK.void),
+                          ...op.local_get(index),
+                          ...op.local_get(result),
+                          ...op.f64_store(3, addOffset),
+                          op.end,
+                        ];
+                                           */
+                        Err(CompilerError::new(
+                            "Assinging to function calls with an update is not yet supported"
+                                .to_string(),
+                            Span::empty(),
+                        ))
+                    }
+                }
             }
         }
-        Ok(())
     }
 
     fn emit_function_call(&mut self, mut function_call: FunctionCall) -> EmitterResult<()> {
