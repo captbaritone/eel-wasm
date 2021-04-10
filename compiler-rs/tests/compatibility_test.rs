@@ -349,8 +349,6 @@ fn compatibility_tests() {
         "Gmegabuf",
         "Megabuf != Gmegabuf",
         "Gmegabuf != Megabuf",
-        "Assign",
-        "Assign return value",
         "EPSILON buffer indexes",
         "+EPSILON & rounding -#s toward 0",
         "Negative buffer index",

@@ -416,6 +416,24 @@ impl<'a> FunctionEmitter<'a> {
                 let count = function_call.arguments.pop().unwrap();
                 self.emit_loop(count, body)?;
             }
+            "assign" => {
+                assert_arity(&function_call, 2)?;
+                let value = function_call.arguments.pop().unwrap();
+                let variable = function_call.arguments.pop().unwrap();
+                if let Expression::Identifier(identifier) = variable {
+                    let resolved_name = self.context.resolve_variable(identifier.name);
+                    self.emit_expression(value)?;
+                    self.push(Instruction::SetGlobal(resolved_name));
+                    self.push(Instruction::GetGlobal(resolved_name));
+                } else {
+                    Err(CompilerError::new(
+                        "Expected the first argument of `assign()` to be an identifier."
+                            .to_string(),
+                        // TODO: Point this to the first arg
+                        function_call.name.span,
+                    ))?
+                }
+            }
             "megabuf" => self.emit_memory_access(&mut function_call, 0)?,
             "gmegabuf" => self.emit_memory_access(&mut function_call, BUFFER_SIZE * 8)?,
             shim_name if Shim::from_str(shim_name).is_some() => {
