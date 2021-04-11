@@ -228,8 +228,7 @@ fn compatibility_tests() {
         ("Case insensitive funcs", "g = InT(10);", 10.0),
         ("Consecutive semis", "g = 10;;; ;g = 20;;", 20.0),
         ("Equality (< epsilon)", "g = 0.000009 == 0;", 1.0),
-        // TODO: Fix this
-        //  ("Equality (< -epsilon)", "g = -0.000009 == 0;", 1.0),
+        ("Equality (< -epsilon)", "g = -0.000009 == 0;", 1.0),
         ("Variables don't collide", "g = 1; not_g = 2;", 1.0),
         ("Simple block comment", "g = 1; /* g = 10 */", 1.0),
         ("Block comment", "g = 1; /* g = 10 */ g = g * 2;", 2.0),
