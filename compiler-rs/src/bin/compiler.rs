@@ -1,4 +1,5 @@
 use eel_wasm::compile;
+use std::io::{self, Write};
 use std::process;
 use std::{collections::HashMap, fs};
 
@@ -14,7 +15,7 @@ struct Opt {
 
     /// Output file, stdout if not present
     #[structopt(parse(from_os_str))]
-    output: PathBuf,
+    output: Option<PathBuf>,
 }
 
 fn main() {
@@ -34,10 +35,18 @@ fn main() {
         process::exit(1);
     });
 
-    fs::write(opt.output, result).unwrap_or_else(|err| {
-        eprintln!("Error writing output: {}", err);
-        process::exit(1);
-    });
-
-    println!("Done.");
+    match opt.output {
+        Some(output) => {
+            fs::write(output, result).unwrap_or_else(|err| {
+                eprintln!("Error writing output: {}", err);
+                process::exit(1);
+            });
+        }
+        None => {
+            io::stdout().write_all(&result).unwrap_or_else(|err| {
+                eprintln!("Error writing to stdout: {}", err);
+                process::exit(1);
+            });
+        }
+    }
 }
