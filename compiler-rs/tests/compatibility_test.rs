@@ -333,18 +333,7 @@ fn compatibility_tests() {
     ];
 
     let expected_failing: Vec<&str> = vec![
-        "Plus equals (megabuf)",
-        "Minus equals (megabuf)",
-        "Times equals (megabuf)",
-        "Divide equals (megabuf)",
-        "Mod equals (megabuf)",
         "Statement block as argument",
-        "Negative buf index +=",
-        "Negative buf index -=",
-        "Negative buf index *=",
-        "Negative buf index /=",
-        "Negative buf index %=",
-        "Buff += mutates",
         "gmegabuf does not write megabuf",
         "megabuf does not write gmegabuf",
     ];

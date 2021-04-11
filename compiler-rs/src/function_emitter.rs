@@ -299,52 +299,45 @@ impl<'a> FunctionEmitter<'a> {
                         self.push(Instruction::End);
                         Ok(())
                     }
-                    Some(_update) => {
-                        /*
-                                          // TODO: Move this to wasmFunctions once we know how to call functions
+                    Some(update) => {
+                        // TODO: Move this to wasmFunctions once we know how to call functions
                         // from within functions (need to get the offset).
-                        const index = context.resolveLocal(VAL_TYPE.i32);
-                        const inBounds = context.resolveLocal(VAL_TYPE.i32);
-                        const rightValue = context.resolveLocal(VAL_TYPE.f64);
-                        const result = context.resolveLocal(VAL_TYPE.f64);
-                        return [
-                          ...rightCode,
-                          ...op.local_set(rightValue),
-                          ...emit(left.arguments[0], context),
-                          ...(context.resolveFunc("_getBufferIndex") ?? []),
-                          ...op.local_tee(index),
-                          // STACK: [index]
-                          ...op.i32_const(-1),
-                          op.i32_ne,
-                          ...op.local_tee(inBounds),
-                          ...op.if(BLOCK.f64),
-                          ...op.local_get(index),
-                          ...op.f64_load(3, addOffset),
-                          op.else,
-                          ...op.f64_const(0),
-                          op.end,
-                          // STACK: [current value from memory || 0]
-
-                          // Apply the mutation
-                          ...op.local_get(rightValue),
-                          ...mutationCode,
-
-                          ...op.local_tee(result),
-                          // STACK: [new value]
-
-                          ...op.local_get(inBounds),
-                          ...op.if(BLOCK.void),
-                          ...op.local_get(index),
-                          ...op.local_get(result),
-                          ...op.f64_store(3, addOffset),
-                          op.end,
-                        ];
-                                           */
-                        Err(CompilerError::new(
-                            "Assinging to function calls with an update is not yet supported"
-                                .to_string(),
-                            Span::empty(),
-                        ))
+                        let index = self.resolve_local(ValueType::I32);
+                        let in_bounds = self.resolve_local(ValueType::I32);
+                        let right_value = self.resolve_local(ValueType::F64);
+                        let result = self.resolve_local(ValueType::F64);
+                        let left = function_call.arguments.pop().unwrap();
+                        self.emit_expression(*assignment_expression.right)?;
+                        self.push(Instruction::SetLocal(right_value));
+                        self.emit_expression(left)?;
+                        let get_buffer_index = self
+                            .context
+                            .resolve_builtin_function(BuiltinFunction::GetBufferIndex);
+                        self.push(Instruction::Call(get_buffer_index));
+                        self.push(Instruction::TeeLocal(index));
+                        // STACK: [index]
+                        self.push(Instruction::I32Const(-1));
+                        self.push(Instruction::I32Ne);
+                        self.push(Instruction::TeeLocal(in_bounds));
+                        self.push(Instruction::If(BlockType::Value(ValueType::F64)));
+                        self.push(Instruction::GetLocal(index));
+                        self.push(Instruction::F64Load(3, memory_offset));
+                        self.push(Instruction::Else);
+                        self.push(Instruction::F64Const(f64_const(0.0)));
+                        self.push(Instruction::End);
+                        // STACK: [current value from memory || 0]
+                        // Apply the mutation
+                        self.push(Instruction::GetLocal(right_value));
+                        self.push(update);
+                        self.push(Instruction::TeeLocal(result));
+                        self.push(Instruction::GetLocal(in_bounds));
+                        // STACK: [new value]
+                        self.push(Instruction::If(BlockType::NoResult));
+                        self.push(Instruction::GetLocal(index));
+                        self.push(Instruction::GetLocal(result));
+                        self.push(Instruction::F64Store(3, memory_offset));
+                        self.push(Instruction::End);
+                        Ok(())
                     }
                 }
             }
