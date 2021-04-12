@@ -331,18 +331,6 @@ fn compatibility_tests() {
         ),
     ];
 
-    let expected_failing: Vec<&str> = vec![
-        "Statement block as argument",
-        "gmegabuf does not write megabuf",
-        "megabuf does not write gmegabuf",
-    ];
-
-    println!("Failing: {}/{}", expected_failing.len(), test_cases.len());
-    println!(
-        "Passing: {}%",
-        (test_cases.len() - expected_failing.len()) as f64 / test_cases.len() as f64
-    );
-
     for (name, code, expected) in test_cases {
         let mut globals = HashMap::default();
         let mut pool_globals = HashSet::new();
@@ -355,9 +343,6 @@ fn compatibility_tests() {
             "test",
         ) {
             Ok(actual) => {
-                if expected_failing.contains(name) {
-                    panic!(format!("Expected {} to fail, but it passed!", name));
-                }
                 if &actual != expected {
                     panic!(format!(
                         "Bad result for {}. Expected {}, but got {}.",
@@ -366,12 +351,10 @@ fn compatibility_tests() {
                 }
             }
             Err(err) => {
-                if !expected_failing.contains(name) {
-                    panic!(format!(
-                        "Didn't expect \"{}\" to fail. Failed with {:?}",
-                        name, err
-                    ));
-                }
+                panic!(format!(
+                    "Didn't expect \"{}\" to fail. Failed with {:?}",
+                    name, err
+                ));
             }
         }
     }

@@ -1,5 +1,5 @@
 use crate::utils::f64_const;
-use crate::{ast::AssignmentOperator, emitter_context::EmitterContext, span::Span};
+use crate::{ast::AssignmentOperator, emitter_context::EmitterContext};
 use crate::{
     ast::{
         Assignment, AssignmentTarget, BinaryExpression, BinaryOperator, EelFunction, Expression,

@@ -293,7 +293,15 @@ impl<'a> Parser<'a> {
         self.advance()?;
         let mut arguments = vec![];
         while self.peek_expression() {
-            arguments.push(self.parse_expression(0)?);
+            let mut block = self.parse_expression_block()?;
+            // Janky here. Some functions are special and expect the arguments to be specific kinds of
+            // expressions. The possiblity of an ExpressionBlock wrapper complicates those checks, so we
+            // avoid the wrapper in the common case of a single expression.
+            if block.expressions.len() == 1 {
+                arguments.push(block.expressions.pop().unwrap());
+            } else {
+                arguments.push(Expression::ExpressionBlock(block));
+            }
             match self.peek().kind {
                 TokenKind::Comma => self.advance()?,
                 TokenKind::CloseParen => {
