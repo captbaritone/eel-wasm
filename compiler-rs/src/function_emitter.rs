@@ -141,6 +141,7 @@ impl<'a> FunctionEmitter<'a> {
     }
 
     fn emit_binary_expression(&mut self, binary_expression: BinaryExpression) -> EmitterResult<()> {
+        // First we handle cases where we don't just emit arguments in order.
         match binary_expression.op {
             BinaryOperator::LogicalAnd => {
                 return self.emit_logical_expression(
@@ -158,6 +159,8 @@ impl<'a> FunctionEmitter<'a> {
             }
             _ => {}
         }
+
+        // Now handle the common cases where we omit arguments in order.
         self.emit_expression(*binary_expression.left)?;
         self.emit_expression(*binary_expression.right)?;
         match binary_expression.op {
@@ -229,8 +232,8 @@ impl<'a> FunctionEmitter<'a> {
             AssignmentOperator::TimesEqual => Some(Instruction::F64Mul),
             AssignmentOperator::DivEqual => Some(Instruction::F64Div),
             AssignmentOperator::ModEqual => {
-                let index = self.context.resolve_builtin_function(BuiltinFunction::Mod);
-                Some(Instruction::Call(index))
+                let mod_index = self.context.resolve_builtin_function(BuiltinFunction::Mod);
+                Some(Instruction::Call(mod_index))
             }
         };
 
@@ -264,7 +267,7 @@ impl<'a> FunctionEmitter<'a> {
                         function_call.name.span,
                     ))?,
                 };
-                // assert arity, assert name
+                assert_arity(&function_call, 1)?;
                 match updater {
                     None => {
                         // TODO: Move this to builtin_functions
