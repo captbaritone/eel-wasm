@@ -131,7 +131,7 @@ export const op = {
   i32_mul: 0x6c,
   // i32_div_s: 0x6d,
   // i32_div_u: 0x6e,
-  // i32_rem_s: 0x6f,
+  i32_rem_s: 0x6f,
   // i32_rem_u: 0x70,
   i32_and: 0x71,
   i32_or: 0x72,
@@ -160,7 +160,7 @@ export const op = {
   // f64_copysign: 0xa6,
 
   i32_trunc_f64_s: 0xaa,
-  // i32_trunc_f64_u: 0xab,
+  i32_trunc_f64_u: 0xab,
   i64_trunc_s_f64: 0xb0,
   f64_convert_i64_s: 0xb9,
   f64_convert_i32_s: 0xb7,

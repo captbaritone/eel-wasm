@@ -16,6 +16,7 @@ const testCases: [string, string, number][] = [
   ["Divide", "g = 10 / 10;", 1],
   ["Mod", "g = 5 % 2;", 1],
   ["Mod zero", "g = 5 % 0;", 0],
+  ["Mod almost zero", "g = 5 % 0.1;", 0],
   ["Bitwise and", "g = 3 & 5;", 1],
   ["Bitwise or", "g = 3 | 5;", 7],
   ["To the power", "g = 5 ^ 2;", 25],
