@@ -1,6 +1,6 @@
 {
   "name": "eel-wasm",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "main": "dist/src/index.js",
   "license": "MIT",
   "homepage": "https://github.com/captbaritone/eel-wasm",
