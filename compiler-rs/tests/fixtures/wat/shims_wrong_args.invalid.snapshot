@@ -1,0 +1,3 @@
+sin(100,200)
+========================================================================
+Incorrect argument count for function `sin`. Expected 1 but got 2.
