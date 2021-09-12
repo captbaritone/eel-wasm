@@ -81,8 +81,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           return emitExpressionBlock(ast.arguments, context);
         case "if":
           assertArity(3);
-          const [test, consiquent, alternate] = ast.arguments;
-          return emitConditional(test, consiquent, alternate, context);
+          const [test, consequent, alternate] = ast.arguments;
+          return emitConditional(test, consequent, alternate, context);
         case "while":
           assertArity(1);
           return emitWhile(ast.arguments[0], context);
@@ -125,7 +125,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           ];
       }
 
-      // Function calls which can be linlined
+      // Function calls which can be inlined
       const args = flatten(ast.arguments.map(node => emit(node, context)));
       // This is just a continuation of the above switch statement, but it's for functions which all parse their args the same.
       switch (functionName) {
@@ -167,7 +167,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       const invocation = context.resolveFunc(functionName);
       if (
         invocation == null ||
-        // Ensure this isn't a private function. This is a bit awkward becuase
+        // Ensure this isn't a private function. This is a bit awkward because
         // Eel does implement some _ functions but while they are _intended_ to be
         // private, they accidentally expose them. We should find a cleaner way
         // to defining user accessible functions vs utility functions used by
@@ -230,7 +230,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       const localIndex = context.resolveLocal(VAL_TYPE.i32);
       if (left.arguments.length !== 1) {
         throw createUserError(
-          `Expected 1 argument when assinging to a buffer but got ${left.arguments.length}.`,
+          `Expected 1 argument when assigning to a buffer but got ${left.arguments.length}.`,
           left.arguments.length === 0 ? left.loc : left.arguments[1].loc,
           context.rawSource
         );
@@ -322,11 +322,11 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
       const behaviorMap = {
         "&&": {
           comparison: IS_ZEROISH,
-          shortCircutValue: 0,
+          shortCircuitValue: 0,
         },
         "||": {
           comparison: IS_NOT_ZEROISH,
-          shortCircutValue: 1,
+          shortCircuitValue: 1,
         },
       };
       const behavior = behaviorMap[ast.operator];
@@ -338,12 +338,12 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           context.rawSource
         );
       }
-      const { comparison, shortCircutValue } = behavior;
+      const { comparison, shortCircuitValue } = behavior;
       return [
         ...left,
         ...comparison,
         ...op.if(BLOCK.f64),
-        ...op.f64_const(shortCircutValue),
+        ...op.f64_const(shortCircuitValue),
         op.else,
         ...right,
         ...IS_NOT_ZEROISH,
@@ -462,7 +462,7 @@ function emitLoop(
 
 function emitConditional(
   test: Ast,
-  consiquent: Ast,
+  consequent: Ast,
   alternate: Ast,
   context: CompilerContext
 ): number[] {
@@ -472,7 +472,7 @@ function emitConditional(
     ...emit(test, context),
     ...IS_NOT_ZEROISH,
     ...op.if(BLOCK.f64),
-    ...emit(consiquent, context),
+    ...emit(consequent, context),
     op.else,
     ...emit(alternate, context),
     op.end,

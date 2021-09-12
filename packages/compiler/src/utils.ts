@@ -25,7 +25,7 @@ export function repeat(n: number, char: string): string {
 // Maintain an ordered list of indexes for namespace/key pairs.
 // In Wasm binary variables are referenced by their index. In our emitter we
 // want to emit variables indexes as we encounter their names. This data
-// structure lets us issue variable indexes on demmand and then iterate through
+// structure lets us issue variable indexes on demand and then iterate through
 // them post facto.
 //
 // `null` may be passed for the namespace argument in order to get a global

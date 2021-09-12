@@ -6,7 +6,7 @@ export const WASM_VERSION = [0x01, 0x00, 0x00, 0x00];
 
 export const EPSILON = 0.00001;
 
-// An intial attempt to construct a Wasm binary by hand.
+// An initial attempt to construct a Wasm binary by hand.
 /*
 0	custom section
 1	type section
