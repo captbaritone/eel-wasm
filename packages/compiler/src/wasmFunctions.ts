@@ -54,7 +54,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     localVariables: [VAL_TYPE.i32],
-    // TODO: Simplify all this type coersion
+    // TODO: Simplify all this type coercion
     binary: [
       ...op.local_get(1),
       op.i32_trunc_f64_s,
@@ -126,7 +126,7 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   // `-1` are not affected.
   _getBufferIndex: {
     args: [VAL_TYPE.f64 /* 0: $index */],
-    returns: [VAL_TYPE.i32 /* $noramlizedIndex */],
+    returns: [VAL_TYPE.i32 /* $normalizedIndex */],
     localVariables: [
       VAL_TYPE.f64, // 1: $with_near
       VAL_TYPE.i32, // 2: $truncated

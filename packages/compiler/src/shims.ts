@@ -3,7 +3,7 @@ import { Shims } from "./types";
 const EPSILON = 0.00001;
 
 const shims: Shims = {
-  // TODO: Reimplement some of these functions natively in Wasm?
+  // TODO: Re-implement some of these functions natively in Wasm?
   sin: Math.sin,
   cos: Math.cos,
   tan: Math.tan,

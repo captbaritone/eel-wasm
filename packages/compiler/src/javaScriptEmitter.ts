@@ -47,7 +47,7 @@ export function emitter(ast: Ast, context: Context): string {
         const { left } = ast;
         if (left.arguments.length !== 1) {
           throw createUserError(
-            `Expected 1 argument when assinging to a buffer but got ${left.arguments.length}.`,
+            `Expected 1 argument when assigning to a buffer but got ${left.arguments.length}.`,
             left.arguments.length === 0 ? left.loc : left.arguments[1].loc,
             context.rawSource
           );

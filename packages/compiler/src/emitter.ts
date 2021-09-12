@@ -81,8 +81,8 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           return emitExpressionBlock(ast.arguments, context);
         case "if":
           assertArity(3);
-          const [test, consiquent, alternate] = ast.arguments;
-          return emitConditional(test, consiquent, alternate, context);
+          const [test, consequent, alternate] = ast.arguments;
+          return emitConditional(test, consequent, alternate, context);
         case "while":
           assertArity(1);
           return emitWhile(ast.arguments[0], context);

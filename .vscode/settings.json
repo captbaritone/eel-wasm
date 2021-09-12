@@ -1,8 +1,18 @@
 {
     "cSpell.words": [
+        "bnot",
+        "copysign",
+        "encodef",
         "gmegabuf",
+        "hashable",
+        "importdesc",
+        "jison",
         "megabuf",
+        "Milkdrop's",
+        "popcnt",
+        "shimdex",
         "unnormalized",
+        "xports",
         "ZEROISH"
     ]
 }

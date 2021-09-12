@@ -165,7 +165,7 @@ export function compileModule({
 
   const localFuncs = localFuncOrder.map(name => {
     const func = localFuncMap[name];
-    // This check is technicaly redundant since we check inside resolveLocalFunc
+    // This check is technically redundant since we check inside resolveLocalFunc
     // in the compiler context. It's here just to catch potential compiler bugs.
     if (func == null) {
       throw new Error(`Undefined local function "${name}"`);
@@ -271,7 +271,7 @@ export function compileModule({
 
   // https://webassembly.github.io/spec/core/binary/modules.html#code-section
   const codes = [...localFuncs, ...moduleFuncs].map(func => {
-    // TODO: We could collapose consecutive types here, or even move to a two
+    // TODO: We could collapse consecutive types here, or even move to a two
     // pass approach where ids are resolved after the emitter is run.
     const localTypes = (func.localVariables ?? []).map(type => {
       return [...unsignedLEB128(1), type];

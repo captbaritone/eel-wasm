@@ -30,17 +30,17 @@ export function mapAst(ast, cb) {
   }
   children.forEach(child => {
     if (child.type === "NODE") {
-      const orignalChild = ast[child.key];
-      const newChild = mapAst(orignalChild, cb);
-      if (newChild !== orignalChild) {
+      const originalChild = ast[child.key];
+      const newChild = mapAst(originalChild, cb);
+      if (newChild !== originalChild) {
         newAst = { ...newAst, [child.key]: newChild };
       }
     } else if (child.type === "ARRAY") {
-      const orignalChildren = ast[child.key];
-      const newChildren = orignalChildren.map(originalChild =>
+      const originalChildren = ast[child.key];
+      const newChildren = originalChildren.map(originalChild =>
         mapAst(originalChild, cb)
       );
-      const childrenHaveChanged = orignalChildren.some(
+      const childrenHaveChanged = originalChildren.some(
         (child, i) => child !== newChildren[i]
       );
       if (childrenHaveChanged) {
