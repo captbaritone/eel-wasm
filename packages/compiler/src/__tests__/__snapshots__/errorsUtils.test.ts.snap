@@ -8,7 +8,7 @@ exports[`assign_non_identifier.eel 2`] = `
     |        ^^^^^^"
 `;
 
-exports[`assign_to_buffer_too_many_args.eel 1`] = `"Expected 1 argument when assinging to a buffer but got 2."`;
+exports[`assign_to_buffer_too_many_args.eel 1`] = `"Expected 1 argument when assigning to a buffer but got 2."`;
 
 exports[`assign_to_buffer_too_many_args.eel 2`] = `
 "
@@ -16,7 +16,7 @@ exports[`assign_to_buffer_too_many_args.eel 2`] = `
     |            ^"
 `;
 
-exports[`assign_to_buffer_zero_args.eel 1`] = `"Expected 1 argument when assinging to a buffer but got 0."`;
+exports[`assign_to_buffer_zero_args.eel 1`] = `"Expected 1 argument when assigning to a buffer but got 0."`;
 
 exports[`assign_to_buffer_zero_args.eel 2`] = `
 "
