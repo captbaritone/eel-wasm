@@ -12,7 +12,7 @@ test("Can execute hand crafted binary Wasm", async () => {
     shims,
   };
 
-  const buffer = compileModule({
+  const buffer = await compileModule({
     pools: {
       main: new Set(Object.keys(importObject.main)),
     },

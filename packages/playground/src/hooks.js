@@ -74,19 +74,20 @@ export function useWasm(code, globals, eelVersion) {
     if (code == null) {
       return;
     }
-    try {
-      const wasm = compileModule({
-        functions: {
-          main: { pool: "main", code }
-        },
-        pools: { main: new Set(Object.keys(globals)) },
-        eelVersion
+    compileModule({
+      functions: {
+        main: { pool: "main", code }
+      },
+      pools: { main: new Set(Object.keys(globals)) },
+      eelVersion
+    })
+      .then(wasm => {
+        setWasm(wasm);
+        setWasmError(null);
+      })
+      .catch(e => {
+        setWasmError(e);
       });
-      setWasm(wasm);
-      setWasmError(null);
-    } catch (e) {
-      setWasmError(e);
-    }
   }, [code, eelVersion, globals]);
 
   return [wasm, wasmError, eelVersion];
