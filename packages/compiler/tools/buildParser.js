@@ -1,4 +1,5 @@
-const { Parser } = require("jison");
+import pkg from "jison";
+const { Parser } = pkg;
 
 const binaryExpression =
   "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2, loc: @$}";
@@ -145,7 +146,15 @@ const grammar = {
 var parser = new Parser(grammar);
 
 // If called from CLI, we should output source.
-if (require.main === module) {
+// In ES modules, we can check if this file is the main module using import.meta.url
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Check if this script was run directly
+if (process.argv[1] === __filename) {
   const settings = {
     moduleType: "js",
     // Without this Jison defaults to including a commandline interface to the generated module.
@@ -167,8 +176,6 @@ export function parse() {
 
 // you can also use the parser directly from memory
 
-module.exports = {
-  parse: program => {
-    return parser.parse(program);
-  },
-};
+export function parse(program) {
+  return parser.parse(program);
+}
