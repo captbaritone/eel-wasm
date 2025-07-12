@@ -8,8 +8,10 @@
     "sourceMap": true,
     "strictNullChecks": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "target": "ES2017",
-    "module": "commonjs",
+    "module": "ES2022",
+    "moduleResolution": "node",
     "types": ["node", "jest"]
   },
   "include": ["./src/**/*"]

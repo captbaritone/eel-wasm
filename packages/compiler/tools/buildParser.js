@@ -151,8 +151,13 @@ if (require.main === module) {
     // Without this Jison defaults to including a commandline interface to the generated module.
     moduleMain: () => {},
   };
+
+  // Remove unused label: `_token_stack:`;
+
+  const unusedLabel = "_token_stack:";
+
   // jison does not support es modules so we do it ourselves.
-  const mod = `${parser.generateModule(settings)}
+  const mod = `${parser.generateModule(settings).replace(unusedLabel, "")}
 export function parse() {
   return parser.parse.apply(parser, arguments);
 };

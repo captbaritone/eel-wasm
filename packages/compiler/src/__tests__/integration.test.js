@@ -36,10 +36,10 @@ test("Minimal example", async () => {
 
 test("parse", () => {
   expect(parse("1;")).toMatchInlineSnapshot(`
-    Object {
-      "body": Array [
-        Object {
-          "loc": Object {
+    {
+      "body": [
+        {
+          "loc": {
             "first_column": 0,
             "first_line": 1,
             "last_column": 1,
@@ -49,7 +49,7 @@ test("parse", () => {
           "value": 1,
         },
       ],
-      "loc": Object {
+      "loc": {
         "first_column": 0,
         "first_line": 1,
         "last_column": 2,
