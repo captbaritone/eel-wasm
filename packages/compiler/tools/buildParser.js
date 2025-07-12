@@ -147,11 +147,17 @@ var parser = new Parser(grammar);
 // If called from CLI, we should output source.
 if (require.main === module) {
   const settings = {
-    moduleType: "commonjs",
+    moduleType: "js",
     // Without this Jison defaults to including a commandline interface to the generated module.
     moduleMain: () => {},
   };
-  console.log(parser.generate(settings));
+  // jison does not support es modules so we do it ourselves.
+  const mod = `${parser.generateModule(settings)}
+export function parse() {
+  return parser.parse.apply(parser, arguments);
+};
+`;
+  console.log(mod);
 }
 
 // you can also use the parser directly from memory
