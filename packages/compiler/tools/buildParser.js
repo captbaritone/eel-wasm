@@ -1,4 +1,6 @@
-import { Parser } from "jison";
+import Jison from "jison";
+
+const Parser = Jison.Parser;
 
 const binaryExpression =
   "$$ = {type: 'BINARY_EXPRESSION', left: $1, right: $3, operator: $2, loc: @$}";
@@ -144,31 +146,20 @@ const grammar = {
 
 var parser = new Parser(grammar);
 
-// If called from CLI, we should output source.
-if (require.main === module) {
-  const settings = {
-    moduleType: "js",
-    // Without this Jison defaults to including a commandline interface to the generated module.
-    moduleMain: () => {},
-  };
+const settings = {
+  moduleType: "js",
+  // Without this Jison defaults to including a commandline interface to the generated module.
+  moduleMain: () => {},
+};
 
-  // Remove unused label: `_token_stack:`;
+// Remove unused label: `_token_stack:`;
 
-  const unusedLabel = "_token_stack:";
+const unusedLabel = "_token_stack:";
 
-  // jison does not support es modules so we do it ourselves.
-  const mod = `${parser.generateModule(settings).replace(unusedLabel, "")}
+// jison does not support es modules so we do it ourselves.
+const mod = `${parser.generateModule(settings).replace(unusedLabel, "")}
 export function parse() {
   return parser.parse.apply(parser, arguments);
 };
 `;
-  console.log(mod);
-}
-
-// you can also use the parser directly from memory
-
-module.exports = {
-  parse: program => {
-    return parser.parse(program);
-  },
-};
+console.log(mod);

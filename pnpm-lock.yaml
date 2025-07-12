@@ -19,6 +19,9 @@ importers:
 
   packages/compiler:
     devDependencies:
+      '@babel/core':
+        specifier: ^7.12.0
+        version: 7.28.0
       '@types/jest':
         specifier: ^25.2.1
         version: 25.2.1
