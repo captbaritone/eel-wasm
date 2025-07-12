@@ -17,21 +17,22 @@
   ],
   "scripts": {
     "test": "jest",
-    "ci": "yarn test && yarn build",
+    "ci": "pnpm test && pnpm build",
     "benchmark": "node tools/benchmark/performance.js perf",
     "consistency": "node tools/benchmark/performance.js consistency",
     "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
     "test-compile": "node tools/parseMilk.js --stats --summary --compile --dir=./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
-    "build": "yarn build-parser && tsc && parcel build src/index.ts -o dist/index.bundle.js --experimental-scope-hoisting",
+    "build": "pnpm build-parser && tsc && parcel build src/index.ts -o dist/index.bundle.js --experimental-scope-hoisting",
     "clean": "rm -rf build/*",
-    "prepublishOnly": "yarn test && yarn clean && yarn build"
+    "prepublishOnly": "pnpm test && pnpm clean && pnpm build"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
     "@babel/preset-typescript": "^7.9.0",
     "@types/jest": "^25.2.1",
+    "@types/node": "^13.11.1",
     "babel-jest": "^25.3.0",
     "jest": "^24.9.0",
     "jison": "^0.4.18",

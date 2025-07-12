@@ -5,7 +5,7 @@
   publish = "packages/playground/build"
 
   # Default build command.
-  command = "yarn build"
+  command = "pnpm build"
 
 [build.environment]
   NODE_OPTIONS = "--max_old_space_size=4096"
