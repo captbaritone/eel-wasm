@@ -6,7 +6,7 @@
     ]
   },
   "scripts": {
-    "build": "yarn workspace eel-wasm run build && yarn workspace playground run build",
-    "test": "yarn workspaces run test"
+    "build": "pnpm --filter eel-wasm run build && pnpm --filter playground run build",
+    "test": "pnpm -r run test"
   }
 }
