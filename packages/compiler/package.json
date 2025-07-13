@@ -1,6 +1,6 @@
 {
   "name": "eel-wasm",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "type": "module",
   "main": "dist/index.js",
   "exports": {
@@ -31,7 +31,7 @@
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
     "build": "pnpm build-parser && rollup -c && tsc",
     "clean": "rm -rf build/*",
-    "prepublishOnly": "pnpm test && pnpm clean && pnpm build"
+    "prepublishOnly": "vitest --run && pnpm clean && pnpm build"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",

@@ -107,7 +107,7 @@ The [**preprocessor**](./packages/compiler/src/preProcessor.ts) takes the raw so
 
 The [**parser**](./packages/compiler/src/parser.ts), written using [jison](https://zaa.ch/jison/), takes the stripped source emitted by the **preprocessor** and returns an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 
-The implemenatation of the parser lives in [buildParser.js](./packages/compiler/tools/buildParser.js) which is a node script that uses jison to generate the actual parser code which is written to [build/parser.js](./packages/compiler/build/parser.js).
+The implementation of the parser lives in [buildParser.js](./packages/compiler/tools/buildParser.js) which is a node script that uses jison to generate the actual parser code which is written to [build/parser.js](./packages/compiler/build/parser.js).
 
 The AST returned by the jison parser is annotated with line/column numbers for each node, but those refer to the stripped source, so before returning the AST to the caller, we walk the AST and map the location back to the raw source location using `getLoc`.
 
