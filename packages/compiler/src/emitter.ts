@@ -1,10 +1,10 @@
-import { op, VAL_TYPE, BLOCK, IS_ZEROISH, IS_NOT_ZEROISH } from "./encoding";
-import shims from "./shims";
-import { createUserError, createCompilerError } from "./errorUtils";
-import { Ast, CompilerContext, AssignmentExpressionAstNode } from "./types";
-import { localFuncMap } from "./wasmFunctions";
-import { flatten, arrayJoin } from "./utils";
-import { BUFFER_SIZE, MAX_LOOP_COUNT } from "./constants";
+import { op, VAL_TYPE, BLOCK, IS_ZEROISH, IS_NOT_ZEROISH } from "./encoding.js";
+import shims from "./shims.js";
+import { createUserError, createCompilerError } from "./errorUtils.js";
+import { Ast, CompilerContext, AssignmentExpressionAstNode } from "./types.js";
+import { localFuncMap } from "./wasmFunctions.js";
+import { flatten, arrayJoin } from "./utils.js";
+import { BUFFER_SIZE, MAX_LOOP_COUNT } from "./constants.js";
 
 export function emit(ast: Ast, context: CompilerContext): number[] {
   switch (ast.type) {

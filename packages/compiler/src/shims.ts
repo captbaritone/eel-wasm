@@ -1,4 +1,4 @@
-import { Shims } from "./types";
+import { Shims } from "./types.js";
 
 const EPSILON = 0.00001;
 

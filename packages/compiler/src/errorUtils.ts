@@ -1,5 +1,5 @@
-import { SourceLocation } from "./types";
-import { repeat } from "./utils";
+import { SourceLocation } from "./types.js";
+import { repeat } from "./utils.js";
 
 /* Build up a string showing a formatted source location in context with line numbers.
  *

@@ -1,5 +1,5 @@
-import * as ieee754 from "./ieee754";
-import { flatten } from "./utils";
+import * as ieee754 from "./ieee754.js";
+import { flatten } from "./utils.js";
 
 export const MAGIC = [0x00, 0x61, 0x73, 0x6d];
 export const WASM_VERSION = [0x01, 0x00, 0x00, 0x00];

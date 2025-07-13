@@ -1,4 +1,4 @@
-import { preProcess, getLoc } from "../preProcessor";
+import { preProcess, getLoc } from "../preProcessor.js";
 import { expect, test, describe } from "vitest";
 
 describe("getLoc", () => {

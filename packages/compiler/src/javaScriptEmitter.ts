@@ -1,6 +1,6 @@
-import { Ast } from "./types";
+import { Ast } from "./types.js";
 
-import { createUserError } from "./errorUtils";
+import { createUserError } from "./errorUtils.js";
 
 function isZeroish(num: string) {
   return `(Math.abs(${num}) < 0.00001)`;

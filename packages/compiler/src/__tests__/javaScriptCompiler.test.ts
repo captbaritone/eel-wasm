@@ -1,6 +1,6 @@
-import { parse } from "../parser";
-import testCases from "../../tools/testCases";
-import { emitter } from "../javaScriptEmitter";
+import { parse } from "../parser.js";
+import testCases from "../../tools/testCases.js";
+import { emitter } from "../javaScriptEmitter.js";
 import { expect, test, describe } from "vitest";
 
 function compileToJavaScript(code: string): string {

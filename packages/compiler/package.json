@@ -3,14 +3,11 @@
   "version": "0.0.15",
   "type": "module",
   "main": "dist/index.js",
-  "exports": "./dist/index.js",
-  "source": "src/index.ts",
-  "targets": {
-    "main": {
-      "outputFormat": "esmodule",
-      "isLibrary": true
-    }
+  "exports": {
+    "import": "./dist/index.js",
+    "types": "./dist/types/index.d.ts"
   },
+  "source": "src/index.ts",
   "license": "MIT",
   "homepage": "https://github.com/captbaritone/eel-wasm",
   "author": "Jordan Eldredge <jordan@jordaneldredge.com>",
@@ -32,7 +29,7 @@
     "test-parse": "node tools/parseMilk.js --stats --summary --dir=./fixtures/mega",
     "test-compile": "node tools/parseMilk.js --stats --summary --compile --dir=./fixtures/mega",
     "build-parser": "node ./tools/buildParser.js > ./build/parser.js",
-    "build": "pnpm build-parser && rollup -c",
+    "build": "pnpm build-parser && rollup -c && tsc",
     "clean": "rm -rf build/*",
     "prepublishOnly": "pnpm test && pnpm clean && pnpm build"
   },

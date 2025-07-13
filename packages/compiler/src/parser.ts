@@ -1,10 +1,10 @@
-import { preProcess, getLoc, Mapper } from "./preProcessor";
-import { Ast, SourceLocation } from "./types";
+import { preProcess, getLoc, Mapper } from "./preProcessor.js";
+import { Ast, SourceLocation } from "./types.js";
 // @ts-ignore
 import { parse as envParse } from "../build/parser";
 // @ts-ignore
 import { mapAst } from "./astUtils";
-import { createUserError, createCompilerError } from "./errorUtils";
+import { createUserError, createCompilerError } from "./errorUtils.js";
 
 function mapLoc(loc: SourceLocation, mapper: Mapper): SourceLocation {
   const first = getLoc(mapper, loc.first_column);

@@ -1,6 +1,6 @@
-import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON, BLOCK } from "./encoding";
-import { FunctionDefinition } from "./types";
-import { BUFFER_SIZE } from "./constants";
+import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON, BLOCK } from "./encoding.js";
+import { FunctionDefinition } from "./types.js";
+import { BUFFER_SIZE } from "./constants.js";
 
 export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   sqr: {

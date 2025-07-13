@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { compileModule } from "../compiler";
-import { printLoc } from "../errorUtils";
+import { compileModule } from "../compiler.js";
+import { printLoc } from "../errorUtils.js";
 import { expect, test, describe } from "vitest";
 
 const DIR = path.join(__dirname, "../../fixtures/errors");

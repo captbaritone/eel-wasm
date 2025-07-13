@@ -1,5 +1,5 @@
-import { parse } from "./parser";
-import { emit } from "./emitter";
+import { parse } from "./parser.js";
+import { emit } from "./emitter.js";
 import {
   encodeString,
   encodeNestedVector,
@@ -16,12 +16,12 @@ import {
   MAGIC,
   WASM_VERSION,
   encodeFlatVector,
-} from "./encoding";
-import shims from "./shims";
-import * as Utils from "./utils";
-import { localFuncMap } from "./wasmFunctions";
-import { CompilerContext, TypedFunction, EelVersion } from "./types";
-import { WASM_MEMORY_SIZE } from "./constants";
+} from "./encoding.js";
+import shims from "./shims.js";
+import * as Utils from "./utils.js";
+import { localFuncMap } from "./wasmFunctions.js";
+import { CompilerContext, TypedFunction, EelVersion } from "./types.js";
+import { WASM_MEMORY_SIZE } from "./constants.js";
 
 type CompilerOptions = {
   pools: {

@@ -1,6 +1,6 @@
-import shims from "./shims";
-import { compileModule } from "./compiler";
-import { EelVersion } from "./types";
+import shims from "./shims.js";
+import { compileModule } from "./compiler.js";
+import { EelVersion } from "./types.js";
 
 type LoadModuleOptions = {
   pools: {
