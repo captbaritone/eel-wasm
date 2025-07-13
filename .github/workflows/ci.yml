@@ -16,10 +16,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install pnpm
+        run: npm install -g pnpm
       - name: Run Tests
         run: |
-          yarn
-          yarn build
-          yarn test
+          pnpm install
+          pnpm run build
+          pnpm test
         env:
           CI: true

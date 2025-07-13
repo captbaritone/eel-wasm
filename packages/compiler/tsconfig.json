@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
-    "allowJs": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
     "downlevelIteration": true,
@@ -9,7 +7,8 @@
     "strictNullChecks": true,
     "esModuleInterop": true,
     "target": "ES2017",
-    "module": "commonjs"
+    "module": "esnext",
+    "types": ["node"]
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "./build/**/*"]
 }

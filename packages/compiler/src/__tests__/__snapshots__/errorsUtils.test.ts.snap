@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`assign_non_identifier.eel 1`] = `"Expected the first argument of \`assign()\` to be an identifier."`;
 
@@ -59,7 +59,7 @@ exports[`too_many_arguments.eel 2`] = `
     |               ^"
 `;
 
-exports[`undefined_function.eel 1`] = `"\\"noexist\\" is not defined."`;
+exports[`undefined_function.eel 1`] = `""noexist" is not defined."`;
 
 exports[`undefined_function.eel 2`] = `
 "
@@ -67,7 +67,7 @@ exports[`undefined_function.eel 2`] = `
     |     ^^^^^^^"
 `;
 
-exports[`undefined_function_multiline.eel 1`] = `"\\"noexist\\" is not defined."`;
+exports[`undefined_function_multiline.eel 1`] = `""noexist" is not defined."`;
 
 exports[`undefined_function_multiline.eel 2`] = `
 "
@@ -78,7 +78,7 @@ exports[`undefined_function_multiline.eel 2`] = `
 "
 `;
 
-exports[`undefined_function_with_comments.eel 1`] = `"\\"noexist\\" is not defined."`;
+exports[`undefined_function_with_comments.eel 1`] = `""noexist" is not defined."`;
 
 exports[`undefined_function_with_comments.eel 2`] = `
 "

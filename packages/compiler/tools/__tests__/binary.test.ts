@@ -1,5 +1,6 @@
 import shims from "../../src/shims";
 import { compileModule } from "../../src/compiler";
+import { expect, test } from "vitest";
 
 // An attempt at generating Wasm binary directly (without the help fo wabt)
 // TODO: We can probably delete this now.

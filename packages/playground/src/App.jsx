@@ -1,7 +1,7 @@
 import { Range } from "monaco-editor";
 import React, { useEffect, useState, useMemo } from "react";
 import "./App.css";
-import Editor, { ControlledEditor } from "@monaco-editor/react";
+import MonacoEditor from "@monaco-editor/react";
 import {
   useUrlState,
   useForceUpdate,
@@ -47,6 +47,8 @@ function App() {
   const anyErrors = astError != null || wasmError != null;
   const [mod, modError] = useMod(anyErrors ? null : wasm, globals);
   const forceUpdate = useForceUpdate();
+
+  console.log("eel", eel);
 
   const run = useMemo(() => {
     if (mod == null) {
@@ -113,14 +115,16 @@ function App() {
       </div>
       <Column>
         <h2>Code</h2>
-        <ControlledEditor
+        <MonacoEditor
           editorDidMount={(_, editor) => {
             setEditor(editor);
           }}
           height="40vh"
           width="100%"
           value={eel}
-          onChange={(ev, value) => setEel(value)}
+          onChange={(newValue) => {
+            setEel(newValue)
+          }}
           options={{ ...EDITOR_OPTIONS, lineNumbers: "on" }}
         />
         <div>
@@ -173,7 +177,7 @@ function App() {
         {wasmError != null && wasmError.loc == null && (
           <ErrorBlock>{wasmError.message}</ErrorBlock>
         )}
-        <Editor
+        <MonacoEditor
           height={"90vh"}
           width="100%"
           language="json"
@@ -186,7 +190,7 @@ function App() {
         {modError != null && modError.loc == null && (
           <ErrorBlock>{modError.message}</ErrorBlock>
         )}
-        <Editor
+        <MonacoEditor
           height="90vh"
           width="100%"
           language="wasm"

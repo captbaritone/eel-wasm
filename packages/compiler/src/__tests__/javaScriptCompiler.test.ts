@@ -1,6 +1,7 @@
 import { parse } from "../parser";
 import testCases from "../../tools/testCases";
 import { emitter } from "../javaScriptEmitter";
+import { expect, test, describe } from "vitest";
 
 function compileToJavaScript(code: string): string {
   const ast = parse(code);
