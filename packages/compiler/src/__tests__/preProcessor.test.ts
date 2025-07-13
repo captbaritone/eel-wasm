@@ -1,4 +1,5 @@
 import { preProcess, getLoc } from "../preProcessor";
+import { expect, test, describe } from "vitest";
 
 describe("getLoc", () => {
   test("basic", () => {

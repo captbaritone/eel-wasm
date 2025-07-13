@@ -1,9 +1,10 @@
-const { loadModule } = require("../loader");
-const fs = require("fs");
-const path = require("path");
-const MILKDROP_GLOBALS = require("../../tools/milkdropGlobals");
-const { parse } = require("../parser");
-const { default: testCases } = require("../../tools/testCases");
+import { loadModule } from "../loader";
+import fs from "fs";
+import path from "path";
+import MILKDROP_GLOBALS from "../../tools/milkdropGlobals";
+import { parse } from "../parser";
+import testCases from "../../tools/testCases";
+import { expect, test, describe } from "vitest";
 
 test("Minimal example", async () => {
   // Initialize global values avaliable to your EEL scripts (and JS).

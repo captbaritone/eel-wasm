@@ -1,6 +1,8 @@
 import { preProcess, getLoc, Mapper } from "./preProcessor";
 import { Ast, SourceLocation } from "./types";
-import { parse as envParse } from "./envParser";
+// @ts-ignore
+import { parse as envParse } from "../build/parser";
+// @ts-ignore
 import { mapAst } from "./astUtils";
 import { createUserError, createCompilerError } from "./errorUtils";
 

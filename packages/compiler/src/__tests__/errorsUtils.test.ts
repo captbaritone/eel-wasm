@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { compileModule } from "../compiler";
 import { printLoc } from "../errorUtils";
+import { expect, test, describe } from "vitest";
 
 const DIR = path.join(__dirname, "../../fixtures/errors");
 
