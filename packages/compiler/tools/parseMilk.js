@@ -128,17 +128,17 @@ const BAD = new Set([
   "fixtures/mega/Telek & EMPR - Hell Cave (Fiddle A Bit (Flicker @xis) Mix).milk", // vnum_increment = ;
 ]);
 
-function validate(milkPath, context) {
+async function validate(milkPath, context) {
   if (BAD.has(milkPath)) {
     return;
   }
   const presetIni = fs.readFileSync(milkPath, { encoding: "utf8" });
   const eels = getEels(presetIni);
 
-  Object.entries(eels).forEach(([name, eel]) => {
+  for (const [name, eel] of Object.entries(eels)) {
     try {
       const root = parse(eel);
-      compileModule({
+      await compileModule({
         globals: new Set(),
         functions: { run: root },
         shims,
@@ -155,7 +155,7 @@ function validate(milkPath, context) {
       }
       throw e;
     }
-  });
+  }
 }
 
 let milkFiles;
@@ -184,10 +184,10 @@ const context = {
 const errors = {};
 let good = 0;
 let bad = 0;
-milkFiles.forEach(milk => {
+for (const milk of milkFiles) {
   // console.log(`Validating eel in "${milk}"...`);
   try {
-    validate(milk, context);
+    await validate(milk, context);
     good++;
   } catch (e) {
     const messageLines = e.message.split("\n");
@@ -209,7 +209,7 @@ milkFiles.forEach(milk => {
     }
     bad++;
   }
-});
+}
 
 if (bad === 0) {
   console.log("No errors found!");
