@@ -1,0 +1,23 @@
+1+1
+========================================================================
+EelFunction {
+    expressions: ExpressionBlock {
+        expressions: [
+            BinaryExpression(
+                BinaryExpression {
+                    left: NumberLiteral(
+                        NumberLiteral {
+                            value: 1.0,
+                        },
+                    ),
+                    right: NumberLiteral(
+                        NumberLiteral {
+                            value: 1.0,
+                        },
+                    ),
+                    op: Add,
+                },
+            ),
+        ],
+    },
+}

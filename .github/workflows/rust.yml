@@ -1,0 +1,26 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master, ci-execution ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: ./compiler-rs
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
+    - name: Ensure formatted
+      run: cargo fmt --all -- --check
+    - name: Run Cargo tests
+      run: cargo test

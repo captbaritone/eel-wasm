@@ -1,0 +1,52 @@
+use eel_wasm::compile;
+use std::io::{self, Write};
+use std::process;
+use std::{collections::HashMap, fs};
+
+use std::path::PathBuf;
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "eel-wasm", about = "Compile Eel code to WebAssembly.")]
+struct Opt {
+    /// Input file
+    #[structopt(parse(from_os_str))]
+    input: PathBuf,
+
+    /// Output file, stdout if not present
+    #[structopt(parse(from_os_str))]
+    output: Option<PathBuf>,
+}
+
+fn main() {
+    let opt = Opt::from_args();
+    let filename = opt.input;
+    let source = fs::read_to_string(filename).unwrap_or_else(|err| {
+        eprintln!("Error reading file: {}", err);
+        process::exit(1);
+    });
+
+    let result = compile(
+        vec![("test".to_string(), &source, "pool".to_string())],
+        HashMap::default(),
+    )
+    .unwrap_or_else(|err| {
+        eprintln!("{:?}", err);
+        process::exit(1);
+    });
+
+    match opt.output {
+        Some(output) => {
+            fs::write(output, result).unwrap_or_else(|err| {
+                eprintln!("Error writing output: {}", err);
+                process::exit(1);
+            });
+        }
+        None => {
+            io::stdout().write_all(&result).unwrap_or_else(|err| {
+                eprintln!("Error writing to stdout: {}", err);
+                process::exit(1);
+            });
+        }
+    }
+}
