@@ -1,4 +1,6 @@
 const testCases: [string, string, number][] = [
+  // https://github.com/captbaritone/eel-wasm/issues/61
+  ["Mod with large value", "g = 56991359368.52679 % 2;", 0],
   ["Expressions", "g = ((6- -7)+ 3);", 16],
   ["Number", "g = 5;", 5],
   ["Number with decimal", "g = 5.5;", 5.5],
