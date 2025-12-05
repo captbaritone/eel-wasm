@@ -56,18 +56,17 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     localVariables: [VAL_TYPE.i32],
     // Performs integer modulo operation with bounds checking.
     // Returns 0 if either operand is outside i32 range or divisor is zero.
+    // Valid range for truncation: (-2147483649, 2147483648) exclusive.
+    // This means 2147483647 and -2147483648 are valid and will be computed.
     binary: [
-      // Check if divisor (arg1) is in i32 range: arg1 > -2147483649 AND arg1 < 2147483648
+      // Check if divisor (arg1) is in i32 range
       ...op.local_get(1),
       ...op.f64_const(I32_MIN_TRUNCATABLE),
       op.f64_gt,
-      // Stack: [divisor > -2147483649]
       ...op.local_get(1),
       ...op.f64_const(I32_MAX_TRUNCATABLE),
       op.f64_lt,
-      // Stack: [divisor > -2147483649, divisor < 2147483648]
       op.i32_and,
-      // Stack: [divisor in range]
       ...op.if(BLOCK.f64),
       // Divisor is in range, now truncate it and check for zero
       ...op.local_get(1),
@@ -80,13 +79,10 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
       ...op.local_get(0),
       ...op.f64_const(I32_MIN_TRUNCATABLE),
       op.f64_gt,
-      // Stack: [dividend > -2147483649]
       ...op.local_get(0),
       ...op.f64_const(I32_MAX_TRUNCATABLE),
       op.f64_lt,
-      // Stack: [dividend > -2147483649, dividend < 2147483648]
       op.i32_and,
-      // Stack: [dividend in range]
       ...op.if(BLOCK.f64),
       // Both operands are valid, perform the modulo
       ...op.local_get(0),
