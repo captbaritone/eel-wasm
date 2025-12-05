@@ -1,4 +1,4 @@
-import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON, BLOCK } from "./encoding.js";
+import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON, BLOCK, I32_MAX_TRUNCATABLE, I32_MIN_TRUNCATABLE } from "./encoding.js";
 import { FunctionDefinition } from "./types.js";
 import { BUFFER_SIZE } from "./constants.js";
 
@@ -54,20 +54,56 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     localVariables: [VAL_TYPE.i32],
-    // TODO: Simplify all this type coercion
+    // Performs integer modulo operation with bounds checking.
+    // Returns 0 if either operand is outside i32 range or divisor is zero.
     binary: [
+      // Check if divisor (arg1) is in i32 range: arg1 > -2147483649 AND arg1 < 2147483648
+      ...op.local_get(1),
+      ...op.f64_const(I32_MIN_TRUNCATABLE),
+      op.f64_gt,
+      // Stack: [divisor > -2147483649]
+      ...op.local_get(1),
+      ...op.f64_const(I32_MAX_TRUNCATABLE),
+      op.f64_lt,
+      // Stack: [divisor > -2147483649, divisor < 2147483648]
+      op.i32_and,
+      // Stack: [divisor in range]
+      ...op.if(BLOCK.f64),
+      // Divisor is in range, now truncate it and check for zero
       ...op.local_get(1),
       op.i32_trunc_f64_s,
       ...op.local_tee(2),
       ...op.i32_const(0),
       op.i32_ne,
       ...op.if(BLOCK.f64),
+      // Divisor is non-zero, now check if dividend (arg0) is in i32 range
+      ...op.local_get(0),
+      ...op.f64_const(I32_MIN_TRUNCATABLE),
+      op.f64_gt,
+      // Stack: [dividend > -2147483649]
+      ...op.local_get(0),
+      ...op.f64_const(I32_MAX_TRUNCATABLE),
+      op.f64_lt,
+      // Stack: [dividend > -2147483649, dividend < 2147483648]
+      op.i32_and,
+      // Stack: [dividend in range]
+      ...op.if(BLOCK.f64),
+      // Both operands are valid, perform the modulo
       ...op.local_get(0),
       op.i32_trunc_f64_s,
       ...op.local_get(2),
       op.i32_rem_s,
       op.f64_convert_i32_s,
       op.else,
+      // Dividend out of range
+      ...op.f64_const(0),
+      op.end,
+      op.else,
+      // Divisor is zero
+      ...op.f64_const(0),
+      op.end,
+      op.else,
+      // Divisor out of range
       ...op.f64_const(0),
       op.end,
     ],

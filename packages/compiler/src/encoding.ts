@@ -209,6 +209,14 @@ export const IS_NOT_ZEROISH: number[] = [
   op.f64_gt,
 ];
 
+// Constants for bounds checking before i32.trunc_f64_s
+// i32 range is [-2147483648, 2147483647].
+// For truncation to be safe:
+// - positive values must be < 2147483648
+// - negative values must be > -2147483649
+export const I32_MAX_TRUNCATABLE = 2147483648; // exclusive upper bound for positive
+export const I32_MIN_TRUNCATABLE = -2147483649; // exclusive lower bound for negative
+
 // f64
 export function encodef64(num: number): Uint8Array {
   const arr = new Uint8Array(8);
