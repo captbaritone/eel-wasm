@@ -1,0 +1,146 @@
+(module
+   (module
+    (type (;0;) (func (param f64) (result f64)))
+    (type (;1;) (func (param f64 f64) (result f64)))
+    (type (;2;) (func))
+    (import "main" "g" (global (;0;) (mut f64)))
+    (import "shims" "sin" (func $sin (type 0)))
+    (import "shims" "cos" (func $cos (type 0)))
+    (import "shims" "tan" (func $tan (type 0)))
+    (import "shims" "asin" (func $asin (type 0)))
+    (import "shims" "acos" (func $acos (type 0)))
+    (import "shims" "atan" (func $atan (type 0)))
+    (import "shims" "atan2" (func $atan2 (type 1)))
+    (import "shims" "rand" (func $rand (type 0)))
+    (import "shims" "pow" (func $pow (type 1)))
+    (import "shims" "log" (func $log (type 0)))
+    (import "shims" "log10" (func $log10 (type 0)))
+    (import "shims" "exp" (func $exp (type 0)))
+    (import "shims" "sigmoid" (func $sigmoid (type 1)))
+    (func $sqr (type 0) (param f64) (result f64)
+      local.get 0
+      local.get 0
+      f64.mul)
+    (func $mod (type 1) (param f64 f64) (result f64)
+      (local i32)
+      local.get 1
+      i32.trunc_f64_s
+      local.tee 2
+      i32.const 0
+      i32.ne
+      if (result f64)  ;; label = @1
+        local.get 0
+        i32.trunc_f64_s
+        local.get 2
+        i32.rem_s
+        f64.convert_i32_s
+      else
+        f64.const 0x0p+0 (;=0;)
+      end)
+    (func $div (type 1) (param f64 f64) (result f64)
+      (local i32)
+      local.get 1
+      f64.const 0x0p+0 (;=0;)
+      f64.ne
+      if (result f64)  ;; label = @1
+        local.get 0
+        local.get 1
+        f64.div
+      else
+        f64.const 0x0p+0 (;=0;)
+      end)
+    (func $bitwiseOr (type 1) (param f64 f64) (result f64)
+      local.get 0
+      i64.trunc_f64_s
+      local.get 1
+      i64.trunc_f64_s
+      i64.or
+      f64.convert_i64_s)
+    (func $bitwiseAnd (type 1) (param f64 f64) (result f64)
+      local.get 0
+      i64.trunc_f64_s
+      local.get 1
+      i64.trunc_f64_s
+      i64.and
+      f64.convert_i64_s)
+    (func $sign (type 0) (param f64) (result f64)
+      f64.const 0x0p+0 (;=0;)
+      local.get 0
+      f64.lt
+      local.get 0
+      f64.const 0x0p+0 (;=0;)
+      f64.lt
+      i32.sub
+      f64.convert_i32_s)
+    (func $myfunc (type 2)
+      global.get 1
+      f64.const 0x1p+1 (;=2;)
+      f64.mul
+      global.set 2
+      global.get 2
+      drop)
+    (func $test (type 2)
+      f64.const 0x1p+1 (;=2;)
+      call 13
+      global.set 0
+      global.get 0
+      drop
+      f64.const 0x1p+0 (;=1;)
+      f64.const 0x1p+1 (;=2;)
+      call 16
+      global.set 0
+      global.get 0
+      drop
+      f64.const 0x1p+0 (;=1;)
+      f64.const 0x1p+1 (;=2;)
+      call 17
+      global.set 0
+      global.get 0
+      drop
+      f64.const 0x1p+1 (;=2;)
+      call 18
+      global.set 0
+      global.get 0
+      drop
+      f64.const 0x1.4p+2 (;=5;)
+      f64.const 0x1p+1 (;=2;)
+      call 14
+      global.set 0
+      global.get 0
+      drop
+      f64.const 0x1p+2 (;=4;)
+      f64.const 0x1p+1 (;=2;)
+      call 15
+      global.set 0
+      global.get 0
+      drop)
+    (memory (;0;) 2048 2048)
+    (global (;1;) (mut f64) (f64.const 0x0p+0 (;=0;)))
+    (global (;2;) (mut f64) (f64.const 0x0p+0 (;=0;)))
+    (export "test" (func 19))
+    (export "myfunc" (func 20)))
+    global.get 0
+    drop
+    f64.const 0x1p+2 (;=4;)
+    f64.const 0x1p+1 (;=2;)
+    call 15
+    global.set 0
+    global.get 0
+    drop
+    f64.const 0x1.8p+1 (;=3;)
+    call 19
+    global.set 0
+    global.get 0
+    drop)
+  (func $myfunc.1 (type 2)
+    global.get 1
+    f64.const 0x1p+1 (;=2;)
+    f64.mul
+    global.set 2
+    global.get 2
+    drop)
+  (memory (;0;) 2048 2048)
+  (global (;1;) (mut f64) (f64.const 0x0p+0 (;=0;)))
+  (global (;2;) (mut f64) (f64.const 0x0p+0 (;=0;)))
+  (export "test" (func 20))
+  (export "myfunc" (func 21)))

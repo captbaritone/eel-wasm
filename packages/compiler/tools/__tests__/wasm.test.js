@@ -3,9 +3,9 @@
 
 import wabt_ from "wabt";
 import { expect, test } from "vitest";
-const wabt = wabt_();
 
 test("Can execute Wasm", async () => {
+  const wabt = await wabt_();
   const wat = `(module
       (func (result i32)
           i32.const 10

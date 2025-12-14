@@ -16,6 +16,7 @@ import {
   MAGIC,
   WASM_VERSION,
   encodeFlatVector,
+  encodeCustomSection,
 } from "./encoding.js";
 import shims from "./shims.js";
 import * as Utils from "./utils.js";
@@ -285,6 +286,31 @@ export function compileModule({
       op.end,
     ]);
   });
+  // Emit a custom "name" section for debug names
+  // See: https://webassembly.github.io/spec/core/appendix/custom.html#name-section
+  const nameSectionType = 0; // Custom section
+  const nameSectionName = "name";
+  // Function names subsection (type 1)
+  const functionNamesSubsectionType = 1;
+  // Only include names for functions actually present in the binary (imports + localFuncs + moduleFuncs)
+  // The function section in the binary is: [...functionImports, ...localFuncs, ...moduleFuncs]
+  // So the name section must match this order and count exactly
+  const presentFuncNames = [
+    ...functionImports.map(f => f.name),
+    ...localFuncOrder,
+    ...moduleFuncs.map(f => f.exportName),
+  ];
+  // Each entry: [index, name]
+  const entries = presentFuncNames.map((name, i) => [
+    ...unsignedLEB128(i),
+    ...encodeString(name),
+  ]);
+  // Use encodeNestedVector so the vector length is the number of function names
+  const names = [
+    functionNamesSubsectionType,
+    ...encodeFlatVector(encodeNestedVector(entries)),
+  ];
+
   return new Uint8Array([
     // Magic module header
     ...MAGIC,
@@ -297,5 +323,6 @@ export function compileModule({
     ...encodeSection(SECTION.GLOBAL, globals),
     ...encodeSection(SECTION.EXPORT, xports),
     ...encodeSection(SECTION.CODE, codes),
+    ...encodeCustomSection(nameSectionType, nameSectionName, names),
   ]);
 }

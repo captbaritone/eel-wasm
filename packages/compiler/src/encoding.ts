@@ -291,3 +291,14 @@ export function encodeSection(type: number, subSections: number[][]) {
   vec.unshift(type);
   return vec;
 }
+
+// Encode the custom section
+export const encodeCustomSection = (
+  sectionType: number,
+  name: string,
+  body: number[]
+) => {
+  const nameBytes = encodeString(name);
+  const sectionBody = [...nameBytes, ...body];
+  return [sectionType, ...encodeFlatVector(sectionBody)];
+};

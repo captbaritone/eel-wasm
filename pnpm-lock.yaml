@@ -56,8 +56,8 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@13.11.1)(lightningcss@1.30.1)(terser@5.43.1)
       wabt:
-        specifier: ^1.0.12
-        version: 1.0.13
+        specifier: ^1.0.39
+        version: 1.0.39
       yargs:
         specifier: ^15.1.0
         version: 15.3.1
@@ -2037,6 +2037,10 @@ packages:
   wabt@1.0.13:
     resolution: {integrity: sha512-nkWPyUjYt+SqPox2mjJF5jrpWv30awdXKdG0OmryzfhtahHBrPz/BGSbakPgcJU2SFjC1s7Mb8MadRhQ6lmqUg==}
 
+  wabt@1.0.39:
+    resolution: {integrity: sha512-ba+dRL/75VQQY7RkU/CgriGbkoWAfS8TDyUlJfJhJ8KhtXgMl5dhNvoPNUcQ9IWRhW8u41glMSuZeTvsYq2rRg==}
+    hasBin: true
+
   which-module@2.0.0:
     resolution: {integrity: sha512-B+enWhmw6cjfVC7kS8Pj9pCrKSc5txArRyaYGe088shv/FGWH+0Rjx/xPgtsWfsUtS27FkP697E4DDhgrgoc0Q==}
 
@@ -3948,6 +3952,8 @@ snapshots:
   vm-browserify@1.1.2: {}
 
   wabt@1.0.13: {}
+
+  wabt@1.0.39: {}
 
   which-module@2.0.0: {}
 

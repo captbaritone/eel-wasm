@@ -7,7 +7,7 @@ import testCases from "../../tools/testCases";
 import { expect, test, describe } from "vitest";
 
 test("Minimal example", async () => {
-  // Initialize global values avaliable to your EEL scripts (and JS).
+  // Initialize global values available to your EEL scripts (and JS).
   const globals = {
     x: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
     y: new WebAssembly.Global({ value: "f64", mutable: true }, 0),
