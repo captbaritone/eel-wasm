@@ -24,18 +24,34 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
     local.get 0
     f64.mul)
   (func $mod (type 1) (param f64 f64) (result f64)
-    (local i32)
+    (local i64)
     local.get 1
-    i32.trunc_f64_s
+    f64.const 0x1p+31 (;=2.14748e+09;)
+    f64.lt
+    if (result f64)  ;; label = @1
+      local.get 1
+      f64.abs
+    else
+      f64.const 0x1p+31 (;=2.14748e+09;)
+    end
+    i64.trunc_f64_s
     local.tee 2
-    i32.const 0
-    i32.ne
+    i64.const 0
+    i64.ne
     if (result f64)  ;; label = @1
       local.get 0
-      i32.trunc_f64_s
+      f64.const 0x1p+31 (;=2.14748e+09;)
+      f64.lt
+      if (result f64)  ;; label = @2
+        local.get 0
+        f64.abs
+      else
+        f64.const 0x1p+31 (;=2.14748e+09;)
+      end
+      i64.trunc_f64_s
       local.get 2
-      i32.rem_s
-      f64.convert_i32_s
+      i64.rem_s
+      f64.convert_i64_s
     else
       f64.const 0x0p+0 (;=0;)
     end)

@@ -16,7 +16,7 @@ test("wasm binary WAT output matches snapshot (debug names)", async () => {
     pools: { main: new Set(["g"]) },
     functions: {
       test: { pool: "main", code },
-      myfunc: { pool: "main", code: "result = x * 2;", args: ["x"] },
+      myfunc: { pool: "main", code: "result = x * 2;" },
     },
   });
 
