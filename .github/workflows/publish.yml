@@ -45,7 +45,7 @@ jobs:
       - name: Set version for main branch
         if: github.ref == 'refs/heads/master'
         working-directory: packages/compiler
-        run: pnpm version --no-git-tag-version 0.0.0-main-${RELEASE_COMMIT_SHA:0:8}
+        run: npm pkg set version=0.0.0-main-${RELEASE_COMMIT_SHA:0:8}
         env:
           RELEASE_COMMIT_SHA: ${{ github.sha }}
 
