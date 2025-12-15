@@ -96,10 +96,11 @@ export const op = {
    * Numeric Instructions
    * https://webassembly.github.io/spec/core/binary/instructions.html#numeric-instructions
    */
-  i32_const: (i: number) => [0x41, ...signedLEB128(i)],
-  // i64_const: 0x42,
+  // TODO: Add bounds checking
+  i32_const: (n: number) => [0x41, ...signedLEB128(n)],
+  i64_const: (n: number) => [0x42, ...signedLEB128(n)],
   // f32_const: 0x43,
-  f64_const: (i: number) => [0x44, ...encodef64(i)],
+  f64_const: (n: number) => [0x44, ...encodef64(n)],
 
   i32_eqz: 0x45,
   // i32_eq: 0x46,
@@ -114,6 +115,7 @@ export const op = {
   // i32_ge_u: 0x4f,
 
   // [0x50...0x5a] i64
+  i64_ne: 0x52,
   // [0x5b...0x60] f32
 
   f64_eq: 0x61,
@@ -164,6 +166,9 @@ export const op = {
   i64_trunc_s_f64: 0xb0,
   f64_convert_i64_s: 0xb9,
   f64_convert_i32_s: 0xb7,
+
+  i64_trunc_f64_s: 0xb0,
+  i64_trunc_f64_u: 0xb1,
 };
 
 // https://webassembly.github.io/spec/core/binary/instructions.html#binary-blocktype

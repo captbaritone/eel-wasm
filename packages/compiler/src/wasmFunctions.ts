@@ -2,6 +2,14 @@ import { op, VAL_TYPE, IS_NOT_ZEROISH, EPSILON, BLOCK } from "./encoding.js";
 import { FunctionDefinition } from "./types.js";
 import { BUFFER_SIZE } from "./constants.js";
 
+// Minimum value that x87 would treat as out of range for conversion
+// from float to int.
+const MIN_OUT_OF_RANGE = op.f64_const(Math.pow(2, 31));
+// Arbitrary value that x87 uses when trying to convert an out of range, or NaN,
+// float to an int.
+
+const INDETERMINATE = op.f64_const(Math.pow(2, 31));
+
 export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   sqr: {
     args: [VAL_TYPE.f64],
@@ -53,20 +61,55 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   mod: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
-    localVariables: [VAL_TYPE.i32],
-    // TODO: Simplify all this type coercion
+    localVariables: [VAL_TYPE.i64],
+    // Tuned to match https://github.com/WACUP/vis_milk2/blob/de9625a89e724afe23ed273b96b8e48496095b6c/ns-eel2/asm-nseel-x86-gcc.c#L507-L531
+    // Specifically, we handle the nuances of how x87 handles out of range values in the
+    // `fist` instruction.
+    // See https://godbolt.org/z/rjf769E3n for some examples
     binary: [
+      ...op.local_get(0),
+      op.f64_abs,
+      ...op.local_set(0),
+
       ...op.local_get(1),
-      op.i32_trunc_f64_s,
+      op.f64_abs,
+      ...op.local_set(1),
+
+      // Bound the input
+      ...op.local_get(0),
+      ...MIN_OUT_OF_RANGE,
+      op.f64_lt,
+      // We purposefully make "out of range" the false case so that
+      // we can also catch NaNs.
+      ...op.if(BLOCK.void),
+      //
+      op.else,
+      ...INDETERMINATE,
+      ...op.local_set(0),
+      op.end,
+
+      // Bound the input 2
+      ...op.local_get(1),
+      ...MIN_OUT_OF_RANGE,
+      op.f64_lt,
+      ...op.if(BLOCK.void),
+      //
+      op.else,
+      ...INDETERMINATE,
+      ...op.local_set(1),
+      op.end,
+
+      ...op.local_get(1),
+      op.i64_trunc_f64_s,
       ...op.local_tee(2),
-      ...op.i32_const(0),
-      op.i32_ne,
+      ...op.i64_const(0),
+      op.i64_ne,
       ...op.if(BLOCK.f64),
       ...op.local_get(0),
-      op.i32_trunc_f64_s,
+      op.i64_trunc_f64_s,
       ...op.local_get(2),
-      op.i32_rem_s,
-      op.f64_convert_i32_s,
+      op.i64_rem_s,
+      op.f64_convert_i64_s,
       op.else,
       ...op.f64_const(0),
       op.end,
