@@ -10,6 +10,31 @@ const MIN_OUT_OF_RANGE = op.f64_const(Math.pow(2, 31));
 
 const INDETERMINATE = op.f64_const(Math.pow(2, 31));
 
+/**
+ * Reimplements the details of how x87 handles out of range values in the `fist`
+ * instruction.
+ *
+ * Expects a local argument offset and leaves an i64 value on the stack. We use
+ * i64 since teh indeterminate value is 2^31, which is just out of the range of
+ * i32.
+ *
+ * See https://godbolt.org/z/rjf769E3n for some examples
+ */
+function localGetAsBoundedPositiveInt(argOffset: number): number[] {
+  return [
+    ...op.local_get(argOffset),
+    ...MIN_OUT_OF_RANGE,
+    op.f64_lt,
+    ...op.if(BLOCK.f64),
+    ...op.local_get(argOffset),
+    op.f64_abs,
+    op.else,
+    ...INDETERMINATE,
+    op.end,
+    op.i64_trunc_f64_s,
+  ];
+}
+
 export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   sqr: {
     args: [VAL_TYPE.f64],
@@ -63,50 +88,13 @@ export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
     returns: [VAL_TYPE.f64],
     localVariables: [VAL_TYPE.i64],
     // Tuned to match https://github.com/WACUP/vis_milk2/blob/de9625a89e724afe23ed273b96b8e48496095b6c/ns-eel2/asm-nseel-x86-gcc.c#L507-L531
-    // Specifically, we handle the nuances of how x87 handles out of range values in the
-    // `fist` instruction.
-    // See https://godbolt.org/z/rjf769E3n for some examples
     binary: [
-      ...op.local_get(0),
-      op.f64_abs,
-      ...op.local_set(0),
-
-      ...op.local_get(1),
-      op.f64_abs,
-      ...op.local_set(1),
-
-      // Bound the input
-      ...op.local_get(0),
-      ...MIN_OUT_OF_RANGE,
-      op.f64_lt,
-      // We purposefully make "out of range" the false case so that
-      // we can also catch NaNs.
-      ...op.if(BLOCK.void),
-      //
-      op.else,
-      ...INDETERMINATE,
-      ...op.local_set(0),
-      op.end,
-
-      // Bound the input 2
-      ...op.local_get(1),
-      ...MIN_OUT_OF_RANGE,
-      op.f64_lt,
-      ...op.if(BLOCK.void),
-      //
-      op.else,
-      ...INDETERMINATE,
-      ...op.local_set(1),
-      op.end,
-
-      ...op.local_get(1),
-      op.i64_trunc_f64_s,
+      ...localGetAsBoundedPositiveInt(1),
       ...op.local_tee(2),
       ...op.i64_const(0),
       op.i64_ne,
       ...op.if(BLOCK.f64),
-      ...op.local_get(0),
-      op.i64_trunc_f64_s,
+      ...localGetAsBoundedPositiveInt(0),
       ...op.local_get(2),
       op.i64_rem_s,
       op.f64_convert_i64_s,
