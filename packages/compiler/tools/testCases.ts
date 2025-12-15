@@ -1,4 +1,11 @@
 const testCases: [string, string, number][] = [
+  // https://github.com/captbaritone/eel-wasm/issues/61
+  ["Mod with NaN in dividend", "g = asin(2) % 2;", 0], // The indeterminate is even
+  ["Mod with large even value in dividend", "g = 56991359368.52679 % 2;", 0], // The indeterminate is even
+  ["Mod with large odd value in dividend", "g = 56991359367.52679 % 2;", 0], // The indeterminate is even
+  ["Mod with large even value in divisor", "g = 300 % 56991359368.52679;", 300],
+  ["Mod with large odd value in divisor", "g = 300 % 56991359367.52679;", 300],
+  ["Mod with NaN in divisor", "g = 300 % asin(2);", 300],
   ["Expressions", "g = ((6- -7)+ 3);", 16],
   ["Number", "g = 5;", 5],
   ["Number with decimal", "g = 5.5;", 5.5],
@@ -39,6 +46,7 @@ const testCases: [string, string, number][] = [
   ["Cos", "g = cos(10);", Math.cos(10)],
   ["Tan", "g = tan(10);", Math.tan(10)],
   ["Asin", "g = asin(0.5);", Math.asin(0.5)],
+  ["Asin", "g = asin(2);", NaN],
   ["Acos", "g = acos(0.5);", Math.acos(0.5)],
   ["Atan", "g = atan(0.5);", Math.atan(0.5)],
   ["Atan2", "g = atan2(1, 1);", Math.atan2(1, 1)],
@@ -46,11 +54,11 @@ const testCases: [string, string, number][] = [
   ["Read globals", "g = x;", 10],
   ["Multiple statements", "g = 10; g = 20;", 20],
   ["Multiple statements expression", "(g = 10; g = 20;);", 20],
-  ["Multiple statements expression implcit return", "g = (0; 20 + 5;);", 25],
+  ["Multiple statements expression implicit return", "g = (0; 20 + 5;);", 25],
   ["if", "g = if(0, 20, 10);", 10],
   ["if", "g = if(0, 20, 10);", 10],
-  ["if does short-circit (consiquent)", "if(0, (g = 10;), 10);", 0],
-  ["if does short-circit (alternate)", "if(1, (10), (g = 10;));", 0],
+  ["if does short-circuit (consequent)", "if(0, (g = 10;), 10);", 0],
+  ["if does short-circuit (alternate)", "if(1, (10), (g = 10;));", 0],
   ["above (true)", "g = above(10, 4);", 1],
   ["above (false)", "g = above(4, 10);", 0],
   ["below (true)", "g = below(4, 10);", 1],
