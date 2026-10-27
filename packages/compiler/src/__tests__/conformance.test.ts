@@ -46,11 +46,6 @@ const knownDeviations = [
   // time.
   // ---------------------------------------------------------------------
 
-  // `%` with a negative dividend: `(-7) % 3` is 1, not -1, since the
-  // out-of-range mod handling in 0.0.17 took the absolute value of the
-  // operand itself.
-  "operators-arithmetic/mod-op-sign",
-
   // `while(cond, body)`: only the single-argument form is supported.
   "control-flow/while-runs-until-condition-is-zero",
 

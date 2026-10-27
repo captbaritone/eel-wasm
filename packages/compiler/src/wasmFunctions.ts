@@ -22,12 +22,16 @@ const INDETERMINATE = op.f64_const(Math.pow(2, 31));
  */
 function localGetAsBoundedPositiveInt(argOffset: number): number[] {
   return [
+    // The magnitude is checked against the x87 range, but the original
+    // (signed) value is converted. Taking the absolute value of the operand
+    // itself would flip the sign of the remainder for negative dividends
+    // (e.g. `(-7) % 3`).
     ...op.local_get(argOffset),
+    op.f64_abs,
     ...MIN_OUT_OF_RANGE,
     op.f64_lt,
     ...op.if(BLOCK.f64),
     ...op.local_get(argOffset),
-    op.f64_abs,
     op.else,
     ...INDETERMINATE,
     op.end,
