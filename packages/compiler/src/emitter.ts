@@ -200,8 +200,7 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
             const temp = context.resolveLocal(VAL_TYPE.f64);
             return [
               ...args,
-              ...op.local_set(temp),
-              ...op.local_get(temp),
+              ...op.local_tee(temp),
               ...op.local_get(temp),
               op.f64_floor,
               op.f64_sub,
