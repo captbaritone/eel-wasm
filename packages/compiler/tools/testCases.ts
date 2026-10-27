@@ -206,6 +206,22 @@ const testCases: [string, string, number][] = [
   ["Loop limit", "g = 0; while(g = g + 1)", 1048576],
   ["Divide by zero", "g = 100 / 0", 0],
   ["Divide by less than epsilon", "g = 100 / 0.000001", 100000000],
+  // while(cond, body) — both the call form and MilkDrop's statement form.
+  [
+    "While with body, call form",
+    "g = 0; n = 3; while(n, n = n - 1; g = g + 1)",
+    3,
+  ],
+  [
+    "While with body, statement form",
+    "g = 0; n = 3; while (n) (n = n - 1; g = g + 1)",
+    3,
+  ],
+  [
+    "While with single-expression statement body",
+    "g = 0; n = 3; while (n) (g = g + 1; n = n - 1)",
+    3,
+  ],
 ];
 
 export default testCases;

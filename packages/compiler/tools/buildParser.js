@@ -87,6 +87,17 @@ const grammar = {
         "IDENTIFIER ( arguments )",
         "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3, loc: @$}",
       ],
+      // MilkDrop statement syntax: `while (cond) (body)` (and the same shape
+      // for other statement-like calls) is sugar for passing the parenthesized
+      // block as a final argument.
+      [
+        "IDENTIFIER ( arguments ) ( EXPRESSION_BLOCK )",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3.concat([$6]), loc: @$}",
+      ],
+      [
+        "IDENTIFIER ( arguments ) ( expression )",
+        "$$ = {type: 'CALL_EXPRESSION', callee: $1, arguments: $3.concat([$6]), loc: @$}",
+      ],
     ],
     LOGICAL_EXPRESSION: [
       [

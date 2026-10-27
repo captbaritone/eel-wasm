@@ -84,8 +84,13 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           const [test, consequent, alternate] = ast.arguments;
           return emitConditional(test, consequent, alternate, context);
         case "while":
-          assertArity(1);
-          return emitWhile(ast.arguments[0], context);
+          // The single-argument form loops until the expression evaluates to
+          // zero; its side effects are the body.
+          if (argList.length === 1) {
+            return emitWhileExpression(ast.arguments[0], context);
+          }
+          assertArity(2);
+          return emitWhile(ast.arguments[0], ast.arguments[1], context);
         case "loop":
           assertArity(2);
           return emitLoop(ast.arguments[0], ast.arguments[1], context);
@@ -395,7 +400,10 @@ function emitExpressionBlock(body: Ast[], context: CompilerContext) {
   return flatten(arrayJoin(statements, [op.drop]));
 }
 
-function emitWhile(expression: Ast, context: CompilerContext): number[] {
+function emitWhileExpression(
+  expression: Ast,
+  context: CompilerContext
+): number[] {
   const body = emit(expression, context);
   const iterationCount = context.resolveLocal(VAL_TYPE.i32);
   return [
@@ -421,6 +429,52 @@ function emitWhile(expression: Ast, context: CompilerContext): number[] {
     // STACK: [can continue]
     ...op.br_if(0), // Return to the top of the loop
     op.end,
+    ...op.f64_const(0), // Implicitly return zero
+  ];
+}
+
+function emitWhile(
+  condition: Ast,
+  body: Ast,
+  context: CompilerContext
+): number[] {
+  const conditionCode = emit(condition, context);
+  const bodyCode = emit(body, context);
+  const iterationCount = context.resolveLocal(VAL_TYPE.i32);
+  return [
+    ...op.i32_const(0),
+    ...op.local_set(iterationCount),
+
+    ...op.block(BLOCK.void),
+    ...op.loop(BLOCK.void),
+
+    // Increment and check the loop count
+    ...op.local_get(iterationCount),
+    ...op.i32_const(1),
+    op.i32_add,
+    ...op.local_tee(iterationCount),
+    // STACK: [iteration count]
+    ...op.i32_const(MAX_LOOP_COUNT),
+    op.i32_lt_u,
+    // STACK: [loop in range]
+
+    // The condition uses the standard truthiness threshold (the close
+    // factor), like every other boolean context in Eel — including ns-eel2's
+    // `nseel_asm_repeatwhile`, which compares |v| against g_closefact.
+    ...conditionCode,
+    ...IS_NOT_ZEROISH,
+    // STACK: [loop in range, condition is true]
+    op.i32_and,
+    // STACK: [can continue]
+
+    ...op.if(BLOCK.void),
+    // Run the body
+    ...bodyCode,
+    op.drop,
+    ...op.br(1), // Return to the top of the loop
+    op.end,
+    op.end, // End loop
+    op.end, // End block
     ...op.f64_const(0), // Implicitly return zero
   ];
 }

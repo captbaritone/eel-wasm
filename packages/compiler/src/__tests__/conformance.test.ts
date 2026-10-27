@@ -46,9 +46,6 @@ const knownDeviations = [
   // time.
   // ---------------------------------------------------------------------
 
-  // `while(cond, body)`: only the single-argument form is supported.
-  "control-flow/while-runs-until-condition-is-zero",
-
   // `min()`/`max()` with more than two arguments.
   "functions-utility/min-max-variadic",
 
