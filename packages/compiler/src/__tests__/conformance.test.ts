@@ -46,10 +46,6 @@ const knownDeviations = [
   // time.
   // ---------------------------------------------------------------------
 
-  // `rand()`/`randint()` with no argument, and `randint()` itself.
-  "random/rand-defaults-to-one",
-  "random/randint-floors-the-draw",
-
   // Builtins eel-wasm does not define yet.
   "functions-math/invsqrt",
   "functions-math/invsqrt-nonpositive",

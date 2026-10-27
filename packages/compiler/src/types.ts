@@ -107,6 +107,7 @@ export interface Shims extends Record<string, Function> {
   atan(n: number): number;
   atan2(n: number, m: number): number;
   rand(n: number): number;
+  randint(n: number): number;
   pow(n: number, m: number): number;
   log(n: number): number;
   log10(n: number): number;

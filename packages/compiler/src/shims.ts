@@ -12,6 +12,7 @@ const shims: Shims = {
   atan: Math.atan,
   atan2: Math.atan2,
   rand: a => Math.random() * a,
+  randint: (a: number) => Math.floor(Math.random() * a),
   pow: Math.pow,
   log: Math.log,
   log10: Math.log10,

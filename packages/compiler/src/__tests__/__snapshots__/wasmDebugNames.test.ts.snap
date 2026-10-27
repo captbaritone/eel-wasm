@@ -14,6 +14,7 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
   (import "shims" "atan" (func $atan (type 0)))
   (import "shims" "atan2" (func $atan2 (type 1)))
   (import "shims" "rand" (func $rand (type 0)))
+  (import "shims" "randint" (func $randint (type 0)))
   (import "shims" "pow" (func $pow (type 1)))
   (import "shims" "log" (func $log (type 0)))
   (import "shims" "log10" (func $log10 (type 0)))
@@ -92,13 +93,7 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
     f64.convert_i32_s)
   (func $test (type 2)
     f64.const 0x1p+1 (;=2;)
-    call 13
-    global.set 0
-    global.get 0
-    drop
-    f64.const 0x1p+0 (;=1;)
-    f64.const 0x1p+1 (;=2;)
-    call 16
+    call 14
     global.set 0
     global.get 0
     drop
@@ -108,20 +103,26 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
     global.set 0
     global.get 0
     drop
+    f64.const 0x1p+0 (;=1;)
     f64.const 0x1p+1 (;=2;)
     call 18
     global.set 0
     global.get 0
     drop
+    f64.const 0x1p+1 (;=2;)
+    call 19
+    global.set 0
+    global.get 0
+    drop
     f64.const 0x1.4p+2 (;=5;)
     f64.const 0x1p+1 (;=2;)
-    call 14
+    call 15
     global.set 0
     global.get 0
     drop
     f64.const 0x1p+2 (;=4;)
     f64.const 0x1p+1 (;=2;)
-    call 15
+    call 16
     global.set 0
     global.get 0
     drop)
@@ -135,7 +136,7 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
   (memory (;0;) 2048 2048)
   (global (;1;) (mut f64) (f64.const 0x0p+0 (;=0;)))
   (global (;2;) (mut f64) (f64.const 0x0p+0 (;=0;)))
-  (export "test" (func 19))
-  (export "myfunc" (func 20)))
+  (export "test" (func 20))
+  (export "myfunc" (func 21)))
 "
 `;

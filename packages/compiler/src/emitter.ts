@@ -104,6 +104,17 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         case "loop":
           assertArity(2);
           return emitLoop(ast.arguments[0], ast.arguments[1], context);
+        // rand()/randint() with no argument draw over [0, 1).
+        case "rand":
+        case "randint":
+          if (argList.length === 0) {
+            return [...op.f64_const(1), ...context.resolveFunc(functionName)!];
+          }
+          assertArity(1);
+          return [
+            ...emit(argList[0], context),
+            ...context.resolveFunc(functionName)!,
+          ];
         case "megabuf":
         case "gmegabuf":
           assertArity(1);
