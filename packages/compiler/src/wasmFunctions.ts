@@ -22,12 +22,16 @@ const INDETERMINATE = op.f64_const(Math.pow(2, 31));
  */
 function localGetAsBoundedPositiveInt(argOffset: number): number[] {
   return [
+    // The magnitude is checked against the x87 range, but the original
+    // (signed) value is converted. Taking the absolute value of the operand
+    // itself would flip the sign of the remainder for negative dividends
+    // (e.g. `(-7) % 3`).
     ...op.local_get(argOffset),
+    op.f64_abs,
     ...MIN_OUT_OF_RANGE,
     op.f64_lt,
     ...op.if(BLOCK.f64),
     ...op.local_get(argOffset),
-    op.f64_abs,
     op.else,
     ...INDETERMINATE,
     op.end,
@@ -35,12 +39,30 @@ function localGetAsBoundedPositiveInt(argOffset: number): number[] {
   ];
 }
 
+// mix(a, b, t) interpolates from a toward b; lerp() is an alias.
+const MIX: FunctionDefinition = {
+  args: [VAL_TYPE.f64, VAL_TYPE.f64, VAL_TYPE.f64],
+  returns: [VAL_TYPE.f64],
+  binary: [
+    // a + (b - a) * t
+    ...op.local_get(0),
+    ...op.local_get(1),
+    ...op.local_get(0),
+    op.f64_sub,
+    ...op.local_get(2),
+    op.f64_mul,
+    op.f64_add,
+  ],
+};
+
 export const localFuncMap: { [functionName: string]: FunctionDefinition } = {
   sqr: {
     args: [VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],
     binary: [...op.local_get(0), ...op.local_get(0), op.f64_mul],
   },
+  mix: MIX,
+  lerp: MIX,
   bor: {
     args: [VAL_TYPE.f64, VAL_TYPE.f64],
     returns: [VAL_TYPE.f64],

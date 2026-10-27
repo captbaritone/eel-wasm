@@ -53,7 +53,7 @@ export const op = {
   if: (retType: BlockType) => [0x04, retType],
   else: 0x05,
   end: 0x0b,
-  // br: (i: number) => [0x0c, ...signedLEB128(i)],
+  br: (i: number) => [0x0c, ...unsignedLEB128(i)],
   br_if: (i: number) => [0x0d, ...unsignedLEB128(i)],
   // br_table: 0x0d,
   // return: 0x0f,

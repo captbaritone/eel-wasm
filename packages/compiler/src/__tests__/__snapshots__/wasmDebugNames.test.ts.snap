@@ -4,7 +4,8 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
 "(module
   (type (;0;) (func (param f64) (result f64)))
   (type (;1;) (func (param f64 f64) (result f64)))
-  (type (;2;) (func))
+  (type (;2;) (func (param f64 f64 f64) (result f64)))
+  (type (;3;) (func))
   (import "main" "g" (global (;0;) (mut f64)))
   (import "shims" "sin" (func $sin (type 0)))
   (import "shims" "cos" (func $cos (type 0)))
@@ -14,11 +15,15 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
   (import "shims" "atan" (func $atan (type 0)))
   (import "shims" "atan2" (func $atan2 (type 1)))
   (import "shims" "rand" (func $rand (type 0)))
+  (import "shims" "randint" (func $randint (type 0)))
   (import "shims" "pow" (func $pow (type 1)))
   (import "shims" "log" (func $log (type 0)))
   (import "shims" "log10" (func $log10 (type 0)))
   (import "shims" "exp" (func $exp (type 0)))
   (import "shims" "sigmoid" (func $sigmoid (type 1)))
+  (import "shims" "fmod" (func $fmod (type 1)))
+  (import "shims" "invsqrt" (func $invsqrt (type 0)))
+  (import "shims" "smoothstep" (func $smoothstep (type 2)))
   (func $sqr (type 0) (param f64) (result f64)
     local.get 0
     local.get 0
@@ -26,11 +31,11 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
   (func $mod (type 1) (param f64 f64) (result f64)
     (local i64)
     local.get 1
+    f64.abs
     f64.const 0x1p+31 (;=2.14748e+09;)
     f64.lt
     if (result f64)  ;; label = @1
       local.get 1
-      f64.abs
     else
       f64.const 0x1p+31 (;=2.14748e+09;)
     end
@@ -40,11 +45,11 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
     i64.ne
     if (result f64)  ;; label = @1
       local.get 0
+      f64.abs
       f64.const 0x1p+31 (;=2.14748e+09;)
       f64.lt
       if (result f64)  ;; label = @2
         local.get 0
-        f64.abs
       else
         f64.const 0x1p+31 (;=2.14748e+09;)
       end
@@ -90,42 +95,42 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
     f64.lt
     i32.sub
     f64.convert_i32_s)
-  (func $test (type 2)
-    f64.const 0x1p+1 (;=2;)
-    call 13
-    global.set 0
-    global.get 0
-    drop
-    f64.const 0x1p+0 (;=1;)
-    f64.const 0x1p+1 (;=2;)
-    call 16
-    global.set 0
-    global.get 0
-    drop
-    f64.const 0x1p+0 (;=1;)
+  (func $test (type 3)
     f64.const 0x1p+1 (;=2;)
     call 17
     global.set 0
     global.get 0
     drop
+    f64.const 0x1p+0 (;=1;)
     f64.const 0x1p+1 (;=2;)
-    call 18
+    call 20
+    global.set 0
+    global.get 0
+    drop
+    f64.const 0x1p+0 (;=1;)
+    f64.const 0x1p+1 (;=2;)
+    call 21
+    global.set 0
+    global.get 0
+    drop
+    f64.const 0x1p+1 (;=2;)
+    call 22
     global.set 0
     global.get 0
     drop
     f64.const 0x1.4p+2 (;=5;)
     f64.const 0x1p+1 (;=2;)
-    call 14
+    call 18
     global.set 0
     global.get 0
     drop
     f64.const 0x1p+2 (;=4;)
     f64.const 0x1p+1 (;=2;)
-    call 15
+    call 19
     global.set 0
     global.get 0
     drop)
-  (func $myfunc (type 2)
+  (func $myfunc (type 3)
     global.get 1
     f64.const 0x1p+1 (;=2;)
     f64.mul
@@ -135,7 +140,7 @@ exports[`wasm binary WAT output matches snapshot (debug names) 1`] = `
   (memory (;0;) 2048 2048)
   (global (;1;) (mut f64) (f64.const 0x0p+0 (;=0;)))
   (global (;2;) (mut f64) (f64.const 0x0p+0 (;=0;)))
-  (export "test" (func 19))
-  (export "myfunc" (func 20)))
+  (export "test" (func 23))
+  (export "myfunc" (func 24)))
 "
 `;

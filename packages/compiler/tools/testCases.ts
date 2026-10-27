@@ -206,6 +206,55 @@ const testCases: [string, string, number][] = [
   ["Loop limit", "g = 0; while(g = g + 1)", 1048576],
   ["Divide by zero", "g = 100 / 0", 0],
   ["Divide by less than epsilon", "g = 100 / 0.000001", 100000000],
+  // while(cond, body) — both the call form and MilkDrop's statement form.
+  [
+    "While with body, call form",
+    "g = 0; n = 3; while(n, n = n - 1; g = g + 1)",
+    3,
+  ],
+  [
+    "While with body, statement form",
+    "g = 0; n = 3; while (n) (n = n - 1; g = g + 1)",
+    3,
+  ],
+  [
+    "While with single-expression statement body",
+    "g = 0; n = 3; while (n) (g = g + 1; n = n - 1)",
+    3,
+  ],
+  // pi is an ordinary variable in ns-eel2 (zero-initialized like any other);
+  // the preprocessor spells the constants `$pi`/`$e`.
+  ["pi is overwritable", "pi = 3; g = pi;", 3],
+  // Variadic min/max.
+  ["Min of three", "g = min(3, 1, 2);", 1],
+  ["Max of three", "g = max(3, 1, 2);", 3],
+  ["Min of four", "g = min(4, 3, 2, 1);", 1],
+  // frac() subtracts the floor.
+  ["Frac", "g = frac(2.75);", 0.75],
+  ["Frac negative", "g = frac(-0.25);", 0.75],
+  // step(edge, v) is 1 when v reaches the edge.
+  ["Step below edge", "g = step(1, 0.5);", 0],
+  ["Step at edge", "g = step(1, 1);", 1],
+  // clamp(v, lo, hi) with omitted bounds.
+  ["Clamp above", "g = clamp(5, 0, 1);", 1],
+  ["Clamp below", "g = clamp(-5, 0, 1);", 0],
+  ["Clamp within", "g = clamp(0.5, 0, 1);", 0.5],
+  ["Clamp default bounds", "g = clamp(2);", 1],
+  ["Clamp inverted bounds", "g = clamp(5, 10, 1);", 1],
+  // mix()/lerp() interpolate; both names exist.
+  ["Mix", "g = mix(0, 10, 0.25);", 2.5],
+  ["Lerp", "g = lerp(0, 10, 0.25);", 2.5],
+  // smoothstep() at the midpoint, and with degenerate (equal) edges.
+  ["Smoothstep midpoint", "g = smoothstep(0, 1, 0.5);", 0.5],
+  ["Smoothstep equal edges below", "g = smoothstep(2, 2, 1);", 0],
+  ["Smoothstep equal edges above", "g = smoothstep(2, 2, 3);", 1],
+  // invsqrt() of non-positive input is 0.
+  ["Invsqrt", "g = invsqrt(4);", 0.5],
+  ["Invsqrt zero", "g = invsqrt(0);", 0],
+  ["Invsqrt negative", "g = invsqrt(-1);", 0],
+  // fmod() is the float remainder, unlike the % operator.
+  ["Fmod", "g = fmod(7.5, 2);", 1.5],
+  ["Fmod negative dividend", "g = fmod(-7.5, 3);", -1.5],
 ];
 
 export default testCases;
