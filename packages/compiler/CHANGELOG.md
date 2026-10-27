@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add missing EEL2 builtins: `fmod()`, `invsqrt()`, `frac()`, `clamp()`, `mix()`, `lerp()`, `step()`, `smoothstep()`, and `randint()`
+- Support `min()`/`max()` with more than two arguments
+- Support `rand()`/`randint()` with no argument (draws over `[0, 1)`)
+- Support `while(cond, body)` (two arguments), including MilkDrop's `while (cond) (body)` statement syntax
+- Fix a regression in `%` with a negative dividend (e.g. `(-7) % 3` returned `1` instead of `-1`) introduced by the out-of-range mod handling in 0.0.17
+- Run the portable [EEL2 conformance corpus](https://github.com/zz-plant/stims/tree/main/packages/eel-conformance) (82 cases) as part of the test suite, with the remaining deviations documented in the test
+
 ## 0.0.17
 
 - Emit debug symbols for better debugging experience

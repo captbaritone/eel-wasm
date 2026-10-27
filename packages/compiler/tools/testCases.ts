@@ -222,6 +222,9 @@ const testCases: [string, string, number][] = [
     "g = 0; n = 3; while (n) (g = g + 1; n = n - 1)",
     3,
   ],
+  // pi is an ordinary variable in ns-eel2 (zero-initialized like any other);
+  // the preprocessor spells the constants `$pi`/`$e`.
+  ["pi is overwritable", "pi = 3; g = pi;", 3],
   // Variadic min/max.
   ["Min of three", "g = min(3, 1, 2);", 1],
   ["Max of three", "g = max(3, 1, 2);", 3],
