@@ -71,6 +71,16 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         }
       };
 
+      const assertMinArity = (arity: number) => {
+        if (argList.length < arity) {
+          throw createUserError(
+            `Too few arguments passed to \`${functionName}()\`. Expected at least ${arity} but only got ${argList.length}.`,
+            ast.loc,
+            context.rawSource
+          );
+        }
+      };
+
       // Some functions have special behavior
       switch (functionName) {
         case "exec2":
@@ -144,11 +154,22 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
           assertArity(1);
           return [...args, op.f64_floor];
         case "min":
-          assertArity(2);
-          return [...args, op.f64_min];
+          assertMinArity(2);
+          // A single `f64.min` per additional argument.
+          return [
+            ...args,
+            ...flatten(
+              Array(argList.length - 1).fill(op.f64_min) as number[][]
+            ),
+          ];
         case "max":
-          assertArity(2);
-          return [...args, op.f64_max];
+          assertMinArity(2);
+          return [
+            ...args,
+            ...flatten(
+              Array(argList.length - 1).fill(op.f64_max) as number[][]
+            ),
+          ];
         case "above":
           assertArity(2);
           return [...args, op.f64_gt, op.f64_convert_i32_s];

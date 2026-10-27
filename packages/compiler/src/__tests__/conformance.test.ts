@@ -46,9 +46,6 @@ const knownDeviations = [
   // time.
   // ---------------------------------------------------------------------
 
-  // `min()`/`max()` with more than two arguments.
-  "functions-utility/min-max-variadic",
-
   // `rand()`/`randint()` with no argument, and `randint()` itself.
   "random/rand-defaults-to-one",
   "random/randint-floors-the-draw",

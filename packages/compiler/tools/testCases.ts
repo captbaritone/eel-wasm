@@ -222,6 +222,10 @@ const testCases: [string, string, number][] = [
     "g = 0; n = 3; while (n) (g = g + 1; n = n - 1)",
     3,
   ],
+  // Variadic min/max.
+  ["Min of three", "g = min(3, 1, 2);", 1],
+  ["Max of three", "g = max(3, 1, 2);", 3],
+  ["Min of four", "g = min(4, 3, 2, 1);", 1],
 ];
 
 export default testCases;
