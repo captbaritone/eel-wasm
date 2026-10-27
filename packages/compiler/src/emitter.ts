@@ -193,6 +193,46 @@ export function emit(ast: Ast, context: CompilerContext): number[] {
         case "bnot":
           assertArity(1);
           return [...args, ...IS_ZEROISH, op.f64_convert_i32_s];
+        // frac(x) subtracts the floor, so negative inputs yield a positive fraction.
+        case "frac":
+          assertArity(1);
+          {
+            const temp = context.resolveLocal(VAL_TYPE.f64);
+            return [
+              ...args,
+              ...op.local_set(temp),
+              ...op.local_get(temp),
+              ...op.local_get(temp),
+              op.f64_floor,
+              op.f64_sub,
+            ];
+          }
+        // step(edge, v) is 1 when v reaches the edge.
+        case "step":
+          assertArity(2);
+          return [...args, op.f64_le, op.f64_convert_i32_s];
+        // clamp(v, lo, hi) evaluates min(max(v, lo), hi); the outer min wins,
+        // so inverted bounds return `hi`. Omitted bounds are 0 and 1.
+        case "clamp":
+          if (argList.length < 1 || argList.length > 3) {
+            throw createUserError(
+              `clamp() takes between 1 and 3 arguments, but got ${argList.length}.`,
+              ast.loc,
+              context.rawSource
+            );
+          }
+          {
+            const value = emit(argList[0], context);
+            const lo =
+              argList.length > 1
+                ? emit(argList[1], context)
+                : [...op.f64_const(0)];
+            const hi =
+              argList.length > 2
+                ? emit(argList[2], context)
+                : [...op.f64_const(1)];
+            return [...value, ...lo, op.f64_max, ...hi, op.f64_min];
+          }
         case "floor":
           assertArity(1);
           return [...args, op.f64_floor];

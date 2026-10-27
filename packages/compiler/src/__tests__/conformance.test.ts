@@ -41,24 +41,6 @@ import {
  */
 const knownDeviations = [
   // ---------------------------------------------------------------------
-  // Engine gaps: cases eel-wasm fails today. Each group is removed by the
-  // compiler change that fixes it, so the list burns down one change at a
-  // time.
-  // ---------------------------------------------------------------------
-
-  // Builtins eel-wasm does not define yet.
-  "functions-math/invsqrt",
-  "functions-math/invsqrt-nonpositive",
-  "functions-utility/clamp",
-  "functions-utility/clamp-default-bounds",
-  "functions-utility/clamp-inverted-bounds",
-  "functions-utility/frac-is-floor-based",
-  "functions-utility/mix-and-lerp",
-  "functions-utility/smoothstep-degenerate-edges",
-  "functions-utility/smoothstep-midpoint",
-  "functions-utility/step-edge-first",
-
-  // ---------------------------------------------------------------------
   // Audited deviations: the corpus was checked against the ns-eel2 source
   // MilkDrop 2 ships. For most of these, eel-wasm matches ns-eel2 and the
   // corpus case is what's wrong; corrections are proposed upstream.

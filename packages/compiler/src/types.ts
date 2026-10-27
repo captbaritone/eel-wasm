@@ -113,6 +113,9 @@ export interface Shims extends Record<string, Function> {
   log10(n: number): number;
   exp(n: number): number;
   sigmoid(n: number, m: number): number;
+  fmod(n: number, m: number): number;
+  invsqrt(n: number): number;
+  smoothstep(n: number, m: number, o: number): number;
 }
 
 export interface TypedFunction {

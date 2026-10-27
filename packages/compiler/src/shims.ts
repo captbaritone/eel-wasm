@@ -21,6 +21,17 @@ const shims: Shims = {
     const t = 1 + Math.exp(-x * y);
     return Math.abs(t) > EPSILON ? 1.0 / t : 0;
   },
+  // Float remainder: unlike the % operator, the operands are not truncated.
+  // Zero divisors yield 0, matching the `mod` guard.
+  fmod: (a: number, b: number) => (b === 0 ? 0 : a % b),
+  invsqrt: (a: number) => (a <= 0 ? 0 : 1 / Math.sqrt(a)),
+  smoothstep: function(e0: number, e1: number, v: number): number {
+    if (e0 === e1) {
+      return v < e0 ? 0 : 1;
+    }
+    const t = Math.min(Math.max((v - e0) / (e1 - e0), 0), 1);
+    return t * t * (3 - 2 * t);
+  },
 };
 
 export default shims;
