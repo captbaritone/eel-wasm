@@ -11,11 +11,11 @@ const testCases = fs.readdirSync(DIR);
 testCases.forEach((filename: string) => {
   const testFunc = filename.startsWith("only.") ? test.only : test;
   const testName = filename.replace(/^only\./, "");
-  testFunc(`${testName}`, () => {
+  testFunc(`${testName}`, async () => {
     const eel = fs.readFileSync(path.join(DIR, filename), { encoding: "utf8" });
     let compilerError = null;
     try {
-      compileModule({
+      await compileModule({
         pools: { main: new Set() },
         functions: { run: { pool: "main", code: eel } },
       });
