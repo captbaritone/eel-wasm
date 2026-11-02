@@ -1,0 +1,42 @@
+g = -1 + 1;
+========================================================================
+EelFunction {
+    expressions: ExpressionBlock {
+        expressions: [
+            Assignment(
+                Assignment {
+                    left: Identifier(
+                        Identifier {
+                            name: "g",
+                            span: Span {
+                                start: 0,
+                                end: 1,
+                            },
+                        },
+                    ),
+                    operator: Equal,
+                    right: BinaryExpression(
+                        BinaryExpression {
+                            left: UnaryExpression(
+                                UnaryExpression {
+                                    right: NumberLiteral(
+                                        NumberLiteral {
+                                            value: 1.0,
+                                        },
+                                    ),
+                                    op: Minus,
+                                },
+                            ),
+                            right: NumberLiteral(
+                                NumberLiteral {
+                                    value: 1.0,
+                                },
+                            ),
+                            op: Add,
+                        },
+                    ),
+                },
+            ),
+        ],
+    },
+}

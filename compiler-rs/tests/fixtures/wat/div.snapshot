@@ -1,0 +1,40 @@
+g = 100 / 0
+========================================================================
+(module
+  (type (;0;) (func (param f64) (result f64)))
+  (type (;1;) (func (param f64 f64) (result f64)))
+  (type (;2;) (func))
+  (import "shims" "sin" (func (;0;) (type 0)))
+  (import "shims" "pow" (func (;1;) (type 1)))
+  (import "shims" "cos" (func (;2;) (type 0)))
+  (import "shims" "tan" (func (;3;) (type 0)))
+  (import "shims" "asin" (func (;4;) (type 0)))
+  (import "shims" "acos" (func (;5;) (type 0)))
+  (import "shims" "atan" (func (;6;) (type 0)))
+  (import "shims" "atan2" (func (;7;) (type 1)))
+  (import "shims" "log" (func (;8;) (type 0)))
+  (import "shims" "log10" (func (;9;) (type 0)))
+  (import "shims" "sigmoid" (func (;10;) (type 1)))
+  (import "shims" "exp" (func (;11;) (type 0)))
+  (func (;12;) (type 2)
+    f64.const 0x1.9p+6 (;=100;)
+    f64.const 0x0p+0 (;=0;)
+    call 13
+    global.set 0
+    global.get 0
+    drop)
+  (func (;13;) (type 1) (param f64 f64) (result f64)
+    (local i32)
+    local.get 1
+    f64.const 0x0p+0 (;=0;)
+    f64.ne
+    if (result f64)  ;; label = @1
+      local.get 0
+      local.get 1
+      f64.div
+    else
+      f64.const 0x0p+0 (;=0;)
+    end)
+  (memory (;0;) 2048 2048)
+  (global (;0;) (mut f64) (f64.const 0x0p+0 (;=0;)))
+  (export "test" (func 12)))
