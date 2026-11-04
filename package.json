@@ -8,5 +8,6 @@
   "scripts": {
     "build": "pnpm --filter eel-wasm run build && pnpm --filter playground run build",
     "test": "pnpm -r run test"
-  }
+  },
+  "packageManager": "pnpm@12.16.1"
 }
